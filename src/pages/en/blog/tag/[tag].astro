@@ -17,7 +17,8 @@ const locale = "en" as const;
 const t = useTranslations(locale);
 ---
 
-<BaseLayout title={`#${tag}`} {locale}>
+{/* Tags are per-locale (an en tag has no guaranteed vi page) → no hreflang. */}
+<BaseLayout title={`#${tag}`} {locale} alternates={null}>
   <section class="page py-section">
     <p class="crumb"><a href={sectionPath("blog", locale)}>{t.nav.blog}</a> / #{tag}</p>
     <h1 class="text-h1">#{tag}</h1>

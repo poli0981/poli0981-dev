@@ -9,6 +9,7 @@ import type { BlogEntry } from "../lib/collections";
 import { useTranslations } from "../i18n";
 import { sectionPath, type Locale } from "../i18n/routing";
 import { formatDate, isoDate } from "../lib/format";
+import { SITE, authorRef } from "../lib/seo";
 
 interface NavLink {
   href: string;
@@ -33,9 +34,28 @@ const {
 const t = useTranslations(locale);
 const { title, description, date, updated, tags, cover } = entry.data;
 const blogHref = sectionPath("blog", locale);
+
+const pathname = Astro.url.pathname;
+const alternates = translationHref
+  ? locale === "vi"
+    ? { vi: pathname, en: translationHref }
+    : { en: pathname, vi: translationHref }
+  : null;
+const postSchema = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: title,
+  description,
+  datePublished: isoDate(date),
+  ...(updated ? { dateModified: isoDate(updated) } : {}),
+  inLanguage: locale === "vi" ? "vi-VN" : "en-US",
+  author: authorRef(),
+  ...(tags.length > 0 ? { keywords: tags.join(", ") } : {}),
+  url: new URL(pathname, SITE.url).href,
+};
 ---
 
-<BaseLayout {title} {description} {locale} type="article" reading>
+<BaseLayout {title} {description} {locale} type="article" reading {alternates} jsonLd={postSchema}>
   <article class="reading-column post" data-pagefind-body>
     <nav class="breadcrumb" aria-label="Breadcrumb" data-pagefind-ignore>
       <a href={blogHref}>{t.nav.blog}</a>

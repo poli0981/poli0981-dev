@@ -8,6 +8,7 @@ import Pagination from "../components/Pagination.astro";
 import type { StoryEntry } from "../lib/collections";
 import { useTranslations } from "../i18n";
 import type { Locale } from "../i18n/routing";
+import { SITE, authorRef } from "../lib/seo";
 
 interface NavLink {
   href: string;
@@ -29,13 +30,33 @@ const {
   seriesTocHref = null,
   prev = null,
   next = null,
+  translationHref = null,
 } = Astro.props;
 const t = useTranslations(locale);
 const { title, description, series, contentWarning } = entry.data;
 const hasCW = contentWarning.length > 0;
+
+const pathname = Astro.url.pathname;
+const alternates = translationHref
+  ? locale === "vi"
+    ? { vi: pathname, en: translationHref }
+    : { en: pathname, vi: translationHref }
+  : null;
+const storySchema = {
+  "@context": "https://schema.org",
+  "@type": "CreativeWork",
+  name: title,
+  headline: title,
+  description,
+  inLanguage: locale === "vi" ? "vi-VN" : "en-US",
+  ...(series ? { isPartOf: { "@type": "CreativeWorkSeries", name: series } } : {}),
+  ...(hasCW ? { contentRating: contentWarning.join(", ") } : {}),
+  author: authorRef(),
+  url: new URL(pathname, SITE.url).href,
+};
 ---
 
-<BaseLayout {title} {description} {locale} type="article" reading>
+<BaseLayout {title} {description} {locale} type="article" reading {alternates} jsonLd={storySchema}>
   {/* Sticky reader bar. The "Aa" reading controls trigger is added in M5. */}
   <div class="reader-bar">
     <a class="back" href={seriesHref ?? seriesTocHref ?? "#"}>

@@ -9,7 +9,7 @@ import MobileTabBar from "../components/MobileTabBar.astro";
 import MenuSheet from "../components/MenuSheet.svelte";
 import SearchModal from "../components/SearchModal.svelte";
 import LegalGateSheet from "../components/LegalGateSheet.svelte";
-import { resolveSeo, SITE, type SeoInput } from "../lib/seo";
+import { resolveSeo, SITE, hreflangPair, personSchema, type SeoInput } from "../lib/seo";
 import { toLocale, useTranslations } from "../i18n";
 import { menuNav, legalNav } from "../lib/nav";
 
@@ -18,15 +18,30 @@ interface Props extends SeoInput {
   mainClass?: string;
   /** Reading pages (blog post, story chapter) load the Literata reading font. */
   reading?: boolean;
+  /**
+   * hreflang alternates. `undefined` → auto (vi↔en pair for bilingual pages);
+   * `null` → suppress (single-locale pages, e.g. tag pages); object → explicit pair.
+   */
+  alternates?: { vi?: string; en?: string } | null;
+  /** Page-specific JSON-LD (BlogPosting / CreativeWork / SoftwareSourceCode). */
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
-const { mainClass, reading = false, ...seoInput } = Astro.props;
+const { mainClass, reading = false, alternates, jsonLd, ...seoInput } = Astro.props;
 // Default the locale from the URL (Astro.currentLocale) so /en/* pages resolve to `en`.
 const locale = seoInput.locale ?? toLocale(Astro.currentLocale);
 const seo = resolveSeo({ ...seoInput, locale }, Astro.url.pathname);
 const lang = seo.locale;
 const t = useTranslations(lang);
 const ogImage = seo.image ? new URL(seo.image, SITE.url).href : undefined;
+
+// hreflang: default to the auto vi↔en pair unless the page opts out (null) or overrides.
+// Normalize to the trailing-slash form so hreflang URLs match canonicals exactly.
+const withSlash = (p: string): string =>
+  p.endsWith("/") || (p.split("/").pop() ?? "").includes(".") ? p : `${p}/`;
+const autoAlt = alternates === undefined ? hreflangPair(Astro.url.pathname) : alternates;
+const alt =
+  autoAlt?.vi && autoAlt.en ? { vi: withSlash(autoAlt.vi), en: withSlash(autoAlt.en) } : null;
 const menuItems = menuNav(lang);
 const legalItems = legalNav(lang);
 // The legal-notice gate is a reminder layer — never shown on the legal pages themselves.
@@ -58,6 +73,17 @@ const onLegalPage = /\/legal(\/|$)/.test(Astro.url.pathname);
     <link rel="canonical" href={seo.canonical} />
     {seo.noindex && <meta name="robots" content="noindex, nofollow" />}
 
+    {/* hreflang — only for pages that exist in both locales (x-default → vi). */}
+    {
+      alt && (
+        <Fragment>
+          <link rel="alternate" hreflang="vi" href={new URL(alt.vi, SITE.url).href} />
+          <link rel="alternate" hreflang="en" href={new URL(alt.en, SITE.url).href} />
+          <link rel="alternate" hreflang="x-default" href={new URL(alt.vi, SITE.url).href} />
+        </Fragment>
+      )
+    }
+
     <meta name="theme-color" content={SITE.themeColor.dark} media="(prefers-color-scheme: dark)" />
     <meta
       name="theme-color"
@@ -87,6 +113,24 @@ const onLegalPage = /\/legal(\/|$)/.test(Astro.url.pathname);
     <Font cssVariable="--ff-mono" />
     {/* Literata loads only on long-form reading pages (keeps the base bundle lean). */}
     {reading && <Font cssVariable="--ff-reading" />}
+
+    {
+      /* Structured data: site-wide Person + optional per-page schema. JSON-LD is a
+       non-executable data block, so Astro's CSP does not hash it — emit verbatim.
+       Escape "<" so a title containing "</script>" can't break out of the block. */
+    }
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify(personSchema()).replace(/</g, "\\u003c")}
+    />
+    {
+      jsonLd && (
+        <script
+          type="application/ld+json"
+          set:html={JSON.stringify(jsonLd).replace(/</g, "\\u003c")}
+        />
+      )
+    }
 
     <ClientRouter />
   </head>
