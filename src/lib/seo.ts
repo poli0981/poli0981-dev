@@ -1,6 +1,7 @@
 /** Site-wide identity + SEO helpers (docs 13). */
 import { alternatePath, localeFromPath, type Locale } from "../i18n/routing";
 import { sameAsUrls } from "./links";
+import { DEFAULT_OG } from "./og";
 
 export const SITE = {
   url: "https://poli0981.dev",
@@ -56,7 +57,7 @@ export function resolveSeo(input: SeoInput, pathname: string): ResolvedSeo {
     locale,
     type: input.type ?? "website",
     noindex: input.noindex ?? false,
-    image: input.image,
+    image: input.image ?? DEFAULT_OG,
   };
 }
 

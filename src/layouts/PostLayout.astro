@@ -10,6 +10,7 @@ import { useTranslations } from "../i18n";
 import { sectionPath, type Locale } from "../i18n/routing";
 import { formatDate, isoDate } from "../lib/format";
 import { SITE, authorRef } from "../lib/seo";
+import { ogUrl } from "../lib/og";
 
 interface NavLink {
   href: string;
@@ -55,7 +56,16 @@ const postSchema = {
 };
 ---
 
-<BaseLayout {title} {description} {locale} type="article" reading {alternates} jsonLd={postSchema}>
+<BaseLayout
+  {title}
+  {description}
+  {locale}
+  type="article"
+  reading
+  {alternates}
+  jsonLd={postSchema}
+  image={ogUrl("blog", entry.id)}
+>
   <article class="reading-column post" data-pagefind-body>
     <nav class="breadcrumb" aria-label="Breadcrumb" data-pagefind-ignore>
       <a href={blogHref}>{t.nav.blog}</a>
