@@ -81,6 +81,34 @@ const en: UIStrings = {
     hoursTwoWeeks: "{h}h / 2 weeks",
     na: "No data yet",
   },
+  dev: {
+    intro:
+      "Where I keep code, open projects, and my toolkit. Priorities: few dependencies, easy to maintain.",
+    featured: "Featured projects",
+    allProjects: "All projects",
+    gear: "Gear & tools",
+    gearLead: "The machine I use to code, edit video, and play games.",
+    gearCta: "See the setup",
+    connect: "Connect",
+  },
+  gaming: {
+    intro:
+      "A channel for slow, story-driven games — visual novels, JRPGs, and indie/psychological horror.",
+    subscribe: "Subscribe",
+    coverTitle: "What I cover",
+    coverBody: "Visual novels · JRPGs · indie/psychological horror. No FPS, no competitive.",
+    community: "Community",
+  },
+  uses: {
+    title: "Uses",
+    lead: "The hardware and tools I use day to day.",
+    languages: "Languages & frameworks",
+  },
+  gh: {
+    title: "GitHub activity",
+    push: "Pushed to",
+    release: "Released in",
+  },
   gallery: {
     open: "Open image",
     close: "Close",

@@ -1,0 +1,184 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Waveline from "@/components/Waveline.svelte";
+import ProjectCard from "@/components/ProjectCard.astro";
+import WidgetGitHub from "@/components/WidgetGitHub.svelte";
+import SocialIcon from "@/components/SocialIcon.astro";
+import { getProjects } from "@/lib/collections";
+import { getWidgetSnapshot } from "@/lib/widgets";
+import { socialsForPersona, emailForScope } from "@/lib/links";
+import { useTranslations } from "@/i18n";
+import { sectionPath, type Locale } from "@/i18n/routing";
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+
+const all = await getProjects(locale);
+const featured = all.filter((p) => p.data.featured);
+const projectsToShow = (featured.length > 0 ? featured : all).slice(0, 6);
+
+const widgets = await getWidgetSnapshot();
+const devSocials = socialsForPersona("dev");
+const codeEmail = emailForScope("code");
+
+function relFor(href: string, me?: boolean): string | undefined {
+  const parts: string[] = [];
+  if (me) parts.push("me");
+  if (href.startsWith("http")) parts.push("noopener", "noreferrer");
+  return parts.length ? parts.join(" ") : undefined;
+}
+---
+
+<BaseLayout title={t.nav.dev} description={t.dev.intro} {locale}>
+  <section class="page py-section">
+    <h1 class="text-h1">{t.nav.dev}</h1>
+    <p class="lede">{t.dev.intro}</p>
+    <div class="wave"><Waveline client:visible height={28} /></div>
+  </section>
+
+  {
+    projectsToShow.length > 0 && (
+      <section class="page block">
+        <div class="block-head">
+          <h2 class="block-title">{t.dev.featured}</h2>
+          <a class="more" href={sectionPath("projects", locale)}>
+            {t.dev.allProjects} →
+          </a>
+        </div>
+        <div class="grid">
+          {projectsToShow.map((entry) => (
+            <ProjectCard {entry} {locale} />
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  <section class="page block">
+    <h2 class="block-title">{t.dev.gear}</h2>
+    <p class="muted">{t.dev.gearLead}</p>
+    <a class="more" href={sectionPath("dev", locale, "uses")}>{t.dev.gearCta} →</a>
+  </section>
+
+  <WidgetGitHub client:idle labels={t.gh} {locale} initial={widgets} />
+
+  <section class="page block">
+    <h2 class="block-title">{t.dev.connect}</h2>
+    <nav class="socials" aria-label={t.footer.social}>
+      {
+        devSocials.map((link) => (
+          <a
+            class="social"
+            href={link.href}
+            rel={relFor(link.href, link.me)}
+            target={link.href.startsWith("http") ? "_blank" : undefined}
+          >
+            <SocialIcon platform={link.platform} size={18} />
+            <span>{link.name}</span>
+          </a>
+        ))
+      }
+    </nav>
+    <p class="contact">
+      <a href={codeEmail.href}>{codeEmail.address}</a>
+      <span class="muted">— {codeEmail.label[locale]}</span>
+    </p>
+  </section>
+</BaseLayout>
+
+<style>
+  .lede {
+    margin-block-start: 1rem;
+    font-size: var(--text-lead);
+    color: var(--muted);
+    max-inline-size: 46rem;
+  }
+  .wave {
+    margin-block: 1.5rem 0;
+    max-inline-size: 22rem;
+  }
+  .block {
+    padding-block-end: clamp(2rem, 6vw, 3.5rem);
+  }
+  .block-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-block-end: 1.25rem;
+  }
+  .block-title {
+    font-size: var(--text-h3);
+    margin-block-end: 1.25rem;
+  }
+  .block-head .block-title {
+    margin-block-end: 0;
+  }
+  .more {
+    color: var(--accent);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+    white-space: nowrap;
+  }
+  .more:hover {
+    color: var(--accent-strong);
+  }
+  .grid {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) {
+    .grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 960px) {
+    .grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  .muted {
+    color: var(--muted);
+  }
+  .socials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-block-end: 1rem;
+  }
+  .social {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.8rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: var(--text-meta);
+    transition:
+      border-color var(--duration-fast) var(--ease-site),
+      color var(--duration-fast) var(--ease-site);
+  }
+  .social:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .contact {
+    margin: 0;
+    font-size: var(--text-meta);
+  }
+  .contact a {
+    color: var(--text);
+  }
+  .contact a:hover {
+    color: var(--accent);
+  }
+  .contact .muted {
+    color: var(--muted);
+  }
+</style>

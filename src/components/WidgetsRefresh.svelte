@@ -7,18 +7,22 @@
    *     title: string, latestVideo: string, nowPlaying: string,
    *     playLabel: string, hoursTwoWeeks: string, na: string
    *   },
-   *   initial: import('../lib/widgets').WidgetsPayload
+   *   initial: import('../lib/widgets').WidgetsPayload,
+   *   maxVideos?: number
    * }}
    */
-  let { labels, initial } = $props();
+  let { labels, initial, maxVideos = 1 } = $props();
 
   let data = $state(initial);
-  let playing = $state(false); // YouTube facade: false = thumbnail, true = nocookie iframe
+  /** @type {Record<string, boolean>} */
+  let playing = $state({}); // YouTube facade, per video id: false = thumbnail, true = nocookie iframe
 
-  // A source counts as present only when its status is not "na" (and it has an item).
-  const video = $derived(data.status?.yt !== "na" ? (data.yt?.items?.[0] ?? null) : null);
+  // A source counts as present only when its status is not "na" (and it has items).
+  const videos = $derived(
+    data.status?.yt !== "na" ? (data.yt?.items ?? []).slice(0, maxVideos) : [],
+  );
   const game = $derived(data.status?.steam !== "na" ? (data.steam?.items?.[0] ?? null) : null);
-  const hasAny = $derived(Boolean(video) || Boolean(game));
+  const hasAny = $derived(videos.length > 0 || Boolean(game));
 
   /** @param {number} min */
   function hours(min) {
@@ -40,10 +44,10 @@
   <section class="page w-block">
     <h2 class="w-head">{labels.title}</h2>
     <div class="w-grid">
-      {#if video}
+      {#each videos as video (video.id)}
         <article class="w-card">
           <div class="w-media">
-            {#if playing}
+            {#if playing[video.id]}
               <iframe
                 title={video.title}
                 src={`https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1`}
@@ -56,7 +60,7 @@
                 type="button"
                 class="w-play"
                 aria-label={labels.playLabel}
-                onclick={() => (playing = true)}
+                onclick={() => (playing[video.id] = true)}
               >
                 ▶
               </button>
@@ -67,7 +71,7 @@
             <h3 class="w-title">{video.title}</h3>
           </div>
         </article>
-      {/if}
+      {/each}
 
       {#if game}
         <article class="w-card">
@@ -107,6 +111,11 @@
   @media (min-width: 640px) {
     .w-grid {
       grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 960px) {
+    .w-grid {
+      grid-template-columns: repeat(3, 1fr);
     }
   }
   .w-card {

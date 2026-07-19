@@ -79,6 +79,32 @@ const vi = {
     hoursTwoWeeks: "{h} giờ / 2 tuần",
     na: "Chưa có dữ liệu",
   },
+  dev: {
+    intro: "Nơi mình gom code, dự án mở và bộ đồ nghề. Ưu tiên: ít phụ thuộc, dễ bảo trì.",
+    featured: "Dự án nổi bật",
+    allProjects: "Tất cả dự án",
+    gear: "Thiết bị & công cụ",
+    gearLead: "Máy mình dùng để code, dựng video và chơi game.",
+    gearCta: "Xem cấu hình",
+    connect: "Kết nối",
+  },
+  gaming: {
+    intro: "Kênh kể chuyện chậm rãi — visual novel, JRPG và indie/psychological horror.",
+    subscribe: "Đăng ký kênh",
+    coverTitle: "Mình cover gì",
+    coverBody: "Visual novel · JRPG · indie/psychological horror. Không FPS, không competitive.",
+    community: "Cộng đồng",
+  },
+  uses: {
+    title: "Thiết bị & công cụ",
+    lead: "Cấu hình và công cụ mình dùng hằng ngày.",
+    languages: "Ngôn ngữ & framework",
+  },
+  gh: {
+    title: "Hoạt động GitHub",
+    push: "Đẩy lên",
+    release: "Phát hành",
+  },
   gallery: {
     open: "Mở ảnh",
     close: "Đóng",
