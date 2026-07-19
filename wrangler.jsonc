@@ -3,6 +3,8 @@
   "name": "poli0981-dev",
   "compatibility_date": "2026-07-01",
   "compatibility_flags": ["nodejs_compat"],
+  // Serve only via the custom domain (poli0981.dev) — no poli0981-dev.*.workers.dev URL.
+  "workers_dev": false,
   "assets": {
     "binding": "ASSETS",
     "directory": "./dist",
