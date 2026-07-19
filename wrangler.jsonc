@@ -12,9 +12,8 @@
   "kv_namespaces": [
     {
       "binding": "KV",
-      // Local placeholder ids — real namespace ids are wired in the deferred deploy track.
-      "id": "poli0981_kv_local",
-      "preview_id": "poli0981_kv_local",
+      "id": "8c366cd5e57c4dd1b309787d0603c490",
+      "preview_id": "7e710034a6a0408191fc00adb5277ae8",
     },
   ],
   "observability": {
