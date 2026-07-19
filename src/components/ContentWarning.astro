@@ -1,0 +1,81 @@
+---
+interface Props {
+  warnings: string[];
+  title?: string;
+  hint?: string;
+}
+// JS-free reveal via native <details> — keyboard-accessible and CSP-clean.
+const { warnings, title = "Cảnh báo nội dung", hint = "Bấm để đọc" } = Astro.props;
+---
+
+<details class="cw">
+  <summary class="cw-summary">
+    <span class="cw-icon" aria-hidden="true">⚠</span>
+    <span class="cw-title">{title}</span>
+    {
+      warnings.length > 0 && (
+        <span class="cw-tags">
+          {warnings.map((w) => (
+            <span class="cw-tag">{w}</span>
+          ))}
+        </span>
+      )
+    }
+    <span class="cw-hint">{hint}</span>
+  </summary>
+  <div class="cw-body">
+    <slot />
+  </div>
+</details>
+
+<style>
+  .cw {
+    border: 1px solid color-mix(in srgb, var(--horror) 55%, var(--line));
+    border-radius: var(--radius-card);
+    background: color-mix(in srgb, var(--horror) 10%, var(--surface));
+  }
+  .cw-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    padding: 0.9rem 1.1rem;
+    cursor: pointer;
+    list-style: none;
+    color: var(--text);
+  }
+  .cw-summary::-webkit-details-marker {
+    display: none;
+  }
+  .cw-icon {
+    color: var(--horror);
+    font-size: 1.1em;
+  }
+  .cw-title {
+    font-weight: 600;
+  }
+  .cw-tags {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+  .cw-tag {
+    padding: 0.1em 0.5em;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--horror) 30%, transparent);
+    color: color-mix(in srgb, var(--horror) 30%, var(--text));
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+  }
+  .cw-hint {
+    margin-inline-start: auto;
+    color: var(--muted);
+    font-size: var(--text-meta);
+  }
+  .cw[open] .cw-hint {
+    display: none;
+  }
+  .cw-body {
+    padding: 0 1.1rem 1.1rem;
+  }
+</style>

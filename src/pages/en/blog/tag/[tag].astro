@@ -1,0 +1,40 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import PostGrid from "@/components/PostGrid.astro";
+import { blogTagPaths } from "@/lib/pages";
+import { useTranslations } from "@/i18n";
+import { sectionPath } from "@/i18n/routing";
+import type { BlogEntry } from "@/lib/collections";
+
+export const getStaticPaths = () => blogTagPaths("en");
+
+interface Props {
+  tag: string;
+  posts: BlogEntry[];
+}
+const { tag, posts } = Astro.props as Props;
+const locale = "en" as const;
+const t = useTranslations(locale);
+---
+
+<BaseLayout title={`#${tag}`} {locale}>
+  <section class="page py-section">
+    <p class="crumb"><a href={sectionPath("blog", locale)}>{t.nav.blog}</a> / #{tag}</p>
+    <h1 class="text-h1">#{tag}</h1>
+    <div class="grid-wrap"><PostGrid {posts} {locale} /></div>
+  </section>
+</BaseLayout>
+
+<style>
+  .crumb {
+    color: var(--muted);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+  }
+  .crumb a:hover {
+    color: var(--accent);
+  }
+  .grid-wrap {
+    margin-block-start: 2rem;
+  }
+</style>

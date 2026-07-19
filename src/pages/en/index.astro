@@ -1,0 +1,130 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Waveline from "@/components/Waveline.svelte";
+import PostCard from "@/components/PostCard.astro";
+import StoryCard from "@/components/StoryCard.astro";
+import { getLatestMixed } from "@/lib/collections";
+import { useTranslations } from "@/i18n";
+import { sectionPath } from "@/i18n/routing";
+
+const locale = "en" as const;
+const t = useTranslations(locale);
+const latest = await getLatestMixed(locale, 3);
+
+const shortcuts = [
+  { href: sectionPath("projects", locale), label: t.nav.projects },
+  { href: sectionPath("stories", locale), label: t.nav.stories },
+  { href: sectionPath("links", locale), label: t.nav.links },
+  { href: sectionPath("about", locale), label: t.nav.about },
+];
+---
+
+<BaseLayout {locale}>
+  <section class="page hero reveal">
+    <p class="eyebrow">poli0981.dev</p>
+    <h1 class="hero-title">Kokone <span class="accent">/ SkullMute</span></h1>
+    <p class="hero-tag">~ {t.site.tagline} ~</p>
+    <div class="hero-wave"><Waveline client:visible height={48} /></div>
+  </section>
+
+  {
+    latest.length > 0 && (
+      <section class="page block">
+        <h2 class="block-title">{t.home.recent}</h2>
+        <div class="latest-grid">
+          {latest.map((item) =>
+            item.kind === "blog" ? (
+              <PostCard entry={item.entry} {locale} />
+            ) : (
+              <StoryCard entry={item.entry} {locale} />
+            ),
+          )}
+        </div>
+      </section>
+    )
+  }
+
+  <section class="page block">
+    <h2 class="block-title">{t.home.shortcuts}</h2>
+    <div class="shortcuts">
+      {
+        shortcuts.map((s) => (
+          <a class="shortcut" href={s.href}>
+            {s.label}
+          </a>
+        ))
+      }
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    padding-block: clamp(3rem, 10vw, 6rem) clamp(2rem, 6vw, 4rem);
+  }
+  .eyebrow {
+    color: var(--muted);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+    letter-spacing: 0.04em;
+  }
+  .hero-title {
+    margin-block-start: 0.5rem;
+    font-size: var(--text-hero);
+    line-height: 1.02;
+    letter-spacing: -0.01em;
+  }
+  .hero-title .accent {
+    color: var(--accent);
+  }
+  .hero-tag {
+    margin-block-start: 0.75rem;
+    color: var(--muted);
+    font-size: var(--text-lead);
+  }
+  .hero-wave {
+    margin-block-start: 1.75rem;
+    max-inline-size: 30rem;
+  }
+  .block {
+    padding-block-end: clamp(2rem, 6vw, 3.5rem);
+  }
+  .block-title {
+    font-size: var(--text-h3);
+    margin-block-end: 1.25rem;
+  }
+  .latest-grid {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) {
+    .latest-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 960px) {
+    .latest-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  .shortcuts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .shortcut {
+    padding: 0.7rem 1.1rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text);
+    transition:
+      border-color var(--duration-fast) var(--ease-site),
+      color var(--duration-fast) var(--ease-site);
+  }
+  .shortcut:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+</style>

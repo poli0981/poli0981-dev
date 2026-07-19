@@ -1,0 +1,142 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Waveline from "@/components/Waveline.svelte";
+import { render } from "astro:content";
+import { getFaqs } from "@/lib/collections";
+import { useTranslations } from "@/i18n";
+import { sectionPath } from "@/i18n/routing";
+
+const locale = "en" as const;
+const t = useTranslations(locale);
+const faqs = await getFaqs(locale);
+const items = await Promise.all(
+  faqs.map(async (f) => {
+    const { Content } = await render(f);
+    return { id: f.id, group: f.data.group, q: f.data.q, Content };
+  }),
+);
+const groups = [
+  { key: "channel", label: t.qaGroups.channel },
+  { key: "dev", label: t.qaGroups.dev },
+  { key: "personal", label: t.qaGroups.personal },
+] as const;
+---
+
+<BaseLayout title={t.nav.qa} {locale}>
+  <section class="page narrow py-section">
+    <h1 class="text-h1">{t.nav.qa}</h1>
+    <div class="wave"><Waveline client:visible height={28} /></div>
+
+    {
+      faqs.length === 0 && (
+        <p class="only-vi">
+          {t.post.onlyVi} <a href={sectionPath("qa", "vi")}>Hỏi đáp (tiếng Việt) →</a>
+        </p>
+      )
+    }
+
+    {
+      groups.map((g) => {
+        const list = items.filter((i) => i.group === g.key);
+        return (
+          list.length > 0 && (
+            <div class="qa-group">
+              <h2 class="group-title">{g.label}</h2>
+              {list.map(({ q, Content }) => (
+                <details class="qa">
+                  <summary>{q}</summary>
+                  <div class="answer">
+                    <Content />
+                  </div>
+                </details>
+              ))}
+            </div>
+          )
+        );
+      })
+    }
+
+    <div class="contact">
+      <h2 class="group-title">{t.contact.title}</h2>
+      <p class="lead">{t.contact.lead}</p>
+      <ul class="contact-list">
+        <li>{t.contact.fast}</li>
+        <li>{t.contact.business}</li>
+        <li>{t.contact.all}</li>
+      </ul>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .narrow {
+    max-inline-size: 46rem;
+  }
+  .wave {
+    margin-block: 1rem 2rem;
+    max-inline-size: 22rem;
+  }
+  .only-vi {
+    color: var(--muted);
+    margin-block-end: 2rem;
+  }
+  .only-vi a {
+    color: var(--accent);
+    font-family: var(--ff-mono);
+  }
+  .qa-group {
+    margin-block-end: 2rem;
+  }
+  .group-title {
+    font-size: var(--text-h3);
+    margin-block-end: 1rem;
+  }
+  .qa {
+    border-block-end: 1px solid var(--line);
+  }
+  .qa summary {
+    padding: 0.9rem 0;
+    cursor: pointer;
+    font-weight: 600;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .qa summary::-webkit-details-marker {
+    display: none;
+  }
+  .qa summary::after {
+    content: "+";
+    color: var(--accent);
+    font-family: var(--ff-mono);
+  }
+  .qa[open] summary::after {
+    content: "−";
+  }
+  .answer {
+    padding-block-end: 1rem;
+    color: var(--muted);
+  }
+  .contact {
+    margin-block-start: 2.5rem;
+    padding: 1.5rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+  }
+  .lead {
+    color: var(--muted);
+    margin-block: 0.5rem 1rem;
+  }
+  .contact-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-family: var(--ff-mono);
+    font-size: var(--text-body);
+  }
+</style>

@@ -1,0 +1,84 @@
+---
+import { SOCIAL_LINKS } from "../lib/links";
+import type { Locale } from "../i18n/routing";
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+
+function relFor(href: string, me?: boolean): string | undefined {
+  const parts: string[] = [];
+  if (me) parts.push("me");
+  if (href.startsWith("http")) parts.push("noopener", "noreferrer");
+  return parts.length ? parts.join(" ") : undefined;
+}
+---
+
+<ul class="links-list">
+  {
+    SOCIAL_LINKS.map((link) => (
+      <li>
+        <a
+          class="link-row"
+          href={link.href}
+          rel={relFor(link.href, link.me)}
+          target={link.href.startsWith("http") ? "_blank" : undefined}
+        >
+          <span class="link-text">
+            <span class="link-name">{link.name}</span>
+            <span class="link-desc">{link.desc[locale]}</span>
+          </span>
+          <span class="link-arrow" aria-hidden="true">
+            →
+          </span>
+        </a>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .links-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .link-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    color: var(--text);
+    transition:
+      border-color var(--duration-fast) var(--ease-site),
+      transform var(--duration-fast) var(--ease-site);
+  }
+  .link-row:hover {
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+    transform: translateY(-2px);
+  }
+  .link-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    flex: 1;
+  }
+  .link-name {
+    font-weight: 600;
+  }
+  .link-desc {
+    color: var(--muted);
+    font-size: var(--text-meta);
+  }
+  .link-arrow {
+    color: var(--accent);
+    font-family: var(--ff-mono);
+  }
+</style>

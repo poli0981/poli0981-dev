@@ -1,0 +1,70 @@
+---
+import { toLocale, useTranslations } from "../i18n";
+import { type Locale } from "../i18n/routing";
+import { menuNav, legalNav } from "../lib/nav";
+import Waveline from "./Waveline.svelte";
+
+const locale: Locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale);
+const nav = menuNav(locale);
+const legal = legalNav(locale);
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="page">
+    <Waveline client:visible height={34} />
+  </div>
+  <div class="page footer-inner">
+    <nav class="footer-nav" aria-label="Footer">
+      {nav.map((item) => <a href={item.href}>{item.label}</a>)}
+    </nav>
+    <nav class="footer-legal" aria-label={t.footer.legal}>
+      {legal.map((item) => <a href={item.href}>{item.label}</a>)}
+    </nav>
+    <p class="copyright">© {year} Kokone (SkullMute). {t.footer.rights}</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-block-start: var(--spacing-section);
+    border-block-start: 1px solid transparent;
+  }
+  .footer-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-block: 2rem 3rem;
+  }
+  .footer-nav,
+  .footer-legal {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+  }
+  .footer-nav a {
+    color: var(--text);
+    font-size: var(--text-body);
+  }
+  .footer-legal a {
+    color: var(--muted);
+    font-size: var(--text-meta);
+  }
+  .footer-nav a:hover,
+  .footer-legal a:hover {
+    color: var(--accent);
+  }
+  .copyright {
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--text-meta);
+    font-family: var(--ff-mono);
+  }
+
+  @media (min-width: 768px) {
+    .footer-inner {
+      padding-block-end: 2rem;
+    }
+  }
+</style>

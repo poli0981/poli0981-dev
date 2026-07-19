@@ -1,0 +1,183 @@
+---
+import { Image } from "astro:assets";
+import BaseLayout from "./BaseLayout.astro";
+import Prose from "../components/Prose.astro";
+import Waveline from "../components/Waveline.svelte";
+import TagPill from "../components/TagPill.astro";
+import Pagination from "../components/Pagination.astro";
+import type { BlogEntry } from "../lib/collections";
+import { useTranslations } from "../i18n";
+import { sectionPath, type Locale } from "../i18n/routing";
+import { formatDate, isoDate } from "../lib/format";
+
+interface NavLink {
+  href: string;
+  label: string;
+}
+interface Props {
+  entry: BlogEntry;
+  locale: Locale;
+  readingMins: number;
+  translationHref?: string | null;
+  prev?: NavLink | null;
+  next?: NavLink | null;
+}
+const {
+  entry,
+  locale,
+  readingMins,
+  translationHref = null,
+  prev = null,
+  next = null,
+} = Astro.props;
+const t = useTranslations(locale);
+const { title, description, date, updated, tags, cover } = entry.data;
+const blogHref = sectionPath("blog", locale);
+---
+
+<BaseLayout {title} {description} {locale} type="article" reading>
+  <article class="reading-column post">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href={blogHref}>{t.nav.blog}</a>
+      <span aria-hidden="true">/</span>
+      <span class="current">{title}</span>
+    </nav>
+
+    <header class="post-header">
+      <h1>{title}</h1>
+      <div class="post-meta">
+        <time datetime={isoDate(date)}>{formatDate(date, locale)}</time>
+        <span aria-hidden="true">·</span>
+        <span>{readingMins} {t.post.minRead}</span>
+        {
+          updated && (
+            <Fragment>
+              <span aria-hidden="true">·</span>
+              <span>
+                {t.post.updated} {formatDate(updated, locale)}
+              </span>
+            </Fragment>
+          )
+        }
+      </div>
+      {
+        tags.length > 0 && (
+          <div class="post-tags">
+            {tags.map((tag) => (
+              <TagPill {tag} {locale} />
+            ))}
+          </div>
+        )
+      }
+      {
+        translationHref && (
+          <a class="translation" href={translationHref}>
+            {t.post.readOther} →
+          </a>
+        )
+      }
+    </header>
+
+    {
+      cover && (
+        <div class="post-cover">
+          <Image
+            src={cover}
+            alt=""
+            widths={[720, 1080, 1440]}
+            sizes="(max-width: 768px) 100vw, 720px"
+            fetchpriority="high"
+          />
+        </div>
+      )
+    }
+
+    <Prose class="post-body">
+      <slot />
+    </Prose>
+
+    <footer class="post-foot">
+      <Waveline client:visible height={36} />
+      <Pagination
+        {prev}
+        {next}
+        prevText={t.post.prev}
+        nextText={t.post.next}
+        ariaLabel="Post navigation"
+      />
+    </footer>
+  </article>
+</BaseLayout>
+
+<style>
+  .reading-column {
+    max-inline-size: 46rem;
+    margin-inline: auto;
+    padding-inline: clamp(1rem, 4vw, 2rem);
+    padding-block: clamp(2rem, 6vw, 3.5rem);
+  }
+  .breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    color: var(--muted);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+  }
+  .breadcrumb a:hover {
+    color: var(--accent);
+  }
+  .breadcrumb .current {
+    color: var(--text);
+    opacity: 0.7;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-inline-size: 20ch;
+  }
+  .post-header {
+    margin-block: 1.25rem 1.5rem;
+  }
+  .post-header h1 {
+    font-size: var(--text-h1);
+    line-height: 1.1;
+  }
+  .post-meta {
+    margin-block-start: 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--muted);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+  }
+  .post-tags {
+    margin-block-start: 0.9rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .translation {
+    display: inline-block;
+    margin-block-start: 0.9rem;
+    color: var(--accent);
+    font-size: var(--text-meta);
+    font-family: var(--ff-mono);
+  }
+  .post-cover {
+    margin-block-end: 2rem;
+  }
+  .post-cover :global(img) {
+    inline-size: 100%;
+    block-size: auto;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--line);
+  }
+  .post-foot {
+    margin-block-start: 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+</style>

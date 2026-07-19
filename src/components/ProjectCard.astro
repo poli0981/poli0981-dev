@@ -1,0 +1,123 @@
+---
+import { type ProjectEntry } from "../lib/collections";
+import { sectionPath, type Locale } from "../i18n/routing";
+
+interface Props {
+  entry: ProjectEntry;
+  locale: Locale;
+}
+const { entry, locale } = Astro.props;
+const href = sectionPath("projects", locale, entry.id);
+const { name, tagline, stack, repo, url, featured, year } = entry.data;
+---
+
+<article class:list={["card project", { featured }]}>
+  <a class="card-link" href={href}>
+    <div class="head">
+      <h3 class="card-title">{name}</h3>
+      <span class="year">{year}</span>
+    </div>
+    <p class="tagline">{tagline}</p>
+    {
+      stack.length > 0 && (
+        <ul class="stack">
+          {stack.slice(0, 6).map((s) => (
+            <li>{s}</li>
+          ))}
+        </ul>
+      )
+    }
+  </a>
+  {
+    (repo || url) && (
+      <div class="links">
+        {repo && (
+          <a href={repo} target="_blank" rel="noopener noreferrer">
+            repo ↗
+          </a>
+        )}
+        {url && (
+          <a href={url} target="_blank" rel="noopener noreferrer">
+            site ↗
+          </a>
+        )}
+      </div>
+    )
+  }
+</article>
+
+<style>
+  .card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    padding: 1.1rem;
+    transition:
+      transform var(--duration-fast) var(--ease-site),
+      border-color var(--duration-fast) var(--ease-site);
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+  }
+  .card.featured {
+    border-color: color-mix(in srgb, var(--accent) 30%, var(--line));
+  }
+  .card-link {
+    color: inherit;
+    flex: 1;
+  }
+  .head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  .card-title {
+    font-size: var(--text-lead);
+    font-weight: 700;
+  }
+  .year {
+    color: var(--muted);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+  }
+  .tagline {
+    margin-block-start: 0.35rem;
+    color: var(--muted);
+    font-size: var(--text-body);
+  }
+  .stack {
+    list-style: none;
+    padding: 0;
+    margin-block-start: 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+  .stack li {
+    padding: 0.1em 0.5em;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+  }
+  .links {
+    display: flex;
+    gap: 1rem;
+    margin-block-start: 0.9rem;
+    padding-block-start: 0.75rem;
+    border-block-start: 1px solid var(--line);
+  }
+  .links a {
+    color: var(--accent);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+  }
+  .links a:hover {
+    color: var(--accent-strong);
+  }
+</style>

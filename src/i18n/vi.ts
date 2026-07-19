@@ -1,0 +1,102 @@
+/** Vietnamese UI strings (default locale). en.ts must mirror this shape. */
+const vi = {
+  site: {
+    tagline: "dev & storyteller",
+  },
+  nav: {
+    home: "Trang chủ",
+    blog: "Blog",
+    stories: "Truyện",
+    projects: "Dự án",
+    gallery: "Ảnh",
+    gaming: "Gaming",
+    dev: "Dev",
+    about: "Giới thiệu",
+    qa: "Hỏi đáp",
+    links: "Liên kết",
+    menu: "Menu",
+    close: "Đóng",
+    openMenu: "Mở menu",
+  },
+  theme: {
+    toggle: "Đổi giao diện sáng/tối",
+    dark: "Tối",
+    light: "Sáng",
+  },
+  lang: {
+    switchTo: "English",
+    label: "Ngôn ngữ",
+  },
+  actions: {
+    readMore: "Đọc tiếp",
+    viewSeries: "Xem series",
+    reportBug: "Báo lỗi",
+    gotIt: "Đã hiểu",
+    skipToContent: "Bỏ qua đến nội dung",
+  },
+  footer: {
+    reportBug: "Báo lỗi",
+    legal: "Pháp lý",
+    rights: "Bảo lưu mọi quyền.",
+  },
+  post: {
+    minRead: "phút đọc",
+    prev: "Trước",
+    next: "Sau",
+    onlyVi: "Chỉ có bản tiếng Việt.",
+    readOther: "Đọc bản dịch",
+    updated: "Cập nhật",
+  },
+  story: {
+    seriesToc: "Mục lục",
+    statusOngoing: "Đang ra",
+    statusComplete: "Hoàn thành",
+    statusDropped: "Tạm dừng",
+    cwTitle: "Cảnh báo nội dung",
+    cwHint: "Bấm để đọc",
+  },
+  reader: {
+    aria: "Tùy chỉnh đọc",
+    sizeTitle: "Cỡ chữ",
+    themeTitle: "Nền",
+    sizeS: "A-",
+    sizeM: "A",
+    sizeL: "A+",
+    paper: "Giấy",
+    sepia: "Sepia",
+    dark: "Tối",
+  },
+  home: {
+    recent: "Mới viết",
+    shortcuts: "Lối tắt",
+  },
+  qaGroups: {
+    channel: "Kênh",
+    dev: "Lập trình",
+    personal: "Cá nhân",
+  },
+  contact: {
+    title: "Liên hệ",
+    lead: "Cách nhanh nhất để nhắn mình:",
+    fast: "Nhanh nhất — Discord",
+    business: "Công việc — contact@poli0981.dev",
+    all: "Tất cả kênh — /links",
+  },
+  gate: {
+    line1: "Nội dung © Kokone (SkullMute), bảo lưu mọi quyền.",
+    line2: "Phần mềm/thương hiệu được nhắc đến thuộc chủ sở hữu tương ứng; trang không liên kết.",
+    line3: "Trang dùng phân tích không cookie.",
+    ack: "Đã hiểu",
+    more: "Chi tiết",
+  },
+  legal: {
+    terms: "Điều khoản",
+    privacy: "Bảo mật",
+    disclaimer: "Miễn trừ",
+    thirdParty: "Bên thứ ba",
+    licenses: "Giấy phép",
+  },
+};
+
+export default vi;
+export type UIStrings = typeof vi;

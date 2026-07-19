@@ -1,0 +1,31 @@
+---
+import LegalLayout from "@/layouts/LegalLayout.astro";
+import { getCollection, render, type CollectionEntry } from "astro:content";
+import { useTranslations } from "@/i18n";
+
+export async function getStaticPaths() {
+  const docs = await getCollection("legal");
+  return docs.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+interface Props {
+  entry: CollectionEntry<"legal">;
+}
+const { entry } = Astro.props as Props;
+const { Content } = await render(entry);
+const locale = "en" as const;
+const t = useTranslations(locale);
+
+const titleMap: Record<string, string> = {
+  terms: t.legal.terms,
+  privacy: t.legal.privacy,
+  disclaimer: t.legal.disclaimer,
+  "third-party": t.legal.thirdParty,
+  licenses: t.legal.licenses,
+};
+const title = titleMap[entry.id] ?? entry.data.title;
+---
+
+<LegalLayout {title} {locale} effectiveDate={entry.data.effectiveDate}>
+  <Content />
+</LegalLayout>

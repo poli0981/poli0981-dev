@@ -1,0 +1,27 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Waveline from "@/components/Waveline.svelte";
+import LinksList from "@/components/LinksList.astro";
+import { useTranslations } from "@/i18n";
+
+const locale = "vi" as const;
+const t = useTranslations(locale);
+---
+
+<BaseLayout title={t.nav.links} {locale}>
+  <section class="page narrow py-section">
+    <h1 class="text-h1">{t.nav.links}</h1>
+    <div class="wave"><Waveline client:visible height={28} /></div>
+    <LinksList {locale} />
+  </section>
+</BaseLayout>
+
+<style>
+  .narrow {
+    max-inline-size: 42rem;
+  }
+  .wave {
+    margin-block: 1rem 2rem;
+    max-inline-size: 22rem;
+  }
+</style>

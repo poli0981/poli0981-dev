@@ -1,0 +1,46 @@
+---
+import ErrorLayout from "@/layouts/ErrorLayout.astro";
+import { getLatestMixed } from "@/lib/collections";
+import { sectionPath } from "@/i18n/routing";
+
+const latest = await getLatestMixed("vi", 3);
+const linkFor = (item: (typeof latest)[number]) =>
+  item.kind === "blog"
+    ? sectionPath("blog", "vi", item.entry.id)
+    : sectionPath("stories", "vi", ...item.entry.id.split("/"));
+---
+
+<ErrorLayout title="404 — poli0981.dev">
+  <p class="code">404</p>
+  <h1>Trang này không phát ra tín hiệu.</h1>
+  <p class="en">This page makes no sound.</p>
+
+  {
+    latest.length > 0 && (
+      <ul class="recent">
+        {latest.map((item) => (
+          <li>
+            <a href={linkFor(item)}>{item.entry.data.title}</a>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</ErrorLayout>
+
+<style>
+  .recent {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .recent a {
+    color: var(--text);
+  }
+  .recent a:hover {
+    color: var(--accent);
+  }
+</style>

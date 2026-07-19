@@ -1,0 +1,125 @@
+---
+import { toLocale, useTranslations } from "../i18n";
+import { homePath, sectionPath, type Locale } from "../i18n/routing";
+import { isActivePath } from "../lib/nav";
+
+const locale: Locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale);
+const pathname = Astro.url.pathname;
+
+const tabs = [
+  { href: homePath(locale), label: t.nav.home, icon: "home" as const },
+  { href: sectionPath("blog", locale), label: t.nav.blog, icon: "blog" as const },
+  { href: sectionPath("stories", locale), label: t.nav.stories, icon: "book" as const },
+];
+---
+
+<nav class="tabbar" aria-label="Primary (mobile)">
+  {
+    tabs.map((tab) => (
+      <a
+        class="tab"
+        href={tab.href}
+        aria-current={isActivePath(pathname, tab.href) ? "page" : undefined}
+      >
+        <svg
+          class="tab-icon"
+          viewBox="0 0 24 24"
+          width="22"
+          height="22"
+          fill="none"
+          aria-hidden="true"
+        >
+          {tab.icon === "home" && (
+            <path
+              d="M4 11.5 12 4l8 7.5M6 10v9h12v-9"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          )}
+          {tab.icon === "blog" && (
+            <path
+              d="M5 4h11l3 3v13H5zM8 9h8M8 13h8M8 17h5"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          )}
+          {tab.icon === "book" && (
+            <path
+              d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5zM19 18v3H6.5"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          )}
+        </svg>
+        <span>{tab.label}</span>
+      </a>
+    ))
+  }
+
+  <button
+    type="button"
+    class="tab"
+    data-menu-trigger
+    aria-controls="menu-sheet"
+    aria-expanded="false"
+  >
+    <svg class="tab-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
+      <path
+        d="M4 7h16M4 12h16M4 17h16"
+        stroke="currentColor"
+        stroke-width="1.6"
+        stroke-linecap="round"></path>
+    </svg>
+    <span>{t.nav.menu}</span>
+  </button>
+</nav>
+
+<style>
+  .tabbar {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: 40;
+    display: flex;
+    align-items: stretch;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(10px);
+    border-block-start: 1px solid var(--line);
+    padding-block-end: env(safe-area-inset-bottom, 0);
+  }
+  .tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    min-block-size: 3.5rem;
+    padding: 0.4rem 0;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .tab[aria-current="page"] {
+    color: var(--accent);
+  }
+  .tab-icon {
+    display: block;
+  }
+
+  @media (min-width: 768px) {
+    .tabbar {
+      display: none;
+    }
+  }
+</style>

@@ -1,0 +1,152 @@
+---
+interface Props {
+  class?: string;
+  /** Reader mode widens the measure and uses the reading font at a larger size. */
+  reader?: boolean;
+}
+const { class: className = "", reader = false } = Astro.props;
+---
+
+<div class:list={["prose", { "prose--reader": reader }, className]}>
+  <slot />
+</div>
+
+<style is:global>
+  .prose {
+    --measure: 65ch;
+    max-inline-size: var(--measure);
+    font-family: var(--ff-reading);
+    font-size: var(--text-body);
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .prose--reader {
+    --measure: 68ch;
+    /* --reader-fs is set by ReadingControls on the reader container and inherits here. */
+    font-size: var(--reader-fs, clamp(1.125rem, 1.05rem + 0.32vw, 1.25rem));
+  }
+
+  .prose > * + * {
+    margin-block-start: 1em;
+  }
+  .prose h2,
+  .prose h3,
+  .prose h4 {
+    font-family: var(--ff-display);
+    line-height: 1.2;
+    margin-block-start: 1.8em;
+    text-wrap: balance;
+  }
+  .prose h2 {
+    font-size: var(--text-h3);
+  }
+  .prose h3 {
+    font-size: var(--text-lead);
+  }
+  .prose a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+    text-decoration-thickness: 1px;
+    text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+  .prose a:hover {
+    text-decoration-color: var(--accent);
+  }
+  .prose strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .prose blockquote {
+    margin-inline: 0;
+    padding-inline-start: 1.1em;
+    border-inline-start: 2px solid var(--accent);
+    color: var(--muted);
+    font-style: italic;
+  }
+  .prose ul,
+  .prose ol {
+    padding-inline-start: 1.4em;
+  }
+  .prose li::marker {
+    color: var(--muted);
+  }
+  .prose img {
+    max-inline-size: 100%;
+    block-size: auto;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--line);
+  }
+  .prose hr {
+    border: none;
+    border-block-start: 1px solid var(--line);
+    margin-block: 2em;
+  }
+  .prose :not(pre) > code {
+    font-family: var(--ff-mono);
+    font-size: 0.9em;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.1em 0.35em;
+  }
+  .prose pre {
+    font-family: var(--ff-mono);
+    font-size: 0.9em;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    padding: 1em 1.1em;
+    overflow-x: auto;
+    line-height: 1.6;
+  }
+  .prose pre code {
+    background: none;
+    border: none;
+    padding: 0;
+  }
+
+  /* Prism token theme (class-based → CSP-clean). */
+  .prose .token.comment,
+  .prose .token.prolog,
+  .prose .token.doctype,
+  .prose .token.cdata {
+    color: var(--muted);
+    font-style: italic;
+  }
+  .prose .token.punctuation {
+    color: var(--muted);
+  }
+  .prose .token.keyword,
+  .prose .token.selector,
+  .prose .token.important,
+  .prose .token.atrule {
+    color: var(--accent);
+  }
+  .prose .token.string,
+  .prose .token.attr-value,
+  .prose .token.char,
+  .prose .token.regex {
+    color: var(--ok);
+  }
+  .prose .token.function,
+  .prose .token.class-name {
+    color: var(--accent-strong);
+  }
+  .prose .token.number,
+  .prose .token.boolean,
+  .prose .token.constant {
+    color: var(--warn);
+  }
+  .prose .token.tag,
+  .prose .token.property,
+  .prose .token.attr-name,
+  .prose .token.symbol {
+    color: var(--text);
+  }
+  .prose .token.operator,
+  .prose .token.entity,
+  .prose .token.url {
+    color: var(--muted);
+  }
+</style>

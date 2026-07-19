@@ -1,0 +1,66 @@
+---
+interface Props {
+  type?: "info" | "tip" | "warn";
+  title?: string;
+}
+const { type = "info", title } = Astro.props;
+const icon = { info: "i", tip: "★", warn: "!" }[type];
+---
+
+<aside class:list={["callout", type]} role="note">
+  <span class="callout-icon" aria-hidden="true">{icon}</span>
+  <div class="callout-body">
+    {title && <p class="callout-title">{title}</p>}
+    <slot />
+  </div>
+</aside>
+
+<style>
+  .callout {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    font-family: var(--ff-body);
+    font-size: var(--text-body);
+  }
+  .callout-icon {
+    flex: none;
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    font-family: var(--ff-mono);
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--bg);
+  }
+  .callout-title {
+    font-weight: 600;
+    margin-block-end: 0.25rem;
+  }
+  .callout-body > :global(* + *) {
+    margin-block-start: 0.5em;
+  }
+  .callout.info {
+    border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+  }
+  .callout.info .callout-icon {
+    background: var(--accent);
+  }
+  .callout.tip {
+    border-color: color-mix(in srgb, var(--ok) 40%, var(--line));
+  }
+  .callout.tip .callout-icon {
+    background: var(--ok);
+  }
+  .callout.warn {
+    border-color: color-mix(in srgb, var(--warn) 45%, var(--line));
+  }
+  .callout.warn .callout-icon {
+    background: var(--warn);
+  }
+</style>

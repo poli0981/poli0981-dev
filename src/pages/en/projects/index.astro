@@ -1,0 +1,68 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import ProjectCard from "@/components/ProjectCard.astro";
+import Waveline from "@/components/Waveline.svelte";
+import { getProjects } from "@/lib/collections";
+import { useTranslations } from "@/i18n";
+import { sectionPath } from "@/i18n/routing";
+
+const locale = "en" as const;
+const t = useTranslations(locale);
+const projects = await getProjects(locale);
+---
+
+<BaseLayout title={t.nav.projects} {locale}>
+  <section class="page py-section">
+    <h1 class="text-h1">{t.nav.projects}</h1>
+    <div class="wave"><Waveline client:visible height={28} /></div>
+    {
+      projects.length > 0 ? (
+        <div class="project-grid">
+          {projects.map((entry) => (
+            <ProjectCard {entry} {locale} />
+          ))}
+        </div>
+      ) : (
+        <div class="empty">
+          <p>{t.post.onlyVi}</p>
+          <a href={sectionPath("projects", "vi")}>Dự án (tiếng Việt) →</a>
+        </div>
+      )
+    }
+  </section>
+</BaseLayout>
+
+<style>
+  .wave {
+    margin-block: 1rem 2rem;
+    max-inline-size: 22rem;
+  }
+  .project-grid {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) {
+    .project-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 960px) {
+    .project-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  .empty {
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-card);
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    color: var(--muted);
+  }
+  .empty a {
+    display: inline-block;
+    margin-block-start: 0.75rem;
+    color: var(--accent);
+    font-family: var(--ff-mono);
+  }
+</style>

@@ -1,0 +1,112 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import Prose from "../components/Prose.astro";
+import { useTranslations } from "../i18n";
+import { legalNav, isActivePath } from "../lib/nav";
+import type { Locale } from "../i18n/routing";
+
+interface Props {
+  title: string;
+  description?: string;
+  locale: Locale;
+  effectiveDate?: string;
+}
+const { title, description, locale, effectiveDate } = Astro.props;
+const t = useTranslations(locale);
+const links = legalNav(locale);
+const pathname = Astro.url.pathname;
+const effectiveLabel = locale === "vi" ? "Hiệu lực" : "Effective";
+---
+
+<BaseLayout {title} {description} {locale}>
+  <div class="legal-wrap page">
+    <aside class="legal-side">
+      <p class="side-title">{t.footer.legal}</p>
+      <ul>
+        {
+          links.map((l) => (
+            <li>
+              <a href={l.href} aria-current={isActivePath(pathname, l.href) ? "page" : undefined}>
+                {l.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </aside>
+
+    <article class="legal-doc">
+      <h1>{title}</h1>
+      {
+        effectiveDate && (
+          <p class="effective">
+            {effectiveLabel}: {effectiveDate}
+          </p>
+        )
+      }
+      <Prose class="legal-body">
+        <slot />
+      </Prose>
+    </article>
+  </div>
+</BaseLayout>
+
+<style>
+  .legal-wrap {
+    display: grid;
+    gap: 2rem;
+    padding-block: clamp(2rem, 6vw, 3.5rem);
+  }
+  .legal-side {
+    align-self: start;
+  }
+  .side-title {
+    color: var(--muted);
+    font-size: var(--text-meta);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-block-end: 0.5rem;
+  }
+  .legal-side ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+  }
+  .legal-side a {
+    color: var(--muted);
+    font-size: var(--text-body);
+  }
+  .legal-side a:hover,
+  .legal-side a[aria-current="page"] {
+    color: var(--accent);
+  }
+  .legal-doc h1 {
+    font-size: var(--text-h1);
+  }
+  .effective {
+    margin-block-start: 0.5rem;
+    color: var(--muted);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+  }
+  .legal-body {
+    margin-block-start: 1.75rem;
+  }
+
+  @media (min-width: 900px) {
+    .legal-wrap {
+      grid-template-columns: 14rem 1fr;
+      gap: 3rem;
+    }
+    .legal-side {
+      position: sticky;
+      inset-block-start: 5rem;
+    }
+    .legal-side ul {
+      flex-direction: column;
+    }
+  }
+</style>

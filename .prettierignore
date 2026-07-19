@@ -1,0 +1,11 @@
+# Generated / build output
+dist/
+.astro/
+.wrangler/
+node_modules/
+public/pagefind/
+worker-configuration.d.ts
+package-lock.json
+
+# Spec documentation suite — authored content, not ours to reformat
+poli0981.dev-docs/
