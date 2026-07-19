@@ -1,0 +1,316 @@
+---
+import { useTranslations } from "../i18n";
+import type { Locale } from "../i18n/routing";
+import { SOCIAL_LINKS } from "../lib/links";
+
+interface Props {
+  locale?: Locale;
+  /** Reference code from the 500 page, attached to the report meta. */
+  ref?: string;
+}
+const { locale = "vi", ref } = Astro.props;
+const t = useTranslations(locale);
+
+const discordRepo =
+  SOCIAL_LINKS.find((l) => l.persona === "dev" && l.platform === "discord")?.href ?? "#";
+
+// Dynamic strings the client script needs (static ones are in the markup below).
+const strings = {
+  attachLog: t.report.attachLog,
+  sending: t.report.sending,
+  success: t.report.success,
+  error: t.report.error,
+  disabled: t.report.disabled,
+  tooShort: t.report.tooShort,
+};
+---
+
+<dialog id="report-dialog" class="report" data-strings={JSON.stringify(strings)} data-ref={ref}>
+  <form class="report-form" method="dialog">
+    <h2 class="report-title">{t.report.title}</h2>
+    <p class="report-lead">{t.report.lead}</p>
+
+    <textarea
+      id="report-desc"
+      class="report-desc"
+      placeholder={t.report.placeholder}
+      minlength="10"
+      maxlength="2000"
+      rows="4"
+      required></textarea>
+
+    <label id="report-attach-wrap" class="report-attach" hidden>
+      <input type="checkbox" id="report-attach" checked />
+      <span id="report-attach-label"></span>
+    </label>
+    <details id="report-preview" class="report-preview" hidden>
+      <summary>{t.report.preview}</summary>
+      <pre id="report-preview-body" class="report-preview-body"></pre>
+    </details>
+
+    <div id="report-turnstile" class="report-turnstile"></div>
+    <p id="report-status" class="report-status" role="status" aria-live="polite"></p>
+
+    <div class="report-actions">
+      <button type="button" class="report-btn ghost" data-report-cancel>{t.report.cancel}</button>
+      <button type="button" class="report-btn primary" id="report-submit">{t.report.submit}</button>
+    </div>
+
+    <div id="report-fallback" class="report-fallback" hidden>
+      <button type="button" class="report-btn ghost" id="report-copy">{t.report.copy}</button>
+      <a class="report-btn ghost" href={discordRepo} target="_blank" rel="noopener noreferrer">
+        {t.report.discord}
+      </a>
+    </div>
+  </form>
+</dialog>
+
+<script>
+  import {
+    REPORT_ENABLED,
+    TURNSTILE_SITE_KEY,
+    collectMeta,
+    reportLog,
+    loadTurnstile,
+    submitReport,
+  } from "../lib/report";
+
+  const dialog = document.getElementById("report-dialog");
+  if (dialog instanceof HTMLDialogElement) {
+    const strings = JSON.parse(dialog.dataset.strings || "{}") as Record<string, string>;
+    // The 500 page generates its reference code client-side into #ref — read it live.
+    const getRef = () =>
+      document.getElementById("ref")?.textContent?.trim() || dialog.dataset.ref || undefined;
+
+    const desc = document.getElementById("report-desc") as HTMLTextAreaElement;
+    const attachWrap = document.getElementById("report-attach-wrap") as HTMLElement;
+    const attachLabel = document.getElementById("report-attach-label") as HTMLElement;
+    const attachCheck = document.getElementById("report-attach") as HTMLInputElement;
+    const preview = document.getElementById("report-preview") as HTMLDetailsElement;
+    const previewBody = document.getElementById("report-preview-body") as HTMLElement;
+    const turnstileEl = document.getElementById("report-turnstile") as HTMLElement;
+    const statusEl = document.getElementById("report-status") as HTMLElement;
+    const submitBtn = document.getElementById("report-submit") as HTMLButtonElement;
+    const fallback = document.getElementById("report-fallback") as HTMLElement;
+    const copyBtn = document.getElementById("report-copy") as HTMLButtonElement;
+
+    let token: string | null = null;
+    let widgetRendered = false;
+
+    const renderTurnstile = async () => {
+      if (widgetRendered) return;
+      try {
+        const ts = await loadTurnstile();
+        ts.render(turnstileEl, {
+          sitekey: TURNSTILE_SITE_KEY,
+          theme: "auto",
+          callback: (t: string) => (token = t),
+          "error-callback": () => (token = null),
+          "expired-callback": () => (token = null),
+        });
+        widgetRendered = true;
+      } catch {
+        statusEl.textContent = strings.error;
+      }
+    };
+
+    const open = () => {
+      const log = reportLog();
+      if (log.length > 0) {
+        attachLabel.textContent = strings.attachLog.replace("{n}", String(log.length));
+        attachWrap.hidden = false;
+        previewBody.textContent = log.map((l) => `[${l.type}] ${l.message}`).join("\n");
+        preview.hidden = false;
+      } else {
+        attachWrap.hidden = true;
+        preview.hidden = true;
+      }
+      statusEl.textContent = "";
+      if (REPORT_ENABLED) {
+        fallback.hidden = true;
+        submitBtn.hidden = false;
+        turnstileEl.hidden = false;
+        void renderTurnstile();
+      } else {
+        submitBtn.hidden = true;
+        turnstileEl.hidden = true;
+        statusEl.textContent = strings.disabled;
+        fallback.hidden = false;
+      }
+      dialog.showModal();
+      desc.focus();
+    };
+
+    document.addEventListener("click", (e) => {
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+      if (target.closest("[data-report-trigger]")) {
+        e.preventDefault();
+        open();
+      } else if (target.closest("[data-report-cancel]")) {
+        dialog.close();
+      }
+    });
+
+    submitBtn.addEventListener("click", async () => {
+      const description = desc.value.trim();
+      if (description.length < 10) {
+        statusEl.textContent = strings.tooShort;
+        return;
+      }
+      if (!token) {
+        statusEl.textContent = strings.error;
+        return;
+      }
+      submitBtn.disabled = true;
+      statusEl.textContent = strings.sending;
+      try {
+        const { status } = await submitReport({
+          description,
+          console: attachCheck.checked ? reportLog() : undefined,
+          meta: collectMeta(getRef()),
+          turnstileToken: token,
+        });
+        if (status === 201 || status === 202) {
+          statusEl.textContent = strings.success;
+          setTimeout(() => dialog.close(), 1200);
+        } else {
+          statusEl.textContent = strings.error;
+          fallback.hidden = false;
+        }
+      } catch {
+        statusEl.textContent = strings.error;
+        fallback.hidden = false;
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    copyBtn?.addEventListener("click", () => {
+      const log = reportLog();
+      const text = [
+        desc.value.trim(),
+        "",
+        JSON.stringify(collectMeta(getRef())),
+        ...(log.length ? ["", ...log.map((l) => `${l.type}: ${l.message}`)] : []),
+      ].join("\n");
+      navigator.clipboard
+        ?.writeText(text)
+        .then(() => (statusEl.textContent = strings.success))
+        .catch(() => {});
+    });
+  }
+</script>
+
+<style>
+  .report {
+    inline-size: min(32rem, 92vw);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    color: var(--text);
+    padding: 1.5rem;
+  }
+  .report::backdrop {
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
+    backdrop-filter: blur(3px);
+  }
+  .report-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin: 0;
+  }
+  .report-title {
+    font-size: var(--text-h3);
+    margin: 0;
+  }
+  .report-lead {
+    color: var(--muted);
+    font-size: var(--text-meta);
+    margin: 0;
+  }
+  .report-desc {
+    inline-size: 100%;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-control);
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+    resize: vertical;
+  }
+  .report-desc:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .report-attach {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--muted);
+    font-size: var(--text-meta);
+  }
+  .report-preview {
+    color: var(--muted);
+    font-size: var(--text-meta);
+  }
+  .report-preview summary {
+    cursor: pointer;
+  }
+  .report-preview-body {
+    margin-block-start: 0.5rem;
+    max-block-size: 8rem;
+    overflow: auto;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-control);
+    background: var(--bg);
+    font-family: var(--ff-mono);
+    font-size: 0.75rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .report-turnstile:empty {
+    display: none;
+  }
+  .report-status {
+    margin: 0;
+    min-block-size: 1.2em;
+    color: var(--muted);
+    font-size: var(--text-meta);
+  }
+  .report-actions,
+  .report-fallback {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    justify-content: flex-end;
+  }
+  .report-fallback {
+    padding-block-start: 0.5rem;
+    border-block-start: 1px solid var(--line);
+  }
+  .report-btn {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-control);
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .report-btn.primary {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .report-btn.primary:hover {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .report-btn.ghost:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+</style>

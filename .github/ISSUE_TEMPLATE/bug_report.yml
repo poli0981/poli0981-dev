@@ -1,0 +1,32 @@
+name: Báo lỗi website / Website bug report
+description: Báo lỗi gặp trên poli0981.dev / Report a problem found on poli0981.dev
+title: "[web-report] "
+labels: ["bug", "from-site"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Cảm ơn bạn đã báo lỗi. / Thanks for reporting.
+        Báo lỗi gửi từ nút "Báo lỗi" trên trang sẽ tự điền các mục dưới đây.
+  - type: textarea
+    id: description
+    attributes:
+      label: Mô tả / Description
+      description: Chuyện gì đã xảy ra? / What happened?
+    validations:
+      required: true
+  - type: input
+    id: route
+    attributes:
+      label: Trang / Route
+      placeholder: "/blog/…"
+  - type: textarea
+    id: environment
+    attributes:
+      label: Môi trường / Environment
+      description: Trình duyệt, kích thước màn hình, theme, ngôn ngữ / Browser, viewport, theme, locale
+  - type: textarea
+    id: console
+    attributes:
+      label: Console log (tùy chọn / optional)
+      render: text

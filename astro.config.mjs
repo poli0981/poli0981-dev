@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig, fontProviders } from "astro/config";
+import { defineConfig, envField, fontProviders } from "astro/config";
 import cloudflare from "@astrojs/cloudflare";
 import svelte from "@astrojs/svelte";
 import mdx from "@astrojs/mdx";
@@ -28,6 +28,22 @@ export default defineConfig({
     defaultLocale: "vi",
     locales: ["vi", "en"],
     routing: { prefixDefaultLocale: false },
+  },
+
+  // Bug-report pipeline env (docs 10). All optional so the site builds + degrades
+  // gracefully until the owner provisions them (Turnstile keys, a fine-grained GitHub
+  // Issues token, and a Discord webhook). The client site key is public + inlined.
+  env: {
+    schema: {
+      PUBLIC_TURNSTILE_SITE_KEY: envField.string({
+        context: "client",
+        access: "public",
+        optional: true,
+      }),
+      TURNSTILE_SECRET: envField.string({ context: "server", access: "secret", optional: true }),
+      GITHUB_ISSUES_TOKEN: envField.string({ context: "server", access: "secret", optional: true }),
+      DISCORD_WEBHOOK_BUG: envField.string({ context: "server", access: "secret", optional: true }),
+    },
   },
 
   integrations: [
@@ -96,16 +112,21 @@ export default defineConfig({
       directives: [
         "default-src 'self'",
         "img-src 'self' data: https://i.ytimg.com https://media.steampowered.com https://*.steamstatic.com",
-        "frame-src https://www.youtube-nocookie.com",
-        "connect-src 'self'",
+        // youtube-nocookie: video facade; challenges.cloudflare.com: Turnstile widget iframe.
+        "frame-src https://www.youtube-nocookie.com https://challenges.cloudflare.com",
+        // challenges.cloudflare.com: Turnstile client XHRs (siteverify is server-side).
+        "connect-src 'self' https://challenges.cloudflare.com",
         "font-src 'self'",
         "base-uri 'none'",
         "form-action 'self'",
         "object-src 'none'",
       ],
-      // 'self' keeps dynamically-imported island chunks (e.g. GSAP) loadable;
-      // 'wasm-unsafe-eval' is pre-baked for Pagefind's WebAssembly (added later).
-      scriptDirective: { resources: ["'self'", "'wasm-unsafe-eval'"] },
+      // 'self' keeps dynamically-imported island chunks loadable; 'wasm-unsafe-eval'
+      // is pre-baked for Pagefind's WebAssembly; challenges.cloudflare.com loads the
+      // Turnstile api.js (bug-report captcha, docs 10).
+      scriptDirective: {
+        resources: ["'self'", "'wasm-unsafe-eval'", "https://challenges.cloudflare.com"],
+      },
       styleDirective: { resources: ["'self'"] },
     },
   },

@@ -1,13 +1,18 @@
 ---
 import "../styles/global.css";
 import { Font } from "astro:assets";
+import ReportDialog from "../components/ReportDialog.astro";
 
 interface Props {
   title: string;
   /** Show the Home / Blog / Truyện links (hidden for 429 + offline). */
   showLinks?: boolean;
+  /** Show the "Báo lỗi" affordance (404 / 500 only). */
+  showReport?: boolean;
+  /** Reference code (500) forwarded to the report dialog. */
+  ref?: string;
 }
-const { title, showLinks = true } = Astro.props;
+const { title, showLinks = true, showReport = false, ref } = Astro.props;
 ---
 
 <!doctype html>
@@ -63,7 +68,17 @@ const { title, showLinks = true } = Astro.props;
           </nav>
         )
       }
+
+      {
+        showReport && (
+          <button type="button" class="err-report" data-report-trigger>
+            Báo lỗi
+          </button>
+        )
+      }
     </main>
+
+    {showReport && <ReportDialog locale="vi" ref={ref} />}
   </body>
 </html>
 
@@ -104,6 +119,18 @@ const { title, showLinks = true } = Astro.props;
   }
   .err-nav a:hover {
     color: var(--accent-strong);
+  }
+  .err-report {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+    cursor: pointer;
+  }
+  .err-report:hover {
+    color: var(--accent);
   }
 
   /* Shared error-content styles (used by the slotted page content). */
