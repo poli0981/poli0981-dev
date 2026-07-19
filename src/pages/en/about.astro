@@ -1,0 +1,118 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Waveline from "@/components/Waveline.svelte";
+import { useTranslations } from "@/i18n";
+
+const locale = "en" as const;
+const t = useTranslations(locale);
+---
+
+<BaseLayout title={t.nav.about} {locale}>
+  <section class="page narrow py-section">
+    <h1 class="text-h1">About</h1>
+    <p class="lede">
+      I'm <strong>Kokone</strong> — a developer by day, a storyteller at midnight. This site is one address
+      for both of those faces.
+    </p>
+    <div class="wave"><Waveline client:visible height={30} /></div>
+
+    <div class="faces">
+      <article class="face">
+        <h2>Kokone — dev</h2>
+        <p>
+          I write code and like tools that are minimal and durable. Open projects live on GitHub (<code
+            >poli0981</code
+          >). Priorities: few dependencies, easy to maintain, near-zero cost.
+        </p>
+      </article>
+      <article class="face">
+        <h2>SkullMute — creator</h2>
+        <p>
+          My channel is about slow, story-driven games — visual novels, JRPGs, and
+          indie/psychological horror. No FPS, no competitive. Sometimes I write short fiction.
+        </p>
+      </article>
+    </div>
+
+    <div class="timeline">
+      <h2 class="timeline-title">Timeline</h2>
+      <ul>
+        <li>
+          <span class="year">2026</span> Built poli0981.dev — a home for the dev &amp; the channel.
+        </li>
+        <li><span class="year">2026</span> Started the first fiction series.</li>
+        <li><span class="year">—</span> And still writing.</li>
+      </ul>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .narrow {
+    max-inline-size: 46rem;
+  }
+  .lede {
+    margin-block-start: 1rem;
+    font-size: var(--text-lead);
+    color: var(--muted);
+  }
+  .lede strong {
+    color: var(--text);
+  }
+  .lede code {
+    font-family: var(--ff-mono);
+  }
+  .wave {
+    margin-block: 1.5rem 2.5rem;
+    max-inline-size: 22rem;
+  }
+  .faces {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 700px) {
+    .faces {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .face {
+    padding: 1.25rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+  }
+  .face h2 {
+    font-size: var(--text-lead);
+    margin-block-end: 0.5rem;
+  }
+  .face p {
+    color: var(--muted);
+  }
+  .face code {
+    font-family: var(--ff-mono);
+    color: var(--accent);
+  }
+  .timeline {
+    margin-block-start: 2.5rem;
+  }
+  .timeline-title {
+    font-size: var(--text-h3);
+    margin-block-end: 1rem;
+  }
+  .timeline ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .timeline .year {
+    display: inline-block;
+    inline-size: 3.5rem;
+    color: var(--accent);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+  }
+</style>

@@ -1,0 +1,21 @@
+---
+import ErrorLayout from "@/layouts/ErrorLayout.astro";
+---
+
+<ErrorLayout title="429 — poli0981.dev" showLinks={false}>
+  <p class="code">429</p>
+  <h1>Chậm lại một nhịp.</h1>
+  <p class="en">Take a breath.</p>
+  <p class="code">Thử lại sau / Retry in <span id="cd">60</span>s</p>
+  <script is:inline>
+    (() => {
+      let n = 60;
+      const el = document.getElementById("cd");
+      const t = setInterval(() => {
+        n -= 1;
+        if (el) el.textContent = String(n);
+        if (n <= 0) clearInterval(t);
+      }, 1000);
+    })();
+  </script>
+</ErrorLayout>

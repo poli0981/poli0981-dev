@@ -1,0 +1,30 @@
+---
+import PostLayout from "@/layouts/PostLayout.astro";
+import { render } from "astro:content";
+import { blogPostPaths } from "@/lib/pages";
+import { readingTime, findTranslation, type BlogEntry } from "@/lib/collections";
+import { sectionPath } from "@/i18n/routing";
+
+export const getStaticPaths = () => blogPostPaths("en");
+
+interface NavLink {
+  href: string;
+  label: string;
+}
+interface Props {
+  entry: BlogEntry;
+  prev: NavLink | null;
+  next: NavLink | null;
+}
+const { entry, prev, next } = Astro.props as Props;
+const { Content } = await render(entry);
+const mins = readingTime(entry.body);
+const translation = await findTranslation("blog", entry);
+const translationHref = translation
+  ? sectionPath("blog", translation.data.lang, translation.id)
+  : null;
+---
+
+<PostLayout {entry} locale="en" readingMins={mins} {translationHref} {prev} {next}>
+  <Content />
+</PostLayout>

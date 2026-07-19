@@ -1,0 +1,24 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "poli0981-dev",
+  "compatibility_date": "2026-07-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./dist",
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash",
+  },
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      // Local placeholder ids — real namespace ids are wired in the deferred deploy track.
+      "id": "poli0981_kv_local",
+      "preview_id": "poli0981_kv_local",
+    },
+  ],
+  "observability": {
+    "enabled": true,
+  },
+  // routes / custom_domain -> deferred to the deploy plan
+}

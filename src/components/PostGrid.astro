@@ -1,0 +1,60 @@
+---
+import PostCard from "./PostCard.astro";
+import type { BlogEntry } from "../lib/collections";
+import type { Locale } from "../i18n/routing";
+
+interface Props {
+  posts: BlogEntry[];
+  locale: Locale;
+  emptyText?: string;
+  emptyHref?: string;
+  emptyLabel?: string;
+}
+const { posts, locale, emptyText, emptyHref, emptyLabel } = Astro.props;
+---
+
+{
+  posts.length > 0 ? (
+    <div class="post-grid">
+      {posts.map((entry) => (
+        <PostCard {entry} {locale} />
+      ))}
+    </div>
+  ) : (
+    <div class="empty">
+      <p>{emptyText}</p>
+      {emptyHref && emptyLabel && <a href={emptyHref}>{emptyLabel} →</a>}
+    </div>
+  )
+}
+
+<style>
+  .post-grid {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) {
+    .post-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 960px) {
+    .post-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  .empty {
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-card);
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    color: var(--muted);
+  }
+  .empty a {
+    display: inline-block;
+    margin-block-start: 0.75rem;
+    color: var(--accent);
+    font-family: var(--ff-mono);
+  }
+</style>

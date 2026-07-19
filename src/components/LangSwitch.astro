@@ -1,0 +1,44 @@
+---
+import { alternatePath, localeFromPath, type Locale } from "../i18n/routing";
+import { useTranslations } from "../i18n";
+
+interface Props {
+  /** Override the target url (content pages resolve this from translationKey). */
+  href?: string;
+  label?: string;
+}
+
+const current: Locale = localeFromPath(Astro.url.pathname);
+const target: Locale = current === "vi" ? "en" : "vi";
+const t = useTranslations(current);
+
+const { href = alternatePath(Astro.url.pathname, target), label = t.lang.switchTo } = Astro.props;
+---
+
+<a class="lang-switch" {href} hreflang={target} lang={target} aria-label={t.lang.label}>
+  {label}
+</a>
+
+<style>
+  .lang-switch {
+    display: inline-flex;
+    align-items: center;
+    block-size: 2.5rem;
+    padding-inline: 0.75rem;
+    border-radius: var(--radius-control);
+    border: 1px solid transparent;
+    color: var(--muted);
+    font-size: var(--text-meta);
+    font-weight: 500;
+    white-space: nowrap;
+    transition:
+      color var(--duration-fast) var(--ease-site),
+      background var(--duration-fast) var(--ease-site),
+      border-color var(--duration-fast) var(--ease-site);
+  }
+  .lang-switch:hover {
+    color: var(--text);
+    background: var(--surface);
+    border-color: var(--line);
+  }
+</style>

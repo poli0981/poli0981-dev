@@ -1,0 +1,125 @@
+---
+import { type StoryEntry } from "../lib/collections";
+import { sectionPath, type Locale } from "../i18n/routing";
+import { useTranslations } from "../i18n";
+import { formatDate, isoDate } from "../lib/format";
+
+interface Props {
+  entry: StoryEntry;
+  locale: Locale;
+}
+const { entry, locale } = Astro.props;
+const t = useTranslations(locale);
+const href = sectionPath("stories", locale, ...entry.id.split("/"));
+
+const statusLabel = {
+  ongoing: t.story.statusOngoing,
+  complete: t.story.statusComplete,
+  dropped: t.story.statusDropped,
+}[entry.data.status];
+
+const hasCW = entry.data.contentWarning.length > 0;
+---
+
+<article class="card story">
+  <a class="card-link" href={href}>
+    <div class="card-body">
+      <div class="badges">
+        <span class:list={["status", entry.data.status]}>{statusLabel}</span>
+        {
+          hasCW && (
+            <span class="cw-badge" title={entry.data.contentWarning.join(", ")}>
+              ⚠ {entry.data.contentWarning[0]}
+            </span>
+          )
+        }
+      </div>
+      {entry.data.series && <p class="series">{entry.data.series}</p>}
+      <h3 class="card-title">{entry.data.title}</h3>
+      <p class="card-desc">{entry.data.description}</p>
+      <div class="card-meta">
+        <time datetime={isoDate(entry.data.date)}>{formatDate(entry.data.date, locale)}</time>
+      </div>
+    </div>
+  </a>
+</article>
+
+<style>
+  .card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    transition:
+      transform var(--duration-fast) var(--ease-site),
+      border-color var(--duration-fast) var(--ease-site);
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+  }
+  .card-link {
+    display: block;
+    color: inherit;
+  }
+  .card-body {
+    padding: 1.1rem;
+  }
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-block-end: 0.6rem;
+  }
+  .status {
+    padding: 0.1em 0.55em;
+    border-radius: 999px;
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+    border: 1px solid var(--line);
+    color: var(--muted);
+  }
+  .status.ongoing {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  }
+  .status.complete {
+    color: var(--ok);
+    border-color: color-mix(in srgb, var(--ok) 45%, var(--line));
+  }
+  .cw-badge {
+    padding: 0.1em 0.55em;
+    border-radius: 999px;
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+    color: color-mix(in srgb, var(--horror) 35%, var(--text));
+    background: color-mix(in srgb, var(--horror) 18%, transparent);
+    border: 1px solid color-mix(in srgb, var(--horror) 45%, var(--line));
+  }
+  .series {
+    color: var(--muted);
+    font-size: var(--text-meta);
+    font-family: var(--ff-mono);
+  }
+  .card-title {
+    margin-block-start: 0.15rem;
+    font-size: var(--text-lead);
+    font-weight: 700;
+    line-height: 1.25;
+  }
+  .card-desc {
+    margin-block-start: 0.4rem;
+    color: var(--muted);
+    font-size: var(--text-body);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-meta {
+    margin-block-start: 0.75rem;
+    color: var(--muted);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+  }
+</style>

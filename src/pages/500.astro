@@ -1,0 +1,18 @@
+---
+import ErrorLayout from "@/layouts/ErrorLayout.astro";
+---
+
+<ErrorLayout title="500 — poli0981.dev">
+  <p class="code">500</p>
+  <h1>Có gì đó vỡ trong im lặng.</h1>
+  <p class="en">Something broke, quietly.</p>
+  <p class="code">
+    Mã tham chiếu / Reference: <span class="ref" id="ref">…</span>
+  </p>
+  <script is:inline>
+    {
+      const el = document.getElementById("ref");
+      if (el) el.textContent = crypto.randomUUID().slice(0, 8);
+    }
+  </script>
+</ErrorLayout>

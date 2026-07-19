@@ -1,0 +1,128 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import Prose from "../components/Prose.astro";
+import Waveline from "../components/Waveline.svelte";
+import type { ProjectEntry } from "../lib/collections";
+import { sectionPath, type Locale } from "../i18n/routing";
+import { useTranslations } from "../i18n";
+
+interface Props {
+  entry: ProjectEntry;
+  locale: Locale;
+}
+const { entry, locale } = Astro.props;
+const t = useTranslations(locale);
+const { name, tagline, stack, repo, url, status, year } = entry.data;
+
+const statusLabel = {
+  active: locale === "vi" ? "Đang phát triển" : "Active",
+  maintained: locale === "vi" ? "Bảo trì" : "Maintained",
+  archived: locale === "vi" ? "Lưu trữ" : "Archived",
+}[status];
+---
+
+<BaseLayout title={name} description={tagline} {locale}>
+  <article class="proj">
+    <p class="crumb">
+      <a href={sectionPath("projects", locale)}>{t.nav.projects}</a> / {name}
+    </p>
+    <h1>{name}</h1>
+    <p class="tagline">{tagline}</p>
+    <div class="facts">
+      <span class="year">{year}</span>
+      <span class="status">{statusLabel}</span>
+    </div>
+    {
+      stack.length > 0 && (
+        <ul class="stack">
+          {stack.map((s) => (
+            <li>{s}</li>
+          ))}
+        </ul>
+      )
+    }
+    {
+      (repo || url) && (
+        <div class="links">
+          {repo && (
+            <a href={repo} target="_blank" rel="noopener noreferrer">
+              repo ↗
+            </a>
+          )}
+          {url && (
+            <a href={url} target="_blank" rel="noopener noreferrer">
+              site ↗
+            </a>
+          )}
+        </div>
+      )
+    }
+    <div class="wave"><Waveline client:visible height={30} /></div>
+    <Prose>
+      <slot />
+    </Prose>
+  </article>
+</BaseLayout>
+
+<style>
+  .proj {
+    max-inline-size: 46rem;
+    margin-inline: auto;
+    padding-inline: clamp(1rem, 4vw, 2rem);
+    padding-block: clamp(2rem, 6vw, 3.5rem);
+  }
+  .crumb {
+    color: var(--muted);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+  }
+  .crumb a:hover {
+    color: var(--accent);
+  }
+  h1 {
+    margin-block-start: 0.75rem;
+    font-size: var(--text-h1);
+  }
+  .tagline {
+    margin-block-start: 0.5rem;
+    color: var(--muted);
+    font-size: var(--text-lead);
+  }
+  .facts {
+    margin-block-start: 1rem;
+    display: flex;
+    gap: 0.75rem;
+    color: var(--muted);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+  }
+  .stack {
+    list-style: none;
+    padding: 0;
+    margin-block-start: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .stack li {
+    padding: 0.15em 0.6em;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+  }
+  .links {
+    margin-block-start: 1rem;
+    display: flex;
+    gap: 1rem;
+  }
+  .links a {
+    color: var(--accent);
+    font-family: var(--ff-mono);
+  }
+  .wave {
+    margin-block: 2rem;
+    max-inline-size: 22rem;
+  }
+</style>

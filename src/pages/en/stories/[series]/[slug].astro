@@ -1,0 +1,38 @@
+---
+import StoryReaderLayout from "@/layouts/StoryReaderLayout.astro";
+import { render } from "astro:content";
+import { storyChapterPaths } from "@/lib/pages";
+import { findTranslation, type StoryEntry } from "@/lib/collections";
+import { sectionPath } from "@/i18n/routing";
+
+export const getStaticPaths = () => storyChapterPaths("en");
+
+interface NavLink {
+  href: string;
+  label: string;
+}
+interface Props {
+  entry: StoryEntry;
+  prev: NavLink | null;
+  next: NavLink | null;
+  seriesTocHref: string;
+}
+const { entry, prev, next, seriesTocHref } = Astro.props as Props;
+const { Content } = await render(entry);
+const translation = await findTranslation("stories", entry);
+const translationHref = translation
+  ? sectionPath("stories", translation.data.lang, ...translation.id.split("/"))
+  : null;
+---
+
+<StoryReaderLayout
+  {entry}
+  locale="en"
+  {prev}
+  {next}
+  {seriesTocHref}
+  seriesHref={seriesTocHref}
+  {translationHref}
+>
+  <Content />
+</StoryReaderLayout>

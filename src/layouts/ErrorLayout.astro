@@ -1,0 +1,128 @@
+---
+import "../styles/global.css";
+import { Font } from "astro:assets";
+
+interface Props {
+  title: string;
+  /** Show the Home / Blog / Truyện links (hidden for 429 + offline). */
+  showLinks?: boolean;
+}
+const { title, showLinks = true } = Astro.props;
+---
+
+<!doctype html>
+<html lang="vi" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <script is:inline>
+      (() => {
+        try {
+          const t = localStorage.getItem("theme");
+          if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+        } catch {}
+      })();
+    </script>
+    <title>{title}</title>
+    {/* Only the body font — no display/reading font, no islands (docs 09 §3.1). */}
+    <Font cssVariable="--ff-body" preload />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+
+  <body>
+    <main class="err">
+      <svg class="flatline" viewBox="0 0 320 24" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="err-flat" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" class="l"></stop>
+            <stop offset="42%" class="l"></stop>
+            <stop offset="50%" class="a"></stop>
+            <stop offset="58%" class="l"></stop>
+            <stop offset="100%" class="l"></stop>
+          </linearGradient>
+        </defs>
+        <line
+          x1="0"
+          y1="12"
+          x2="320"
+          y2="12"
+          stroke="url(#err-flat)"
+          stroke-width="1.5"
+          vector-effect="non-scaling-stroke"></line>
+      </svg>
+
+      <slot />
+
+      {
+        showLinks && (
+          <nav class="err-nav" aria-label="Điều hướng lỗi">
+            <a href="/">Trang chủ</a>
+            <a href="/blog">Blog</a>
+            <a href="/truyen">Truyện</a>
+          </nav>
+        )
+      }
+    </main>
+  </body>
+</html>
+
+<style>
+  .err {
+    min-block-size: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    text-align: center;
+    padding: 2rem 1.25rem;
+    max-inline-size: 40rem;
+    margin-inline: auto;
+  }
+  .flatline {
+    inline-size: min(20rem, 80vw);
+    block-size: 24px;
+  }
+  .flatline .l {
+    stop-color: var(--line);
+  }
+  .flatline .a {
+    stop-color: var(--accent);
+  }
+  .err-nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem 1.25rem;
+    margin-block-start: 0.5rem;
+  }
+  .err-nav a {
+    color: var(--accent);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+  }
+  .err-nav a:hover {
+    color: var(--accent-strong);
+  }
+
+  /* Shared error-content styles (used by the slotted page content). */
+  :global(.err h1) {
+    font-family: var(--ff-body);
+    font-weight: 600;
+    font-size: var(--text-h2);
+    line-height: 1.15;
+  }
+  :global(.err .en) {
+    color: var(--muted);
+    font-size: var(--text-lead);
+  }
+  :global(.err .code) {
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+    color: var(--muted);
+  }
+  :global(.err .ref) {
+    color: var(--accent);
+  }
+</style>

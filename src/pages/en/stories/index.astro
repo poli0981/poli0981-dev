@@ -1,0 +1,102 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import StoryCard from "@/components/StoryCard.astro";
+import Waveline from "@/components/Waveline.svelte";
+import { getStoryChapters, parseStoryId, type StoryEntry } from "@/lib/collections";
+import { useTranslations } from "@/i18n";
+import { sectionPath } from "@/i18n/routing";
+
+const locale = "en" as const;
+const t = useTranslations(locale);
+const chapters = await getStoryChapters(locale);
+
+const groups = new Map<string, StoryEntry[]>();
+const standalone: StoryEntry[] = [];
+for (const c of chapters) {
+  const key = c.data.series ?? parseStoryId(c.id).series;
+  if (key) {
+    const list = groups.get(key) ?? [];
+    list.push(c);
+    groups.set(key, list);
+  } else {
+    standalone.push(c);
+  }
+}
+for (const list of groups.values()) {
+  list.sort((a, b) => (a.data.chapter ?? 0) - (b.data.chapter ?? 0));
+}
+---
+
+<BaseLayout title={t.nav.stories} {locale}>
+  <section class="page py-section">
+    <h1 class="text-h1">{t.nav.stories}</h1>
+    <div class="wave"><Waveline client:visible height={28} /></div>
+
+    {
+      [...groups].map(([series, list]) => (
+        <div class="series">
+          <h2 class="series-name">{series}</h2>
+          <div class="story-grid">
+            {list.map((entry) => (
+              <StoryCard {entry} {locale} />
+            ))}
+          </div>
+        </div>
+      ))
+    }
+    {
+      standalone.length > 0 && (
+        <div class="story-grid">
+          {standalone.map((entry) => (
+            <StoryCard {entry} {locale} />
+          ))}
+        </div>
+      )
+    }
+    {
+      chapters.length === 0 && (
+        <div class="empty">
+          <p>{t.post.onlyVi}</p>
+          <a href={sectionPath("stories", "vi")}>Truyện (tiếng Việt) →</a>
+        </div>
+      )
+    }
+  </section>
+</BaseLayout>
+
+<style>
+  .wave {
+    margin-block: 1rem 2rem;
+    max-inline-size: 22rem;
+  }
+  .series {
+    margin-block-end: 2.5rem;
+  }
+  .series-name {
+    font-size: var(--text-h3);
+    margin-block-end: 1rem;
+  }
+  .story-grid {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) {
+    .story-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  .empty {
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-card);
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    color: var(--muted);
+  }
+  .empty a {
+    display: inline-block;
+    margin-block-start: 0.75rem;
+    color: var(--accent);
+    font-family: var(--ff-mono);
+  }
+</style>

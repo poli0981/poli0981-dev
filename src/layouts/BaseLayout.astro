@@ -1,0 +1,123 @@
+---
+import "../styles/global.css";
+import { Font } from "astro:assets";
+import { ClientRouter } from "astro:transitions";
+import SkipLink from "../components/SkipLink.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import MobileTabBar from "../components/MobileTabBar.astro";
+import MenuSheet from "../components/MenuSheet.svelte";
+import LegalGateSheet from "../components/LegalGateSheet.svelte";
+import { resolveSeo, SITE, type SeoInput } from "../lib/seo";
+import { toLocale, useTranslations } from "../i18n";
+import { menuNav, legalNav } from "../lib/nav";
+
+interface Props extends SeoInput {
+  /** Extra classes for the <main> wrapper. */
+  mainClass?: string;
+  /** Reading pages (blog post, story chapter) load the Literata reading font. */
+  reading?: boolean;
+}
+
+const { mainClass, reading = false, ...seoInput } = Astro.props;
+// Default the locale from the URL (Astro.currentLocale) so /en/* pages resolve to `en`.
+const locale = seoInput.locale ?? toLocale(Astro.currentLocale);
+const seo = resolveSeo({ ...seoInput, locale }, Astro.url.pathname);
+const lang = seo.locale;
+const t = useTranslations(lang);
+const ogImage = seo.image ? new URL(seo.image, SITE.url).href : undefined;
+const menuItems = menuNav(lang);
+const legalItems = legalNav(lang);
+// The legal-notice gate is a reminder layer — never shown on the legal pages themselves.
+const onLegalPage = /\/legal(\/|$)/.test(Astro.url.pathname);
+---
+
+<!doctype html>
+<html lang={lang} data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    {/* Apply stored theme before first paint, and re-apply after View Transitions swaps. */}
+    <script is:inline>
+      (() => {
+        const apply = () => {
+          try {
+            const t = localStorage.getItem("theme");
+            if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+          } catch {}
+        };
+        apply();
+        document.addEventListener("astro:after-swap", apply);
+      })();
+    </script>
+
+    <title>{seo.title}</title>
+    <meta name="description" content={seo.description} />
+    <link rel="canonical" href={seo.canonical} />
+    {seo.noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <meta name="theme-color" content={SITE.themeColor.dark} media="(prefers-color-scheme: dark)" />
+    <meta
+      name="theme-color"
+      content={SITE.themeColor.light}
+      media="(prefers-color-scheme: light)"
+    />
+
+    {/* Open Graph / Twitter */}
+    <meta property="og:type" content={seo.type} />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:title" content={seo.title} />
+    <meta property="og:description" content={seo.description} />
+    <meta property="og:url" content={seo.canonical} />
+    <meta property="og:locale" content={lang === "vi" ? "vi_VN" : "en_US"} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    {
+      /* Self-hosted fonts. Preload only the display family (hero + headings, the most
+        prominent first-paint text). Body/mono swap in with size-adjusted fallbacks
+        (optimizedFallbacks → CLS-safe), keeping the preload set within the perf budget. */
+    }
+    <Font cssVariable="--ff-display" preload />
+    <Font cssVariable="--ff-body" />
+    <Font cssVariable="--ff-mono" />
+    {/* Literata loads only on long-form reading pages (keeps the base bundle lean). */}
+    {reading && <Font cssVariable="--ff-reading" />}
+
+    <ClientRouter />
+  </head>
+
+  <body>
+    <SkipLink label={t.actions.skipToContent} />
+    <Header />
+    <main id="main" class={mainClass}>
+      <slot />
+    </main>
+    <Footer />
+    <MobileTabBar />
+    <MenuSheet
+      client:idle
+      items={menuItems}
+      legal={legalItems}
+      title={t.nav.menu}
+      closeLabel={t.nav.close}
+      legalTitle={t.footer.legal}
+    />
+
+    {!onLegalPage && <LegalGateSheet client:idle strings={t.gate} links={legalItems} />}
+
+    <script>
+      // Route every menu trigger (header hamburger + mobile tab "Menu") to the sheet.
+      // One document-level listener; it survives View Transitions navigations.
+      document.addEventListener("click", (e) => {
+        const target = e.target;
+        if (target instanceof Element && target.closest("[data-menu-trigger]")) {
+          document.dispatchEvent(new CustomEvent("toggle-menu"));
+        }
+      });
+    </script>
+  </body>
+</html>

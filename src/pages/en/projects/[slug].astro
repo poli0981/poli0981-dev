@@ -1,0 +1,18 @@
+---
+import ProjectLayout from "@/layouts/ProjectLayout.astro";
+import { render } from "astro:content";
+import { projectPaths } from "@/lib/pages";
+import type { ProjectEntry } from "@/lib/collections";
+
+export const getStaticPaths = () => projectPaths("en");
+
+interface Props {
+  entry: ProjectEntry;
+}
+const { entry } = Astro.props as Props;
+const { Content } = await render(entry);
+---
+
+<ProjectLayout {entry} locale="en">
+  <Content />
+</ProjectLayout>
