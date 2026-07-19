@@ -45,7 +45,7 @@ const hasCW = contentWarning.length > 0;
     <ReadingControls client:idle labels={t.reader} />
   </div>
 
-  <article id="reader-root" class="reading-column reader">
+  <article id="reader-root" class="reading-column reader" data-pagefind-body>
     <header class="reader-head">
       {series && <p class="series">{series}</p>}
       <h1>{title}</h1>
@@ -65,7 +65,7 @@ const hasCW = contentWarning.length > 0;
       )
     }
 
-    <footer class="reader-foot">
+    <footer class="reader-foot" data-pagefind-ignore>
       <Waveline client:visible height={36} />
       <Pagination
         {prev}

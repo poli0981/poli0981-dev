@@ -22,8 +22,8 @@ const statusLabel = {
 ---
 
 <BaseLayout title={name} description={tagline} {locale}>
-  <article class="proj">
-    <p class="crumb">
+  <article class="proj" data-pagefind-body>
+    <p class="crumb" data-pagefind-ignore>
       <a href={sectionPath("projects", locale)}>{t.nav.projects}</a> / {name}
     </p>
     <h1>{name}</h1>
@@ -57,7 +57,7 @@ const statusLabel = {
         </div>
       )
     }
-    <div class="wave"><Waveline client:visible height={30} /></div>
+    <div class="wave" data-pagefind-ignore><Waveline client:visible height={30} /></div>
     <Prose>
       <slot />
     </Prose>
