@@ -7,7 +7,7 @@ export default tseslint.config(
     ignores: [
       "dist/",
       ".astro/",
-      ".wrangler/",
+      "**/.wrangler/",
       "node_modules/",
       "public/pagefind/",
       "poli0981.dev-docs/",

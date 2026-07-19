@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+
+# AI-training crawlers — blocked (content is All Rights Reserved; mirrors the
+# Cloudflare "Block AI Scrapers" toggle, docs 06/07/13).
+User-agent: GPTBot
+User-agent: CCBot
+User-agent: Google-Extended
+User-agent: anthropic-ai
+User-agent: ClaudeBot
+Disallow: /
+
+Sitemap: https://poli0981.dev/sitemap-index.xml

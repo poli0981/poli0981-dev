@@ -80,6 +80,14 @@ const en: UIStrings = {
     hoursTwoWeeks: "{h}h / 2 weeks",
     na: "No data yet",
   },
+  gallery: {
+    open: "Open image",
+    close: "Close",
+    prev: "Previous image",
+    next: "Next image",
+    counter: "{i}/{n}",
+    empty: "No albums yet.",
+  },
   qaGroups: {
     channel: "Channel",
     dev: "Dev",

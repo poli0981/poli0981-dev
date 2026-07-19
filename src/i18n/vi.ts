@@ -78,6 +78,14 @@ const vi = {
     hoursTwoWeeks: "{h} giờ / 2 tuần",
     na: "Chưa có dữ liệu",
   },
+  gallery: {
+    open: "Mở ảnh",
+    close: "Đóng",
+    prev: "Ảnh trước",
+    next: "Ảnh sau",
+    counter: "{i}/{n}",
+    empty: "Chưa có album nào.",
+  },
   qaGroups: {
     channel: "Kênh",
     dev: "Lập trình",
