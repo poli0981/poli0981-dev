@@ -18,7 +18,10 @@
   let loading = $state(false);
   let searched = $state(false);
   let selectedIndex = $state(-1);
-  let groups = $state({ blog: [], story: [], page: [] });
+  // Single source of truth: each item is Pagefind data + a `group` field. `sections`
+  // derives from this, so section items are the SAME state proxies flat holds — that's
+  // what makes `flat.indexOf(r)` work in the template (Svelte 5 proxies aren't identity-
+  // equal across separate $state trees).
   let flat = $state([]);
 
   let dialogEl = $state(null);
@@ -55,10 +58,12 @@
 
   const sections = $derived(
     [
-      { key: "blog", label: labels.groupBlog, items: groups.blog },
-      { key: "story", label: labels.groupStory, items: groups.story },
-      { key: "page", label: labels.groupPage, items: groups.page },
-    ].filter((s) => s.items.length),
+      { key: "blog", label: labels.groupBlog },
+      { key: "story", label: labels.groupStory },
+      { key: "page", label: labels.groupPage },
+    ]
+      .map((s) => ({ ...s, items: flat.filter((r) => r.group === s.key) }))
+      .filter((s) => s.items.length),
   );
   const countText = $derived(labels.countLabel.replace("{n}", String(flat.length)));
 
@@ -71,7 +76,6 @@
     const q = query.trim();
     const my = ++token;
     if (!q) {
-      groups = { blog: [], story: [], page: [] };
       flat = [];
       selectedIndex = -1;
       searched = false;
@@ -81,7 +85,6 @@
     await ensurePagefind();
     if (my !== token) return;
     if (pf === "unavailable") {
-      groups = { blog: [], story: [], page: [] };
       flat = [];
       selectedIndex = -1;
       searched = true;
@@ -92,11 +95,13 @@
     const res = await pf.search(q);
     const items = await Promise.all(res.results.slice(0, 15).map((r) => r.data()));
     if (my !== token) return;
-    const kept = items.filter((d) => isEn(d.url) === wantEn);
-    const g = { blog: [], story: [], page: [] };
-    for (const d of kept) g[groupOf(d.url)].push(d);
-    groups = g;
-    flat = [...g.blog, ...g.story, ...g.page];
+    const ORDER = { blog: 0, story: 1, page: 2 };
+    // One ordered list (blog → story → page); the stable sort keeps Pagefind's
+    // relevance order within each group. `sections` re-groups this for display.
+    flat = items
+      .filter((d) => isEn(d.url) === wantEn)
+      .map((d) => ({ ...d, group: groupOf(d.url) }))
+      .sort((a, b) => ORDER[a.group] - ORDER[b.group]);
     selectedIndex = flat.length ? 0 : -1;
     searched = true;
     loading = false;
