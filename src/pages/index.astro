@@ -30,7 +30,7 @@ const shortcuts = [
     <div class="hero-wave"><Waveline client:visible height={48} /></div>
   </section>
 
-  <WidgetsRefresh client:visible labels={t.widgets} initial={widgets} />
+  <WidgetsRefresh client:idle labels={t.widgets} initial={widgets} />
 
   {
     latest.length > 0 && (
