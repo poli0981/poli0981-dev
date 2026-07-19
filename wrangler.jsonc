@@ -3,6 +3,8 @@
   "name": "poli0981-dev",
   "compatibility_date": "2026-07-01",
   "compatibility_flags": ["nodejs_compat"],
+  // Serve only via the custom domain (poli0981.dev) — no poli0981-dev.*.workers.dev URL.
+  "workers_dev": false,
   "assets": {
     "binding": "ASSETS",
     "directory": "./dist",
@@ -12,9 +14,17 @@
   "kv_namespaces": [
     {
       "binding": "KV",
-      // Local placeholder ids — real namespace ids are wired in the deferred deploy track.
-      "id": "poli0981_kv_local",
-      "preview_id": "poli0981_kv_local",
+      "id": "8c366cd5e57c4dd1b309787d0603c490",
+      "preview_id": "7e710034a6a0408191fc00adb5277ae8",
+    },
+    // Astro's Cloudflare adapter enables sessions by default and injects a `SESSION`
+    // KV binding. This site does not use Astro.session, but wrangler deploy needs the
+    // binding to resolve to a real namespace — reuse the KV namespace (SESSION keys are
+    // never written here, so no collision with rl:/denylist: keys).
+    {
+      "binding": "SESSION",
+      "id": "8c366cd5e57c4dd1b309787d0603c490",
+      "preview_id": "7e710034a6a0408191fc00adb5277ae8",
     },
   ],
   "observability": {

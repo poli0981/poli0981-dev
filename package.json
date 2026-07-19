@@ -16,7 +16,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "knip": "knip"
+    "knip": "knip",
+    "deploy": "wrangler deploy --config ./dist/server/wrangler.json"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.1.3",
