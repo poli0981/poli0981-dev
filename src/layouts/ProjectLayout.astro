@@ -2,9 +2,10 @@
 import BaseLayout from "./BaseLayout.astro";
 import Prose from "../components/Prose.astro";
 import Waveline from "../components/Waveline.svelte";
-import type { ProjectEntry } from "../lib/collections";
+import { findTranslation, type ProjectEntry } from "../lib/collections";
 import { sectionPath, type Locale } from "../i18n/routing";
 import { useTranslations } from "../i18n";
+import { SITE, authorRef } from "../lib/seo";
 
 interface Props {
   entry: ProjectEntry;
@@ -19,9 +20,31 @@ const statusLabel = {
   maintained: locale === "vi" ? "Bảo trì" : "Maintained",
   archived: locale === "vi" ? "Lưu trữ" : "Archived",
 }[status];
+
+const translation = await findTranslation("projects", entry);
+const translationHref = translation
+  ? sectionPath("projects", translation.data.lang, translation.id)
+  : null;
+const pathname = Astro.url.pathname;
+const alternates = translationHref
+  ? locale === "vi"
+    ? { vi: pathname, en: translationHref }
+    : { en: pathname, vi: translationHref }
+  : null;
+const projectSchema = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareSourceCode",
+  name,
+  description: tagline,
+  ...(repo ? { codeRepository: repo } : {}),
+  ...(stack.length > 0 ? { programmingLanguage: stack } : {}),
+  inLanguage: locale === "vi" ? "vi-VN" : "en-US",
+  author: authorRef(),
+  url: new URL(pathname, SITE.url).href,
+};
 ---
 
-<BaseLayout title={name} description={tagline} {locale}>
+<BaseLayout title={name} description={tagline} {locale} {alternates} jsonLd={projectSchema}>
   <article class="proj" data-pagefind-body>
     <p class="crumb" data-pagefind-ignore>
       <a href={sectionPath("projects", locale)}>{t.nav.projects}</a> / {name}

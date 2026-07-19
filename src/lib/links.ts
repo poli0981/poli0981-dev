@@ -190,3 +190,9 @@ export function socialsForPersona(persona: Persona): SocialLink[] {
 export function emailForScope(scope: EmailScope): ContactEmail {
   return CONTACT_EMAILS.find((e) => e.scope === scope) ?? GENERAL_EMAIL;
 }
+
+/** Deduped profile URLs for JSON-LD `Person.sameAs` (http(s) only, no mailto). */
+export function sameAsUrls(): string[] {
+  const urls = SOCIAL_LINKS.filter((l) => l.href.startsWith("http")).map((l) => l.href);
+  return Array.from(new Set(urls));
+}

@@ -1,5 +1,6 @@
 /** Site-wide identity + SEO helpers (docs 13). */
-import type { Locale } from "../i18n/routing";
+import { alternatePath, localeFromPath, type Locale } from "../i18n/routing";
+import { sameAsUrls } from "./links";
 
 export const SITE = {
   url: "https://poli0981.dev",
@@ -57,4 +58,34 @@ export function resolveSeo(input: SeoInput, pathname: string): ResolvedSeo {
     noindex: input.noindex ?? false,
     image: input.image,
   };
+}
+
+/**
+ * The vi + en URLs of a page, for hreflang. Symmetric — the same pair is produced
+ * from either locale's page. Only meaningful for pages that exist in both locales
+ * (BaseLayout auto-uses this; content detail pages pass an explicit pair or none).
+ */
+export function hreflangPair(pathname: string): { vi: string; en: string } {
+  const locale = localeFromPath(pathname);
+  return {
+    vi: locale === "vi" ? pathname : alternatePath(pathname, "vi"),
+    en: locale === "en" ? pathname : alternatePath(pathname, "en"),
+  };
+}
+
+/** Site-wide Person schema (JSON-LD); `sameAs` links the owner's public profiles. */
+export function personSchema(): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: "Kokone",
+    alternateName: "SkullMute",
+    url: SITE.url,
+    sameAs: sameAsUrls(),
+  };
+}
+
+/** Minimal Person reference for embedding as an `author` on content schemas. */
+export function authorRef(): Record<string, unknown> {
+  return { "@type": "Person", name: "Kokone", url: SITE.url };
 }
