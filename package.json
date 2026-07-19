@@ -9,7 +9,8 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && pagefind --site dist/client",
+    "build": "astro build && node scripts/gen-og.mjs && pagefind --site dist/client",
+    "gen-og": "node scripts/gen-og.mjs",
     "preview": "astro preview",
     "astro": "astro",
     "check": "astro check",
@@ -36,11 +37,13 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
+    "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^26.1.1",
     "eslint": "^10.7.0",
     "eslint-plugin-astro": "^3.0.1",
     "eslint-plugin-svelte": "^3.21.0",
     "exifr": "^7.1.3",
+    "gray-matter": "^4.0.3",
     "knip": "^6.27.0",
     "lefthook": "^2.1.10",
     "pagefind": "^1.5.2",
@@ -48,6 +51,8 @@
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-svelte": "^4.1.1",
     "prettier-plugin-tailwindcss": "^0.8.1",
+    "satori": "^0.28.0",
+    "satori-html": "^0.3.2",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.64.0",
     "wrangler": "^4.112.0"

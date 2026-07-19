@@ -9,6 +9,7 @@ import type { StoryEntry } from "../lib/collections";
 import { useTranslations } from "../i18n";
 import type { Locale } from "../i18n/routing";
 import { SITE, authorRef } from "../lib/seo";
+import { ogUrl } from "../lib/og";
 
 interface NavLink {
   href: string;
@@ -56,7 +57,16 @@ const storySchema = {
 };
 ---
 
-<BaseLayout {title} {description} {locale} type="article" reading {alternates} jsonLd={storySchema}>
+<BaseLayout
+  {title}
+  {description}
+  {locale}
+  type="article"
+  reading
+  {alternates}
+  jsonLd={storySchema}
+  image={ogUrl("story", entry.id)}
+>
   {/* Sticky reader bar. The "Aa" reading controls trigger is added in M5. */}
   <div class="reader-bar">
     <a class="back" href={seriesHref ?? seriesTocHref ?? "#"}>

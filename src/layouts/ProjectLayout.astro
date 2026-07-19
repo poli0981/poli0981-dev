@@ -6,6 +6,7 @@ import { findTranslation, type ProjectEntry } from "../lib/collections";
 import { sectionPath, type Locale } from "../i18n/routing";
 import { useTranslations } from "../i18n";
 import { SITE, authorRef } from "../lib/seo";
+import { ogUrl } from "../lib/og";
 
 interface Props {
   entry: ProjectEntry;
@@ -44,7 +45,14 @@ const projectSchema = {
 };
 ---
 
-<BaseLayout title={name} description={tagline} {locale} {alternates} jsonLd={projectSchema}>
+<BaseLayout
+  title={name}
+  description={tagline}
+  {locale}
+  {alternates}
+  jsonLd={projectSchema}
+  image={ogUrl("project", entry.id)}
+>
   <article class="proj" data-pagefind-body>
     <p class="crumb" data-pagefind-ignore>
       <a href={sectionPath("projects", locale)}>{t.nav.projects}</a> / {name}
