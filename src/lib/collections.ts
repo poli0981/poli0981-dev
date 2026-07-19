@@ -30,6 +30,18 @@ export async function getStoryChapters(locale: Locale): Promise<StoryEntry[]> {
   return chapters.sort(byDateDesc);
 }
 
+/** Every non-draft blog post across both locales, newest first (for the RSS feeds). */
+export async function getAllBlogPosts(): Promise<BlogEntry[]> {
+  const [vi, en] = await Promise.all([getBlogPosts("vi"), getBlogPosts("en")]);
+  return [...vi, ...en].sort(byDateDesc);
+}
+
+/** Every non-draft story chapter across both locales, newest first (for the RSS feeds). */
+export async function getAllStoryChapters(): Promise<StoryEntry[]> {
+  const [vi, en] = await Promise.all([getStoryChapters("vi"), getStoryChapters("en")]);
+  return [...vi, ...en].sort(byDateDesc);
+}
+
 export async function getProjects(locale: Locale): Promise<ProjectEntry[]> {
   const projects = await getCollection(
     "projects",
