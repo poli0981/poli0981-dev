@@ -37,7 +37,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Soft rate-limit on /api/* → custom 429 + Retry-After. (The hard limit is a
   // Cloudflare zone rule; KV is eventually-consistent, so this is best-effort.)
   if (url.pathname.startsWith("/api/") && kv) {
-    const key = `rl:${ip}`;
+    // Namespace the counter per endpoint group so e.g. widget polling can't exhaust the
+    // report budget (and vice-versa). "/api/report" → "report", "/api/widgets" → "widgets".
+    const group = url.pathname.split("/")[2] || "api";
+    const key = `rl:${group}:${ip}`;
     const current = Number((await kv.get(key)) ?? "0");
     if (current >= RATE_LIMIT) {
       const res = await serveError("/429", 429);
