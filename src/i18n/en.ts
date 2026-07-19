@@ -86,6 +86,7 @@ const en: UIStrings = {
       "Where I keep code, open projects, and my toolkit. Priorities: few dependencies, easy to maintain.",
     featured: "Featured projects",
     allProjects: "All projects",
+    allRepos: "All public repos",
     gear: "Gear & tools",
     gearLead: "The machine I use to code, edit video, and play games.",
     gearCta: "See the setup",

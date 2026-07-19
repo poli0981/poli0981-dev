@@ -83,6 +83,7 @@ const vi = {
     intro: "Nơi mình gom code, dự án mở và bộ đồ nghề. Ưu tiên: ít phụ thuộc, dễ bảo trì.",
     featured: "Dự án nổi bật",
     allProjects: "Tất cả dự án",
+    allRepos: "Tất cả repo công khai",
     gear: "Thiết bị & công cụ",
     gearLead: "Máy mình dùng để code, dựng video và chơi game.",
     gearCta: "Xem cấu hình",
