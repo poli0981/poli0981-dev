@@ -2,13 +2,25 @@
 import { toLocale, useTranslations } from "../i18n";
 import { type Locale } from "../i18n/routing";
 import { menuNav, legalNav } from "../lib/nav";
+import { SOCIAL_LINKS, emailForScope } from "../lib/links";
+import { SITE } from "../lib/seo";
 import Waveline from "./Waveline.svelte";
+import SocialIcon from "./SocialIcon.astro";
 
 const locale: Locale = toLocale(Astro.currentLocale);
 const t = useTranslations(locale);
 const nav = menuNav(locale);
 const legal = legalNav(locale);
 const year = new Date().getFullYear();
+const general = emailForScope("general");
+const sponsor = emailForScope("sponsor");
+
+function relFor(href: string, me?: boolean): string | undefined {
+  const parts: string[] = [];
+  if (me) parts.push("me");
+  if (href.startsWith("http")) parts.push("noopener", "noreferrer");
+  return parts.length ? parts.join(" ") : undefined;
+}
 ---
 
 <footer class="site-footer">
@@ -19,10 +31,34 @@ const year = new Date().getFullYear();
     <nav class="footer-nav" aria-label="Footer">
       {nav.map((item) => <a href={item.href}>{item.label}</a>)}
     </nav>
+
+    <nav class="footer-social" aria-label={t.footer.social}>
+      {
+        SOCIAL_LINKS.map((link) => (
+          <a
+            href={link.href}
+            rel={relFor(link.href, link.me)}
+            target={link.href.startsWith("http") ? "_blank" : undefined}
+            aria-label={link.name}
+            title={link.name}
+          >
+            <SocialIcon platform={link.platform} size={18} />
+          </a>
+        ))
+      }
+    </nav>
+
+    <p class="footer-contact">
+      <a href={general.href}>{general.address}</a>
+      <span class="sep" aria-hidden="true">·</span>
+      <a href={sponsor.href}>{sponsor.address}</a>
+      <span class="muted">({sponsor.label[locale]})</span>
+    </p>
+
     <nav class="footer-legal" aria-label={t.footer.legal}>
       {legal.map((item) => <a href={item.href}>{item.label}</a>)}
     </nav>
-    <p class="copyright">© {year} Kokone (SkullMute). {t.footer.rights}</p>
+    <p class="copyright">© {year} {SITE.author}. {t.footer.rights}</p>
   </div>
 </footer>
 
@@ -54,6 +90,41 @@ const year = new Date().getFullYear();
   .footer-nav a:hover,
   .footer-legal a:hover {
     color: var(--accent);
+  }
+  .footer-social {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    align-items: center;
+    margin-block: 0.25rem;
+  }
+  .footer-social a {
+    display: inline-flex;
+    color: var(--muted);
+    transition: color var(--duration-fast) var(--ease-site);
+  }
+  .footer-social a:hover {
+    color: var(--accent);
+  }
+  .footer-contact {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem;
+    font-size: var(--text-meta);
+  }
+  .footer-contact a {
+    color: var(--text);
+  }
+  .footer-contact a:hover {
+    color: var(--accent);
+  }
+  .footer-contact .sep {
+    color: var(--line);
+  }
+  .footer-contact .muted {
+    color: var(--muted);
   }
   .copyright {
     margin: 0;
