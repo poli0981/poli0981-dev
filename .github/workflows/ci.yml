@@ -15,7 +15,7 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  # Cancel superseded PR runs; never abort an in-flight main deploy.
+  # Cancel superseded PR runs; let main runs finish.
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
@@ -56,14 +56,7 @@ jobs:
       - name: Build
         run: npm run build
 
-      # Deploy on push to main only, after every check + the build succeeded.
-      # The adapter writes the deploy config to dist/server/wrangler.json (main:
-      # entry.mjs, assets: ../client, auto SESSION binding) — verified via dry-run.
-      - name: Deploy to Cloudflare
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          wranglerVersion: "4.112.0"
-          command: deploy --config ./dist/server/wrangler.json
+      # Deployment is handled by Cloudflare Workers Builds (connected to this repo),
+      # not GitHub Actions — this workflow is CI gates only (lint/types/knip/audit/build).
+      # Workers Builds must deploy with: wrangler deploy --config ./dist/server/wrangler.json
+      # (the root wrangler.jsonc has no `main`; the adapter writes the real config there).
