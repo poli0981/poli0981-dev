@@ -3,6 +3,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import ProjectCard from "@/components/ProjectCard.astro";
 import Waveline from "@/components/Waveline.svelte";
 import { getProjects } from "@/lib/collections";
+import { ALL_REPOS_URL } from "@/lib/links";
 import { useTranslations } from "@/i18n";
 import { sectionPath } from "@/i18n/routing";
 
@@ -13,7 +14,12 @@ const projects = await getProjects(locale);
 
 <BaseLayout title={t.nav.projects} {locale}>
   <section class="page py-section">
-    <h1 class="text-h1">{t.nav.projects}</h1>
+    <div class="head">
+      <h1 class="text-h1">{t.nav.projects}</h1>
+      <a class="all-repos" href={ALL_REPOS_URL} target="_blank" rel="noopener noreferrer">
+        {t.dev.allRepos} ↗
+      </a>
+    </div>
     <div class="wave"><Waveline client:visible height={28} /></div>
     {
       projects.length > 0 ? (
@@ -33,6 +39,22 @@ const projects = await getProjects(locale);
 </BaseLayout>
 
 <style>
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+  }
+  .all-repos {
+    color: var(--accent);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+    white-space: nowrap;
+  }
+  .all-repos:hover {
+    color: var(--accent-strong);
+  }
   .wave {
     margin-block: 1rem 2rem;
     max-inline-size: 22rem;
