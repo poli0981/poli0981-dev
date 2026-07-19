@@ -17,6 +17,8 @@ export function primaryNav(locale: Locale): NavItem[] {
     { href: sectionPath("blog", locale), label: t.nav.blog },
     { href: sectionPath("stories", locale), label: t.nav.stories },
     { href: sectionPath("projects", locale), label: t.nav.projects },
+    { href: sectionPath("dev", locale), label: t.nav.dev },
+    { href: sectionPath("gaming", locale), label: t.nav.gaming },
     { href: sectionPath("gallery", locale), label: t.nav.gallery },
     { href: sectionPath("about", locale), label: t.nav.about },
   ];

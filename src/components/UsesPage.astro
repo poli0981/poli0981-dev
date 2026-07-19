@@ -1,0 +1,120 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Waveline from "@/components/Waveline.svelte";
+import { USES, USES_STACK } from "@/lib/uses";
+import { useTranslations } from "@/i18n";
+import type { Locale } from "@/i18n/routing";
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+---
+
+<BaseLayout title={t.uses.title} description={t.uses.lead} {locale}>
+  <section class="page narrow py-section">
+    <h1 class="text-h1">{t.uses.title}</h1>
+    <p class="lede">{t.uses.lead}</p>
+    <div class="wave"><Waveline client:visible height={28} /></div>
+
+    {
+      USES.map((group) => (
+        <section class="uses-group">
+          <h2 class="group-title">{group.title[locale]}</h2>
+          <dl class="table">
+            {group.items.map((item) => (
+              <div class="row">
+                <dt>{item.label[locale]}</dt>
+                <dd>
+                  {item.value}
+                  {item.note && <span class="note"> — {item.note[locale]}</span>}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ))
+    }
+
+    <section class="uses-group">
+      <h2 class="group-title">{t.uses.languages}</h2>
+      <ul class="stack">
+        {USES_STACK.map((s) => <li>{s}</li>)}
+      </ul>
+    </section>
+  </section>
+</BaseLayout>
+
+<style>
+  .narrow {
+    max-inline-size: 46rem;
+  }
+  .lede {
+    margin-block-start: 1rem;
+    font-size: var(--text-lead);
+    color: var(--muted);
+  }
+  .wave {
+    margin-block: 1.5rem 2.5rem;
+    max-inline-size: 22rem;
+  }
+  .uses-group {
+    margin-block-start: 2.25rem;
+  }
+  .group-title {
+    font-size: var(--text-h3);
+    margin-block-end: 1rem;
+  }
+  .table {
+    margin: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    overflow: clip;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 10rem 1fr;
+    gap: 1rem;
+    padding: 0.75rem 1.1rem;
+  }
+  .row + .row {
+    border-block-start: 1px solid var(--line);
+  }
+  .row dt {
+    color: var(--muted);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+  }
+  .row dd {
+    margin: 0;
+    color: var(--text);
+  }
+  .note {
+    color: var(--muted);
+    font-size: var(--text-meta);
+  }
+  .stack {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .stack li {
+    padding: 0.35em 0.8em;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+  }
+  @media (max-width: 480px) {
+    .row {
+      grid-template-columns: 1fr;
+      gap: 0.2rem;
+    }
+  }
+</style>

@@ -1,0 +1,175 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Waveline from "@/components/Waveline.svelte";
+import WidgetsRefresh from "@/components/WidgetsRefresh.svelte";
+import SocialIcon from "@/components/SocialIcon.astro";
+import { getWidgetSnapshot } from "@/lib/widgets";
+import { socialsForPersona, emailForScope } from "@/lib/links";
+import { useTranslations } from "@/i18n";
+import type { Locale } from "@/i18n/routing";
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+
+const widgets = await getWidgetSnapshot();
+const gameSocials = socialsForPersona("game");
+const gamesEmail = emailForScope("games");
+const youtube = gameSocials.find((s) => s.platform === "youtube");
+
+function relFor(href: string, me?: boolean): string | undefined {
+  const parts: string[] = [];
+  if (me) parts.push("me");
+  if (href.startsWith("http")) parts.push("noopener", "noreferrer");
+  return parts.length ? parts.join(" ") : undefined;
+}
+---
+
+<BaseLayout title={t.nav.gaming} description={t.gaming.intro} {locale}>
+  <section class="page hero py-section">
+    <h1 class="text-h1">SkullMute</h1>
+    <p class="lede">{t.gaming.intro}</p>
+    {
+      youtube && (
+        <a class="cta" href={youtube.href} target="_blank" rel="noopener noreferrer">
+          {t.gaming.subscribe} →
+        </a>
+      )
+    }
+    <div class="wave"><Waveline client:visible height={28} /></div>
+  </section>
+
+  <WidgetsRefresh client:idle labels={t.widgets} initial={widgets} maxVideos={3} />
+
+  <section class="page cover block">
+    <h2 class="block-title">{t.gaming.coverTitle}</h2>
+    <p class="cover-body">{t.gaming.coverBody}</p>
+  </section>
+
+  <section class="page block">
+    <h2 class="block-title">{t.gaming.community}</h2>
+    <nav class="socials" aria-label={t.footer.social}>
+      {
+        gameSocials.map((link) => (
+          <a
+            class="social"
+            href={link.href}
+            rel={relFor(link.href, link.me)}
+            target={link.href.startsWith("http") ? "_blank" : undefined}
+          >
+            <SocialIcon platform={link.platform} size={18} />
+            <span>{link.name}</span>
+          </a>
+        ))
+      }
+    </nav>
+    <p class="contact">
+      <a href={gamesEmail.href}>{gamesEmail.address}</a>
+      <span class="muted">— {gamesEmail.label[locale]}</span>
+    </p>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    position: relative;
+    isolation: isolate;
+  }
+  /* Light static scanline — allowed on /gaming only (design system §4). */
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0 3px,
+      color-mix(in srgb, var(--text) 4%, transparent) 3px 4px
+    );
+    opacity: 0.5;
+    mask-image: linear-gradient(to bottom, black, transparent 85%);
+  }
+  .hero > * {
+    position: relative;
+    z-index: 1;
+  }
+  .lede {
+    margin-block-start: 1rem;
+    font-size: var(--text-lead);
+    color: var(--muted);
+    max-inline-size: 42rem;
+  }
+  .cta {
+    display: inline-block;
+    margin-block-start: 1.1rem;
+    padding: 0.6rem 1.15rem;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-control);
+    color: var(--accent);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+    transition:
+      background var(--duration-fast) var(--ease-site),
+      color var(--duration-fast) var(--ease-site);
+  }
+  .cta:hover {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .wave {
+    margin-block: 1.75rem 0;
+    max-inline-size: 22rem;
+  }
+  .block {
+    padding-block-end: clamp(2rem, 6vw, 3.5rem);
+  }
+  .block-title {
+    font-size: var(--text-h3);
+    margin-block-end: 1.25rem;
+  }
+  .cover-body {
+    color: var(--muted);
+    font-size: var(--text-lead);
+    max-inline-size: 46rem;
+  }
+  .socials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-block-end: 1rem;
+  }
+  .social {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.8rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: var(--text-meta);
+    transition:
+      border-color var(--duration-fast) var(--ease-site),
+      color var(--duration-fast) var(--ease-site);
+  }
+  .social:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .contact {
+    margin: 0;
+    font-size: var(--text-meta);
+  }
+  .contact a {
+    color: var(--text);
+  }
+  .contact a:hover {
+    color: var(--accent);
+  }
+  .contact .muted {
+    color: var(--muted);
+  }
+</style>
