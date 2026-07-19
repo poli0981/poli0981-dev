@@ -15,6 +15,18 @@ const linkFor = (item: (typeof latest)[number]) =>
   <h1>Trang này không phát ra tín hiệu.</h1>
   <p class="en">This page makes no sound.</p>
 
+  <form id="s404-form" class="s404" role="search">
+    <input
+      id="s404-input"
+      type="search"
+      placeholder="Tìm bài viết, truyện…"
+      aria-label="Tìm kiếm trên trang"
+      autocomplete="off"
+      spellcheck="false"
+    />
+  </form>
+  <ul id="s404-results" class="s404-results" aria-live="polite"></ul>
+
   {
     latest.length > 0 && (
       <ul class="recent">
@@ -28,11 +40,97 @@ const linkFor = (item: (typeof latest)[number]) =>
   }
 </ErrorLayout>
 
+<script>
+  // Lightweight inline search — lazy-loads the Pagefind runtime on first input.
+  // Degrades silently where the index is absent (e.g. `astro dev`).
+  const form = document.getElementById("s404-form");
+  const input = document.getElementById("s404-input");
+  const list = document.getElementById("s404-results");
+  if (form && input instanceof HTMLInputElement && list) {
+    form.addEventListener("submit", (e) => e.preventDefault());
+    type PagefindApi = {
+      search: (q: string) => Promise<{ results: { data: () => Promise<unknown> }[] }>;
+    };
+    let pf: PagefindApi | null = null;
+    let timer: ReturnType<typeof setTimeout>;
+    const load = async (): Promise<PagefindApi> => {
+      if (pf) return pf;
+      const mod = (await import(
+        new URL("/pagefind/pagefind.js", location.origin).href
+      )) as PagefindApi;
+      pf = mod;
+      return mod;
+    };
+    input.addEventListener("input", () => {
+      clearTimeout(timer);
+      const q = input.value.trim();
+      if (!q) {
+        list.replaceChildren();
+        return;
+      }
+      timer = setTimeout(async () => {
+        try {
+          const api = await load();
+          const search = await api.search(q);
+          const items = await Promise.all(search.results.slice(0, 5).map((r) => r.data()));
+          list.replaceChildren(
+            ...items.map((d) => {
+              const data = d as { url: string; meta?: { title?: string } };
+              const li = document.createElement("li");
+              const a = document.createElement("a");
+              a.href = data.url;
+              a.textContent = data.meta?.title ?? data.url;
+              li.appendChild(a);
+              return li;
+            }),
+          );
+        } catch {
+          /* index unavailable — leave results empty */
+        }
+      }, 200);
+    });
+  }
+</script>
+
 <style>
+  .s404 {
+    margin-block-start: 0.5rem;
+    inline-size: min(28rem, 90vw);
+  }
+  .s404 input {
+    inline-size: 100%;
+    padding: 0.7rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-control);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+  }
+  .s404 input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .s404-results {
+    list-style: none;
+    padding: 0;
+    margin: 0.75rem 0 0;
+    inline-size: min(28rem, 90vw);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    text-align: start;
+  }
+  .s404-results a {
+    color: var(--accent);
+    font-size: var(--text-meta);
+  }
+  .s404-results a:hover {
+    color: var(--accent-strong);
+  }
   .recent {
     list-style: none;
     padding: 0;
-    margin: 0.5rem 0 0;
+    margin: 1.25rem 0 0;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;

@@ -159,6 +159,15 @@ const onLegalPage = /\/legal(\/|$)/.test(Astro.url.pathname);
     {!onLegalPage && <LegalGateSheet client:idle strings={t.gate} links={legalItems} />}
 
     <script>
+      // Register the offline-fallback service worker once, after first load.
+      if ("serviceWorker" in navigator) {
+        const register = () => navigator.serviceWorker.register("/sw.js").catch(() => {});
+        if (document.readyState === "complete") register();
+        else addEventListener("load", register, { once: true });
+      }
+    </script>
+
+    <script>
       // One document-level click listener routes every trigger to its island.
       // It survives View Transitions navigations.
       document.addEventListener("click", (e) => {
