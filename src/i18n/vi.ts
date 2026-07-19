@@ -70,6 +70,14 @@ const vi = {
     recent: "Mới viết",
     shortcuts: "Lối tắt",
   },
+  widgets: {
+    title: "Trực tiếp",
+    latestVideo: "Video mới nhất",
+    nowPlaying: "Đang chơi",
+    playLabel: "Phát video",
+    hoursTwoWeeks: "{h} giờ / 2 tuần",
+    na: "Chưa có dữ liệu",
+  },
   qaGroups: {
     channel: "Kênh",
     dev: "Lập trình",

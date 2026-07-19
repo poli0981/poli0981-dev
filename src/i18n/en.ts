@@ -72,6 +72,14 @@ const en: UIStrings = {
     recent: "Recently written",
     shortcuts: "Shortcuts",
   },
+  widgets: {
+    title: "Live",
+    latestVideo: "Latest video",
+    nowPlaying: "Now playing",
+    playLabel: "Play video",
+    hoursTwoWeeks: "{h}h / 2 weeks",
+    na: "No data yet",
+  },
   qaGroups: {
     channel: "Channel",
     dev: "Dev",

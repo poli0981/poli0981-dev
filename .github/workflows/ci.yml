@@ -47,6 +47,14 @@ jobs:
       - name: Type check
         run: npm run check
 
+      # The cron worker is a separate TS project (own tsconfig + Env types) and is
+      # excluded from the root check. Deploy is manual, so typecheck it here as a guard.
+      - name: Typecheck widgets worker
+        working-directory: workers/widgets
+        run: |
+          npx wrangler types
+          npx tsc -p tsconfig.json --noEmit
+
       - name: Dead code
         run: npm run knip
 

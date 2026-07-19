@@ -1,0 +1,28 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "poli0981-widgets",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // Cron-only worker: no public route, no workers.dev URL.
+  "workers_dev": false,
+  "triggers": {
+    "crons": ["*/45 * * * *"],
+  },
+  "kv_namespaces": [
+    {
+      // SAME namespace as the site worker (root wrangler.jsonc). This worker only
+      // writes `widgets:*` keys — disjoint from the site's rl:/denylist:/SESSION keys.
+      "binding": "KV",
+      "id": "8c366cd5e57c4dd1b309787d0603c490",
+      "preview_id": "7e710034a6a0408191fc00adb5277ae8",
+    },
+  ],
+  "vars": {
+    // Public (non-secret) YouTube channel id. Replace with the real UC… value before deploy.
+    "YT_CHANNEL_ID": "UC__SET_YOUR_CHANNEL_ID__",
+  },
+  "observability": {
+    "enabled": true,
+  },
+}

@@ -11,7 +11,7 @@ export default tseslint.config(
       "node_modules/",
       "public/pagefind/",
       "poli0981.dev-docs/",
-      "worker-configuration.d.ts",
+      "**/worker-configuration.d.ts",
     ],
   },
   ...tseslint.configs.recommended,
