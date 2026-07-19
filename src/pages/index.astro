@@ -1,15 +1,18 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import Waveline from "@/components/Waveline.svelte";
+import WidgetsRefresh from "@/components/WidgetsRefresh.svelte";
 import PostCard from "@/components/PostCard.astro";
 import StoryCard from "@/components/StoryCard.astro";
 import { getLatestMixed } from "@/lib/collections";
+import { getWidgetSnapshot } from "@/lib/widgets";
 import { useTranslations } from "@/i18n";
 import { sectionPath } from "@/i18n/routing";
 
 const locale = "vi" as const;
 const t = useTranslations(locale);
 const latest = await getLatestMixed(locale, 3);
+const widgets = await getWidgetSnapshot();
 
 const shortcuts = [
   { href: sectionPath("projects", locale), label: t.nav.projects },
@@ -26,6 +29,8 @@ const shortcuts = [
     <p class="hero-tag">~ {t.site.tagline} ~</p>
     <div class="hero-wave"><Waveline client:visible height={48} /></div>
   </section>
+
+  <WidgetsRefresh client:visible labels={t.widgets} initial={widgets} />
 
   {
     latest.length > 0 && (

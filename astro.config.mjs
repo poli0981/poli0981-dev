@@ -95,7 +95,7 @@ export default defineConfig({
       algorithm: "SHA-256",
       directives: [
         "default-src 'self'",
-        "img-src 'self' data: https://i.ytimg.com",
+        "img-src 'self' data: https://i.ytimg.com https://media.steampowered.com https://*.steamstatic.com",
         "frame-src https://www.youtube-nocookie.com",
         "connect-src 'self'",
         "font-src 'self'",
