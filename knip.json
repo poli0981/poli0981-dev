@@ -1,5 +1,5 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignoreDependencies": ["cloudflare", "lefthook"],
-  "entry": ["workers/widgets/src/index.ts"]
+  "entry": ["workers/widgets/src/index.ts", "scripts/*.mjs"]
 }

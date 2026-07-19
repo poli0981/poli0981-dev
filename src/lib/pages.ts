@@ -2,10 +2,12 @@ import {
   getBlogPosts,
   getStoryChapters,
   getProjects,
+  getGalleryAlbums,
   parseStoryId,
   type BlogEntry,
   type StoryEntry,
 } from "./collections";
+import { getAlbumPhotos } from "./gallery";
 import { sectionPath, type Locale } from "../i18n/routing";
 
 interface NavLink {
@@ -61,6 +63,17 @@ export async function blogTagPaths(locale: Locale) {
 export async function projectPaths(locale: Locale) {
   const projects = await getProjects(locale);
   return projects.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+/** getStaticPaths for gallery album detail pages. Album slug = the shared folder name,
+ *  so vi and en resolve to the same `/gallery/<album>` slug (LangSwitch works via
+ *  alternatePath). Two entries in one locale must not share an `album` value. */
+export async function galleryAlbumPaths(locale: Locale) {
+  const albums = await getGalleryAlbums(locale);
+  return albums.map((entry) => ({
+    params: { album: entry.data.album },
+    props: { entry, photos: getAlbumPhotos(entry.data.album) },
+  }));
 }
 
 /**

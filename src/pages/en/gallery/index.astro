@@ -1,0 +1,59 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import GalleryCard from "@/components/GalleryCard.astro";
+import Waveline from "@/components/Waveline.svelte";
+import { getGalleryAlbums } from "@/lib/collections";
+import { getAlbumCover } from "@/lib/gallery";
+import { useTranslations } from "@/i18n";
+
+const locale = "en" as const;
+const t = useTranslations(locale);
+const albums = await getGalleryAlbums(locale);
+const cards = albums.map((entry) => ({
+  entry,
+  cover: getAlbumCover(entry.data.album, entry.data.coverIndex),
+}));
+---
+
+<BaseLayout title={t.nav.gallery} {locale}>
+  <section class="page py-section">
+    <h1 class="text-h1">{t.nav.gallery}</h1>
+    <div class="wave"><Waveline client:visible height={28} /></div>
+    {
+      cards.length > 0 ? (
+        <div class="gallery-grid">
+          {cards.map(({ entry, cover }) => (
+            <GalleryCard {entry} {cover} {locale} />
+          ))}
+        </div>
+      ) : (
+        <p class="empty">{t.gallery.empty}</p>
+      )
+    }
+  </section>
+</BaseLayout>
+
+<style>
+  .wave {
+    margin-block: 1rem 2rem;
+    max-inline-size: 22rem;
+  }
+  .gallery-grid {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) {
+    .gallery-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 960px) {
+    .gallery-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  .empty {
+    color: var(--muted);
+  }
+</style>

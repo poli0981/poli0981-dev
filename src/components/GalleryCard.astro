@@ -1,0 +1,77 @@
+---
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+import { type GalleryEntry } from "../lib/collections";
+import { sectionPath, type Locale } from "../i18n/routing";
+
+interface Props {
+  entry: GalleryEntry;
+  cover: ImageMetadata;
+  locale: Locale;
+}
+const { entry, cover, locale } = Astro.props;
+const href = sectionPath("gallery", locale, entry.data.album);
+const year = entry.data.date.getFullYear();
+---
+
+<article class="card">
+  <a class="card-link" href={href}>
+    <div class="cover">
+      <Image
+        src={cover}
+        alt=""
+        widths={[400, 800]}
+        sizes="(max-width: 640px) 100vw, 360px"
+        loading="lazy"
+        decoding="async"
+      />
+    </div>
+    <div class="body">
+      <h3 class="title">{entry.data.title}</h3>
+      <span class="year">{year}</span>
+    </div>
+  </a>
+</article>
+
+<style>
+  .card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    overflow: clip;
+    transition:
+      transform var(--duration-fast) var(--ease-site),
+      border-color var(--duration-fast) var(--ease-site);
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+  }
+  .card-link {
+    display: block;
+    color: inherit;
+  }
+  .cover :global(img) {
+    display: block;
+    inline-size: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+  }
+  .body {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.9rem 1.1rem 1rem;
+  }
+  .title {
+    font-size: var(--text-lead);
+    font-weight: 700;
+    line-height: 1.25;
+  }
+  .year {
+    color: var(--muted);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+  }
+</style>

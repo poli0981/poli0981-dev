@@ -8,7 +8,7 @@ export interface NavItem {
 
 /**
  * Nav definitions live here so Header, MobileTabBar, MenuSheet, and Footer stay in sync.
- * P1 scope: only pages that exist. Gaming / Gallery / Dev join when their pages ship.
+ * P1 scope: only pages that exist. Gaming / Dev join when their pages ship.
  */
 
 export function primaryNav(locale: Locale): NavItem[] {
@@ -17,6 +17,7 @@ export function primaryNav(locale: Locale): NavItem[] {
     { href: sectionPath("blog", locale), label: t.nav.blog },
     { href: sectionPath("stories", locale), label: t.nav.stories },
     { href: sectionPath("projects", locale), label: t.nav.projects },
+    { href: sectionPath("gallery", locale), label: t.nav.gallery },
     { href: sectionPath("about", locale), label: t.nav.about },
   ];
 }

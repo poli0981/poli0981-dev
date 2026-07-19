@@ -1,0 +1,22 @@
+{
+  "demo-01.jpg": {
+    "vi": "Ảnh mẫu 01 — gradient xanh dương sang mực đêm",
+    "en": "Demo image 01 — blue to ink-night gradient"
+  },
+  "demo-02.jpg": {
+    "vi": "Ảnh mẫu 02 — gradient xanh lá sang mực đêm",
+    "en": "Demo image 02 — green to ink-night gradient"
+  },
+  "demo-03.jpg": {
+    "vi": "Ảnh mẫu 03 — gradient cam sang mực đêm",
+    "en": "Demo image 03 — orange to ink-night gradient"
+  },
+  "demo-04.jpg": {
+    "vi": "Ảnh mẫu 04 — gradient tím sang mực đêm",
+    "en": "Demo image 04 — purple to ink-night gradient"
+  },
+  "demo-05.jpg": {
+    "vi": "Ảnh mẫu 05 — gradient đỏ sang mực đêm",
+    "en": "Demo image 05 — red to ink-night gradient"
+  }
+}

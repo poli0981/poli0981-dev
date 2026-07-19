@@ -23,6 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # check-exif diffs changed images against the base ref
 
       - uses: actions/setup-node@v4
         with:
@@ -60,6 +62,12 @@ jobs:
 
       - name: Audit (prod deps, high+)
         run: npm audit --omit=dev --audit-level=high
+
+      # Fail if any changed image under src/assets/ still carries GPS or a camera serial.
+      - name: Check EXIF (changed images)
+        env:
+          DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: node scripts/check-exif.mjs --changed
 
       - name: Build
         run: npm run build

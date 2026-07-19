@@ -5,6 +5,7 @@ export type BlogEntry = CollectionEntry<"blog">;
 export type StoryEntry = CollectionEntry<"stories">;
 export type ProjectEntry = CollectionEntry<"projects">;
 export type FaqEntry = CollectionEntry<"faq">;
+export type GalleryEntry = CollectionEntry<"gallery">;
 
 /** Drafts are visible in `astro dev` but excluded from production builds. */
 const INCLUDE_DRAFTS = import.meta.env.DEV;
@@ -43,6 +44,11 @@ export async function getProjects(locale: Locale): Promise<ProjectEntry[]> {
 export async function getFaqs(locale: Locale): Promise<FaqEntry[]> {
   const faqs = await getCollection("faq", ({ data }) => data.lang === locale);
   return faqs.sort((a, b) => a.data.order - b.data.order);
+}
+
+export async function getGalleryAlbums(locale: Locale): Promise<GalleryEntry[]> {
+  const albums = await getCollection("gallery", ({ data }) => data.lang === locale);
+  return albums.sort(byDateDesc);
 }
 
 export type MixedItem = { kind: "blog"; entry: BlogEntry } | { kind: "story"; entry: StoryEntry };
