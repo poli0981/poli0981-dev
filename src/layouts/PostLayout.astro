@@ -36,8 +36,8 @@ const blogHref = sectionPath("blog", locale);
 ---
 
 <BaseLayout {title} {description} {locale} type="article" reading>
-  <article class="reading-column post">
-    <nav class="breadcrumb" aria-label="Breadcrumb">
+  <article class="reading-column post" data-pagefind-body>
+    <nav class="breadcrumb" aria-label="Breadcrumb" data-pagefind-ignore>
       <a href={blogHref}>{t.nav.blog}</a>
       <span aria-hidden="true">/</span>
       <span class="current">{title}</span>
@@ -96,7 +96,7 @@ const blogHref = sectionPath("blog", locale);
       <slot />
     </Prose>
 
-    <footer class="post-foot">
+    <footer class="post-foot" data-pagefind-ignore>
       <Waveline client:visible height={36} />
       <Pagination
         {prev}

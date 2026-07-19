@@ -37,6 +37,21 @@ const pathname = Astro.url.pathname;
     </nav>
 
     <div class="actions">
+      <button
+        type="button"
+        class="search-trigger"
+        data-search-trigger
+        aria-label={t.search.trigger}
+        aria-controls="search-modal"
+        aria-expanded="false"
+        aria-keyshortcuts="/"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.7"></circle>
+          <path d="M20 20l-3.2-3.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+          ></path>
+        </svg>
+      </button>
       <ThemeToggle client:load label={t.theme.toggle} />
       <LangSwitch />
       <button
@@ -116,7 +131,8 @@ const pathname = Astro.url.pathname;
     gap: 0.25rem;
     margin-inline-start: auto;
   }
-  .menu-trigger {
+  .menu-trigger,
+  .search-trigger {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -128,7 +144,8 @@ const pathname = Astro.url.pathname;
     color: var(--text);
     cursor: pointer;
   }
-  .menu-trigger:hover {
+  .menu-trigger:hover,
+  .search-trigger:hover {
     background: var(--surface);
     border-color: var(--line);
   }

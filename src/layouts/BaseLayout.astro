@@ -7,6 +7,7 @@ import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import MobileTabBar from "../components/MobileTabBar.astro";
 import MenuSheet from "../components/MenuSheet.svelte";
+import SearchModal from "../components/SearchModal.svelte";
 import LegalGateSheet from "../components/LegalGateSheet.svelte";
 import { resolveSeo, SITE, type SeoInput } from "../lib/seo";
 import { toLocale, useTranslations } from "../i18n";
@@ -107,16 +108,38 @@ const onLegalPage = /\/legal(\/|$)/.test(Astro.url.pathname);
       legalTitle={t.footer.legal}
     />
 
+    <SearchModal client:idle labels={t.search} locale={lang} />
+
     {!onLegalPage && <LegalGateSheet client:idle strings={t.gate} links={legalItems} />}
 
     <script>
-      // Route every menu trigger (header hamburger + mobile tab "Menu") to the sheet.
-      // One document-level listener; it survives View Transitions navigations.
+      // One document-level click listener routes every trigger to its island.
+      // It survives View Transitions navigations.
       document.addEventListener("click", (e) => {
         const target = e.target;
-        if (target instanceof Element && target.closest("[data-menu-trigger]")) {
+        if (!(target instanceof Element)) return;
+        if (target.closest("[data-menu-trigger]")) {
           document.dispatchEvent(new CustomEvent("toggle-menu"));
+        } else if (target.closest("[data-search-trigger]")) {
+          document.dispatchEvent(new CustomEvent("open-search"));
         }
+      });
+
+      // "/" opens search — unless the user is typing in a field or holding a modifier.
+      document.addEventListener("keydown", (e) => {
+        if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
+        const el = e.target;
+        if (
+          el instanceof HTMLElement &&
+          (el.isContentEditable ||
+            el.tagName === "INPUT" ||
+            el.tagName === "TEXTAREA" ||
+            el.tagName === "SELECT")
+        ) {
+          return;
+        }
+        e.preventDefault();
+        document.dispatchEvent(new CustomEvent("open-search"));
       });
     </script>
   </body>
