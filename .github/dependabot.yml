@@ -1,0 +1,20 @@
+version: 2
+updates:
+  # Root npm project. `/workers/widgets` is intentionally omitted until that worker exists.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 8
+    groups:
+      astro:
+        patterns: ["astro", "@astrojs/*"]
+      dev-tools:
+        dependency-type: development
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
