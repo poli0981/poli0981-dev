@@ -1,11 +1,19 @@
 ---
-import { SOCIAL_LINKS } from "../lib/links";
+import { socialsForPersona, CONTACT_EMAILS, type SocialLink } from "../lib/links";
+import { useTranslations } from "../i18n";
 import type { Locale } from "../i18n/routing";
+import SocialIcon from "./SocialIcon.astro";
 
 interface Props {
   locale: Locale;
 }
 const { locale } = Astro.props;
+const t = useTranslations(locale);
+
+const groups: { title: string; links: SocialLink[] }[] = [
+  { title: t.linksGroups.game, links: socialsForPersona("game") },
+  { title: t.linksGroups.dev, links: socialsForPersona("dev") },
+];
 
 function relFor(href: string, me?: boolean): string | undefined {
   const parts: string[] = [];
@@ -15,30 +23,73 @@ function relFor(href: string, me?: boolean): string | undefined {
 }
 ---
 
-<ul class="links-list">
+<div class="links-groups">
   {
-    SOCIAL_LINKS.map((link) => (
-      <li>
-        <a
-          class="link-row"
-          href={link.href}
-          rel={relFor(link.href, link.me)}
-          target={link.href.startsWith("http") ? "_blank" : undefined}
-        >
-          <span class="link-text">
-            <span class="link-name">{link.name}</span>
-            <span class="link-desc">{link.desc[locale]}</span>
-          </span>
-          <span class="link-arrow" aria-hidden="true">
-            →
-          </span>
-        </a>
-      </li>
+    groups.map((group) => (
+      <section class="link-group">
+        <h2 class="group-title">{group.title}</h2>
+        <ul class="links-list">
+          {group.links.map((link) => (
+            <li>
+              <a
+                class="link-row"
+                href={link.href}
+                rel={relFor(link.href, link.me)}
+                target={link.href.startsWith("http") ? "_blank" : undefined}
+              >
+                <span class="link-glyph" aria-hidden="true">
+                  <SocialIcon platform={link.platform} size={22} />
+                </span>
+                <span class="link-text">
+                  <span class="link-name">{link.name}</span>
+                  <span class="link-desc">{link.desc[locale]}</span>
+                </span>
+                <span class="link-arrow" aria-hidden="true">
+                  →
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
     ))
   }
-</ul>
+
+  <section class="link-group">
+    <h2 class="group-title">{t.contact.title}</h2>
+    <ul class="links-list">
+      {
+        CONTACT_EMAILS.map((email) => (
+          <li>
+            <a class="link-row" href={email.href}>
+              <span class="link-glyph" aria-hidden="true">
+                <SocialIcon platform="mail" size={22} />
+              </span>
+              <span class="link-text">
+                <span class="link-name">{email.address}</span>
+                <span class="link-desc">{email.label[locale]}</span>
+              </span>
+              <span class="link-arrow" aria-hidden="true">
+                →
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</div>
 
 <style>
+  .links-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  .group-title {
+    font-size: var(--text-h3);
+    margin: 0 0 0.85rem;
+  }
   .links-list {
     list-style: none;
     margin: 0;
@@ -63,6 +114,14 @@ function relFor(href: string, me?: boolean): string | undefined {
   .link-row:hover {
     border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
     transform: translateY(-2px);
+  }
+  .link-glyph {
+    display: inline-flex;
+    color: var(--muted);
+    flex: none;
+  }
+  .link-row:hover .link-glyph {
+    color: var(--accent);
   }
   .link-text {
     display: flex;

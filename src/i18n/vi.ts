@@ -38,6 +38,7 @@ const vi = {
     reportBug: "Báo lỗi",
     legal: "Pháp lý",
     rights: "Bảo lưu mọi quyền.",
+    social: "Mạng xã hội",
   },
   post: {
     minRead: "phút đọc",
@@ -103,6 +104,10 @@ const vi = {
     channel: "Kênh",
     dev: "Lập trình",
     personal: "Cá nhân",
+  },
+  linksGroups: {
+    game: "SkullMute — Game",
+    dev: "Kokone — Dev · đời thường",
   },
   contact: {
     title: "Liên hệ",

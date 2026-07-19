@@ -40,6 +40,7 @@ const en: UIStrings = {
     reportBug: "Report a bug",
     legal: "Legal",
     rights: "All rights reserved.",
+    social: "Social",
   },
   post: {
     minRead: "min read",
@@ -105,6 +106,10 @@ const en: UIStrings = {
     channel: "Channel",
     dev: "Dev",
     personal: "Personal",
+  },
+  linksGroups: {
+    game: "SkullMute — Gaming",
+    dev: "Kokone — Dev · life",
   },
   contact: {
     title: "Contact",
