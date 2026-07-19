@@ -20,7 +20,7 @@
   ],
   "vars": {
     // Public (non-secret) YouTube channel id. Replace with the real UC… value before deploy.
-    "YT_CHANNEL_ID": "UC__SET_YOUR_CHANNEL_ID__",
+    "YT_CHANNEL_ID": "UCCpZWle6fSgQXn3gLKoCGOg",
   },
   "observability": {
     "enabled": true,
