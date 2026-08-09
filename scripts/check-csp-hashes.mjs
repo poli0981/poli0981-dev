@@ -21,14 +21,47 @@ import { createHash } from "node:crypto";
 const ROOT = "dist/client";
 const CSP_META = /<meta http-equiv="content-security-policy" content="([^"]*)"/i;
 // Matches what a *browser* executes, not what Astro happens to emit. This guard exists to
-// notice scripts nobody expected, so a matcher that only recognises the tidy form would
-// report "all clear" on exactly the surprise it was built to catch. Three deliberate parts:
-//   /i          — `<SCRIPT>` runs just fine
-//   (\s[^>]*)?  — requires whitespace or `>` after the name, so `<scripting>` is not a match
-//   <\/script\s*> — HTML allows whitespace before the closing `>`, e.g. `</script >`
-// (Both variants were caught by CodeQL js/bad-tag-filter.)
-const SCRIPT = /<script(\s[^>]*)?>([\s\S]*?)<\/script\s*>/gi;
+// notice scripts nobody expected, so a matcher that only recognises the tidy form reports
+// "all clear" on exactly the surprise it was built to catch. Following HTML's tag grammar:
+//   /i             `<SCRIPT>` runs just fine
+//   (\s[^>]*)?     after the tag name, either `>` or whitespace-then-anything. Requiring
+//                  the whitespace is what stops `<scripting>` matching.
+//   <\/script(\s[^>]*)?>   end tags take the same shape — `</script >` and even
+//                  `</script foo>` are valid end tags whose attributes the parser discards.
+// CodeQL js/bad-tag-filter found three separate holes here, one patch at a time, so the
+// cases below are now asserted on every run instead of being re-reasoned from scratch.
+const SCRIPT = /<script(\s[^>]*)?>([\s\S]*?)<\/script(\s[^>]*)?>/gi;
 const JSON_LD = /type=("|')?application\/ld\+json/i;
+
+/** Tag forms a browser executes (or doesn't). Asserted before every real run. */
+const SELFTEST = [
+  ["<script>X</script>", true, "plain"],
+  ["<SCRIPT>X</SCRIPT>", true, "uppercase"],
+  ["<ScRiPt>X</ScRiPt>", true, "mixed case"],
+  ["<script defer>X</script>", true, "with attributes"],
+  ['<script type="module">X</script>', true, "typed"],
+  ["<script\n  defer\n>X</script>", true, "newlines in the start tag"],
+  ["<script>X</script >", true, "space before the end-tag close"],
+  ["<script>X</script\t\n bar>", true, "end tag with junk (HTML discards it)"],
+  ["<scripting>X</scripting>", false, "different element, must not match"],
+  ["<noscript>X</noscript>", false, "different element, must not match"],
+];
+
+function selftest() {
+  const failures = SELFTEST.filter(([html, shouldMatch]) => {
+    SCRIPT.lastIndex = 0;
+    return SCRIPT.test(html) !== shouldMatch;
+  });
+  if (failures.length > 0) {
+    console.error("CSP guard SELFTEST FAILED — the script matcher is wrong:\n");
+    for (const [html, shouldMatch, label] of failures) {
+      console.error(`  ${label}: expected ${shouldMatch ? "match" : "no match"} for ${html}`);
+    }
+    console.error("\nA guard that mis-parses script tags silently passes the very thing it");
+    console.error("is meant to catch. Fix the pattern before trusting any 'ok' below.");
+    process.exit(1);
+  }
+}
 
 function htmlFiles(dir) {
   const out = [];
@@ -39,6 +72,8 @@ function htmlFiles(dir) {
   }
   return out;
 }
+
+selftest();
 
 const offenders = [];
 let pages = 0;
