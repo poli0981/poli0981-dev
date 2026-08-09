@@ -81,13 +81,11 @@
     window.addEventListener("resize", onScroll, { passive: true });
     document.addEventListener("keydown", onKey);
     document.addEventListener("pointerdown", onDown);
-    document.addEventListener("astro:after-swap", apply);
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("pointerdown", onDown);
-      document.removeEventListener("astro:after-swap", apply);
     };
   });
 </script>

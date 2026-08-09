@@ -8,7 +8,7 @@ export interface NavItem {
 
 /**
  * Nav definitions live here so Header, MobileTabBar, MenuSheet, and Footer stay in sync.
- * P1 scope: only pages that exist. Gaming / Dev join when their pages ship.
+ * Every href comes from `sectionPath`, so they all carry the canonical trailing slash.
  */
 
 export function primaryNav(locale: Locale): NavItem[] {
@@ -45,8 +45,15 @@ export function legalNav(locale: Locale): NavItem[] {
   ];
 }
 
-/** Marks a nav item active for the current path (exact or as a section prefix). */
+/**
+ * Marks a nav item active for the current path (exact or as a section prefix).
+ *
+ * `sectionPath` hrefs end in "/", so a bare prefix test is already safe:
+ * "/blogging/".startsWith("/blog/") is false. The home hrefs are excluded because
+ * "/" is a prefix of everything.
+ */
 export function isActivePath(pathname: string, href: string): boolean {
   if (href === "/" || href === "/en/") return pathname === href;
-  return pathname === href || pathname.startsWith(href + "/");
+  const base = href.endsWith("/") ? href : `${href}/`;
+  return pathname === href || pathname.startsWith(base);
 }

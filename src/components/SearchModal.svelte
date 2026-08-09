@@ -179,16 +179,11 @@
 
   onMount(() => {
     const onOpen = () => openModal();
-    const onSwap = () => {
-      if (open) close();
-    };
     document.addEventListener("open-search", onOpen);
     document.addEventListener("keydown", onKey);
-    document.addEventListener("astro:after-swap", onSwap);
     return () => {
       document.removeEventListener("open-search", onOpen);
       document.removeEventListener("keydown", onKey);
-      document.removeEventListener("astro:after-swap", onSwap);
       document.body.style.overflow = "";
     };
   });

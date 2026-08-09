@@ -21,14 +21,7 @@ const { title, showLinks = true, showReport = false, ref } = Astro.props;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex" />
-    <script is:inline>
-      (() => {
-        try {
-          const t = localStorage.getItem("theme");
-          if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
-        } catch {}
-      })();
-    </script>
+    {/* Theme bootstrap comes from the `themeBootstrap` integration (astro.config.mjs). */}
     <title>{title}</title>
     {/* Only the body font — no display/reading font, no islands (docs 09 §3.1). */}
     <Font cssVariable="--ff-body" preload />
@@ -63,8 +56,8 @@ const { title, showLinks = true, showReport = false, ref } = Astro.props;
         showLinks && (
           <nav class="err-nav" aria-label="Điều hướng lỗi">
             <a href="/">Trang chủ</a>
-            <a href="/blog">Blog</a>
-            <a href="/truyen">Truyện</a>
+            <a href="/blog/">Blog</a>
+            <a href="/truyen/">Truyện</a>
           </nav>
         )
       }

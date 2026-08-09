@@ -38,11 +38,17 @@ export function homePath(locale: Locale): string {
   return locale === DEFAULT_LOCALE ? "/" : `/${locale}/`;
 }
 
-/** Build a localized path for a section, plus optional trailing slug segments. */
+/**
+ * Build a localized path for a section, plus optional trailing slug segments.
+ *
+ * Always ends in "/" to match `build.format: "directory"` and the canonical URLs
+ * BaseLayout emits. Without it every nav click cost a 307 from Cloudflare's
+ * `html_handling: "auto-trailing-slash"`, and href/canonical disagreed.
+ */
 export function sectionPath(section: Section, locale: Locale, ...rest: string[]): string {
   const seg = SEGMENTS[section][locale];
   const tail = rest.length ? `/${rest.join("/")}` : "";
-  return `${localePrefix(locale)}/${seg}${tail}`;
+  return `${localePrefix(locale)}/${seg}${tail}/`;
 }
 
 /** Which locale a pathname belongs to (only `/en/...` is prefixed). */
@@ -77,5 +83,5 @@ export function alternatePath(pathname: string, target: Locale): string {
   if (section) parts[0] = SEGMENTS[section][target];
 
   const prefix = localePrefix(target);
-  return `${prefix}/${parts.join("/")}`;
+  return `${prefix}/${parts.join("/")}/`;
 }
