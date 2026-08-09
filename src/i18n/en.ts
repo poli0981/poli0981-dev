@@ -176,6 +176,7 @@ const en: UIStrings = {
     disclaimer: "Disclaimer",
     thirdParty: "Third-party",
     licenses: "Licenses",
+    aiUsage: "AI disclosure",
   },
 };
 
