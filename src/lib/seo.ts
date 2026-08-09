@@ -15,6 +15,10 @@ export const SITE = {
     dark: "#0d1117",
     light: "#f5efe2",
   },
+  /** X handle used for twitter:site / twitter:creator (the dev persona account). */
+  twitter: "@tech9191010985",
+  /** OG images are generated at a fixed 1200x630 by scripts/gen-og.mjs. */
+  ogSize: { width: 1200, height: 630 },
 } as const;
 
 /** `<title>` text. Homepage gets the signature line; other pages are "Name — poli0981.dev". */
@@ -89,4 +93,48 @@ export function personSchema(): Record<string, unknown> {
 /** Minimal Person reference for embedding as an `author` on content schemas. */
 export function authorRef(): Record<string, unknown> {
   return { "@type": "Person", name: "Kokone", url: SITE.url };
+}
+
+/**
+ * `publisher` for Article-family schemas. Google's article guidelines expect one, and a
+ * one-person site publishes as itself — so this is an Organization wrapping the same
+ * identity rather than a separate brand.
+ */
+export function publisherRef(): Record<string, unknown> {
+  return {
+    "@type": "Organization",
+    name: SITE.name,
+    url: SITE.url,
+    logo: { "@type": "ImageObject", url: new URL("/favicon.svg", SITE.url).href },
+  };
+}
+
+/** BreadcrumbList from an ordered trail. The last item is the current page. */
+export function breadcrumbSchema(trail: { name: string; path: string }[]): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: trail.map((crumb, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: crumb.name,
+      item: new URL(crumb.path, SITE.url).href,
+    })),
+  };
+}
+
+/**
+ * FAQPage from the `faq` collection. `answer` must be plain text — schema.org's
+ * acceptedAnswer takes a string, and Google rejects entries whose answer is empty.
+ */
+export function faqPageSchema(items: { q: string; answer: string }[]): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map(({ q, answer }) => ({
+      "@type": "Question",
+      name: q,
+      acceptedAnswer: { "@type": "Answer", text: answer },
+    })),
+  };
 }

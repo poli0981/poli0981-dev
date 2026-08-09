@@ -5,7 +5,7 @@ import Waveline from "../components/Waveline.svelte";
 import { findTranslation, type ProjectEntry } from "../lib/collections";
 import { sectionPath, type Locale } from "../i18n/routing";
 import { useTranslations } from "../i18n";
-import { SITE, authorRef } from "../lib/seo";
+import { SITE, authorRef, breadcrumbSchema } from "../lib/seo";
 import { ogUrl } from "../lib/og";
 
 interface Props {
@@ -41,8 +41,14 @@ const projectSchema = {
   ...(stack.length > 0 ? { programmingLanguage: stack } : {}),
   inLanguage: locale === "vi" ? "vi-VN" : "en-US",
   author: authorRef(),
+  image: new URL(ogUrl("project", entry.id), SITE.url).href,
   url: new URL(pathname, SITE.url).href,
 };
+// Mirrors the visible crumb below.
+const crumbs = breadcrumbSchema([
+  { name: t.nav.projects, path: sectionPath("projects", locale) },
+  { name, path: pathname },
+]);
 ---
 
 <BaseLayout
@@ -50,7 +56,7 @@ const projectSchema = {
   description={tagline}
   {locale}
   {alternates}
-  jsonLd={projectSchema}
+  jsonLd={[projectSchema, crumbs]}
   image={ogUrl("project", entry.id)}
 >
   <article class="proj" data-pagefind-body>

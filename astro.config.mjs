@@ -9,6 +9,10 @@ import tailwindcss from "@tailwindcss/vite";
 // Error/system pages that must never appear in the sitemap.
 const NON_INDEXED = /\/(404|500|403|429|offline)\/?$/;
 
+// Sitemap <lastmod>. Every deploy is a full rebuild, so build time is the truthful
+// "as of" for the whole site.
+const BUILD_TIME = new Date().toISOString();
+
 // The theme must be applied before first paint or the default flashes, so this has to
 // be inline and synchronous — which rules out a processed <script> (Astro turns those
 // into deferred external modules). `is:inline` would work but Astro never hashes it
@@ -78,6 +82,10 @@ export default defineConfig({
     sitemap({
       i18n: { defaultLocale: "vi", locales: { vi: "vi", en: "en" } },
       filter: (page) => !NON_INDEXED.test(page),
+      // The sitemap shipped with no <lastmod> at all. Per-page dates would mean
+      // threading content dates through the integration; the build timestamp is the
+      // honest site-wide answer and is what crawlers use to schedule a recrawl.
+      serialize: (item) => ({ ...item, lastmod: BUILD_TIME }),
     }),
   ],
 
