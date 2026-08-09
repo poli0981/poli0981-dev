@@ -1,0 +1,5 @@
+Contact: mailto:contact@poli0981.dev
+Expires: 2027-07-01T00:00:00Z
+Preferred-Languages: vi, en
+Canonical: https://poli0981.dev/.well-known/security.txt
+Policy: https://github.com/poli0981/poli0981-dev/blob/main/SECURITY.md

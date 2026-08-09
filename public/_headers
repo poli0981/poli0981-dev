@@ -9,3 +9,9 @@
 # The service worker must always revalidate so updates (bumped SHELL) propagate.
 /sw.js
   Cache-Control: no-cache
+
+# RFC 9116 requires text/plain. Wrangler already infers it from the .txt extension at
+# upload time; this is belt-and-braces so a future asset-handling change can't break it.
+/.well-known/security.txt
+  Content-Type: text/plain; charset=utf-8
+  Cache-Control: public, max-age=86400
