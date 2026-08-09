@@ -9,7 +9,7 @@ import type { BlogEntry } from "../lib/collections";
 import { useTranslations } from "../i18n";
 import { sectionPath, type Locale } from "../i18n/routing";
 import { formatDate, isoDate } from "../lib/format";
-import { SITE, authorRef } from "../lib/seo";
+import { SITE, authorRef, publisherRef, breadcrumbSchema } from "../lib/seo";
 import { ogUrl } from "../lib/og";
 
 interface NavLink {
@@ -42,6 +42,7 @@ const alternates = translationHref
     ? { vi: pathname, en: translationHref }
     : { en: pathname, vi: translationHref }
   : null;
+const canonicalUrl = new URL(pathname, SITE.url).href;
 const postSchema = {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
@@ -51,9 +52,18 @@ const postSchema = {
   ...(updated ? { dateModified: isoDate(updated) } : {}),
   inLanguage: locale === "vi" ? "vi-VN" : "en-US",
   author: authorRef(),
+  publisher: publisherRef(),
+  // Google's article guidelines want an image; every post has a generated OG card.
+  image: new URL(ogUrl("blog", entry.id), SITE.url).href,
+  mainEntityOfPage: { "@type": "WebPage", "@id": canonicalUrl },
   ...(tags.length > 0 ? { keywords: tags.join(", ") } : {}),
-  url: new URL(pathname, SITE.url).href,
+  url: canonicalUrl,
 };
+// Mirrors the visible breadcrumb below, so the two can't drift.
+const crumbs = breadcrumbSchema([
+  { name: t.nav.blog, path: blogHref },
+  { name: title, path: pathname },
+]);
 ---
 
 <BaseLayout
@@ -63,7 +73,12 @@ const postSchema = {
   type="article"
   reading
   {alternates}
-  jsonLd={postSchema}
+  jsonLd={[postSchema, crumbs]}
+  article={{
+    published: isoDate(date),
+    ...(updated ? { modified: isoDate(updated) } : {}),
+    tags,
+  }}
   image={ogUrl("blog", entry.id)}
 >
   <article class="reading-column post" data-pagefind-body>

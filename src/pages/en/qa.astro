@@ -5,6 +5,8 @@ import { render } from "astro:content";
 import { getFaqs } from "@/lib/collections";
 import { useTranslations } from "@/i18n";
 import { sectionPath } from "@/i18n/routing";
+import { faqPageSchema } from "@/lib/seo";
+import { plainText } from "@/lib/format";
 
 const locale = "en" as const;
 const t = useTranslations(locale);
@@ -15,6 +17,12 @@ const items = await Promise.all(
     return { id: f.id, group: f.data.group, q: f.data.q, Content };
   }),
 );
+// See the vi page: acceptedAnswer.text must be a string, so it comes from the raw body.
+const faqSchema = faqPageSchema(
+  faqs
+    .map((f) => ({ q: f.data.q, answer: plainText(f.body ?? "") }))
+    .filter((x) => x.answer.length > 0),
+);
 const groups = [
   { key: "channel", label: t.qaGroups.channel },
   { key: "dev", label: t.qaGroups.dev },
@@ -22,7 +30,7 @@ const groups = [
 ] as const;
 ---
 
-<BaseLayout title={t.nav.qa} {locale}>
+<BaseLayout title={t.nav.qa} {locale} jsonLd={faqSchema}>
   <section class="page narrow py-section" data-pagefind-body>
     <h1 class="text-h1">{t.nav.qa}</h1>
     <div class="wave"><Waveline client:visible height={28} /></div>
