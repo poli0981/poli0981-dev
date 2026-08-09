@@ -21,16 +21,25 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Job-level too, so a second job added later can't silently inherit something wider.
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
+      # Actions are pinned to commit SHAs, not tags: a tag is mutable, so `@v7` would
+      # execute whatever that tag points at on the day CI runs. Dependabot's
+      # github-actions ecosystem updates the pins and keeps the version comment in sync.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # check-exif diffs changed images against the base ref
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: npm
 
+      # Lifecycle scripts run only for the packages allow-listed in package.json
+      # #allowScripts; .npmrc sets strict-allow-scripts so anything unreviewed is a
+      # hard install failure rather than a warning (docs 06 §6, anti-worm).
       - name: Install
         run: npm ci
 

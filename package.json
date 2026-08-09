@@ -7,6 +7,12 @@
   "engines": {
     "node": ">=24"
   },
+  "allowScripts": {
+    "esbuild": true,
+    "workerd": true,
+    "lefthook": true,
+    "fsevents": true
+  },
   "scripts": {
     "dev": "astro dev",
     "build": "astro build && node scripts/gen-og.mjs && pagefind --site dist/client && node scripts/check-csp-hashes.mjs",

@@ -1,0 +1,19 @@
+# Suppressions for the weekly OSV scan (.github/workflows/osv-scanner.yml).
+#
+# Rules for adding an entry:
+#  - every entry carries `untilDate`, so a suppression expires and gets re-argued
+#    instead of quietly becoming permanent;
+#  - `reason` must say why it is not exploitable HERE, not merely that it is annoying;
+#  - if a fix ships, delete the entry rather than extending the date.
+
+[[IgnoredVulns]]
+id = "GHSA-5p4m-2wfm-xmqj"
+untilDate = 2026-11-10T00:00:00Z
+reason = """
+js-yaml 3.x quadratic CPU in !!omap resolution, reached via gray-matter@4 -> js-yaml@3.15.0.
+There is no patched 3.x — the fix was not backported — and gray-matter needs the v3 API
+(safeLoad), so the js-yaml override in package.json is deliberately scoped to ^4.
+Not exploitable here: gray-matter is a devDependency used only by scripts/gen-og.mjs at
+build time, and the only YAML it ever parses is our own committed content frontmatter.
+No untrusted YAML reaches it. Revisit if gray-matter is replaced or ships a v4 engine.
+"""

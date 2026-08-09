@@ -1,6 +1,9 @@
 version: 2
 updates:
-  # Root npm project. `/workers/widgets` is intentionally omitted until that worker exists.
+  # Root npm project. `/workers/widgets` is still omitted, but the reason has changed:
+  # the worker exists now, it is just deliberately dependency-free (no package.json, the
+  # YouTube RSS is hand-parsed), so there is no manifest for Dependabot to read. Add an
+  # entry here the day that worker gains a package.json.
   - package-ecosystem: npm
     directory: "/"
     schedule:
