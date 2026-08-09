@@ -20,7 +20,11 @@ import { createHash } from "node:crypto";
 
 const ROOT = "dist/client";
 const CSP_META = /<meta http-equiv="content-security-policy" content="([^"]*)"/i;
-const SCRIPT = /<script([^>]*)>([\s\S]*?)<\/script>/g;
+// Case-insensitive on purpose. Astro emits lowercase, but this guard's whole job is to
+// notice scripts nobody expected — and a browser happily executes <SCRIPT>. A matcher
+// that only sees the expected casing would report "all clear" on exactly the surprise
+// it exists to catch. (Flagged by CodeQL js/bad-tag-filter.)
+const SCRIPT = /<script([^>]*)>([\s\S]*?)<\/script>/gi;
 const JSON_LD = /type=("|')?application\/ld\+json/i;
 
 function htmlFiles(dir) {
