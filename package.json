@@ -7,6 +7,12 @@
   "engines": {
     "node": ">=24"
   },
+  "allowScripts": {
+    "esbuild": true,
+    "workerd": true,
+    "lefthook": true,
+    "fsevents": true
+  },
   "scripts": {
     "dev": "astro dev",
     "build": "astro build && node scripts/gen-og.mjs && pagefind --site dist/client && node scripts/check-csp-hashes.mjs",
@@ -29,7 +35,8 @@
     "fast-uri": "^3.1.5",
     "postcss": "^8.5.26",
     "nanoid": "^3.3.18",
-    "js-yaml@^4": "^4.3.1"
+    "js-yaml@^4": "^4.3.1",
+    "js-yaml@^3": "^3.15.1"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.1.3",
