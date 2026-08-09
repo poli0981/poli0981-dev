@@ -20,6 +20,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const assets = env.ASSETS as Fetcher | undefined;
 
   // Serve a prerendered error page via ASSETS, preserving the HTTP status.
+  // `path` MUST carry the trailing slash: the pages build to /403/index.html, and with
+  // `html_handling: "auto-trailing-slash"` a fetch of "/403" answers 307 with an EMPTY
+  // body — which this would then re-wrap as a blank 403.
   const serveError = async (path: string, status: number): Promise<Response> => {
     if (assets) {
       const res = await assets.fetch(new URL(path, url));
@@ -31,7 +34,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Denylist → custom 403.
   if (kv) {
     const denied = await kv.get(`denylist:${ip}`);
-    if (denied !== null) return serveError("/403", 403);
+    if (denied !== null) return serveError("/403/", 403);
   }
 
   // Soft rate-limit on /api/* → custom 429 + Retry-After. (The hard limit is a
@@ -43,7 +46,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const key = `rl:${group}:${ip}`;
     const current = Number((await kv.get(key)) ?? "0");
     if (current >= RATE_LIMIT) {
-      const res = await serveError("/429", 429);
+      const res = await serveError("/429/", 429);
       res.headers.set("Retry-After", String(WINDOW_SECONDS));
       return res;
     }

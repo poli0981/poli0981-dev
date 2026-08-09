@@ -1,7 +1,6 @@
 ---
 import "../styles/global.css";
 import { Font } from "astro:assets";
-import { ClientRouter } from "astro:transitions";
 import SkipLink from "../components/SkipLink.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
@@ -55,19 +54,10 @@ const onLegalPage = /\/legal(\/|$)/.test(Astro.url.pathname);
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    {/* Apply stored theme before first paint, and re-apply after View Transitions swaps. */}
-    <script is:inline>
-      (() => {
-        const apply = () => {
-          try {
-            const t = localStorage.getItem("theme");
-            if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
-          } catch {}
-        };
-        apply();
-        document.addEventListener("astro:after-swap", apply);
-      })();
-    </script>
+    {
+      /* The pre-paint theme bootstrap is injected head-inline by the `themeBootstrap`
+        integration in astro.config.mjs, so Astro hashes it for the CSP. */
+    }
 
     <title>{seo.title}</title>
     <meta name="description" content={seo.description} />
@@ -134,8 +124,6 @@ const onLegalPage = /\/legal(\/|$)/.test(Astro.url.pathname);
         />
       )
     }
-
-    <ClientRouter />
   </head>
 
   <body>
@@ -174,7 +162,6 @@ const onLegalPage = /\/legal(\/|$)/.test(Astro.url.pathname);
 
     <script>
       // One document-level click listener routes every trigger to its island.
-      // It survives View Transitions navigations.
       document.addEventListener("click", (e) => {
         const target = e.target;
         if (!(target instanceof Element)) return;

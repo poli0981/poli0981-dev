@@ -9,10 +9,12 @@ import ErrorLayout from "@/layouts/ErrorLayout.astro";
   <p class="code">
     Mã tham chiếu / Reference: <span class="ref" id="ref">…</span>
   </p>
-  <script is:inline>
-    {
-      const el = document.getElementById("ref");
-      if (el) el.textContent = crypto.randomUUID().slice(0, 8);
-    }
+  {
+    /* Processed (not `is:inline`): this sits in the body, so a <meta> CSP already governs
+      it, and only a bundled script gets a hash. Deferring is fine — it only fills a span. */
+  }
+  <script>
+    const el = document.getElementById("ref");
+    if (el) el.textContent = crypto.randomUUID().slice(0, 8);
   </script>
 </ErrorLayout>

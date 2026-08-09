@@ -9,12 +9,37 @@ import tailwindcss from "@tailwindcss/vite";
 // Error/system pages that must never appear in the sitemap.
 const NON_INDEXED = /\/(404|500|403|429|offline)\/?$/;
 
+// The theme must be applied before first paint or the default flashes, so this has to
+// be inline and synchronous — which rules out a processed <script> (Astro turns those
+// into deferred external modules). `is:inline` would work but Astro never hashes it
+// (see core/csp/common.js: trackScriptHashes only covers bundled scripts, client
+// directives, island prebuilts, and settings.scripts), leaving it to survive only
+// because a <meta> CSP does not govern markup that precedes it — fragile by accident.
+// `injectScript("head-inline")` is the one path that is BOTH rendered verbatim inline
+// AND hashed from that same string, so the CSP can never drift from the source.
+const THEME_BOOTSTRAP = `(()=>{try{const t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch{}})();`;
+
+/** @type {import('astro').AstroIntegration} */
+const themeBootstrap = {
+  name: "theme-bootstrap",
+  hooks: {
+    "astro:config:setup": ({ injectScript }) => injectScript("head-inline", THEME_BOOTSTRAP),
+  },
+};
+
 // https://astro.build/config
 export default defineConfig({
   site: "https://poli0981.dev",
   // Default output is "static": every page prerenders unless it opts out with
   // `export const prerender = false` (only api routes + middleware run on-demand).
   output: "static",
+
+  // Astro's prefetch is off by default, but <ClientRouter /> force-enables it with
+  // `prefetchAll: true` + a hover strategy. Cloudflare's zone-level Speculation Rules
+  // then answers every `Sec-Purpose: prefetch` request to a Worker origin with a 503
+  // (`Cf-Speculation-Refused`), so hovering any link logged a failed request. Pin this
+  // off so re-adding the router can never silently switch hover-prefetch back on.
+  prefetch: false,
 
   // The @cloudflare/vite-plugin (used by this adapter) runs `astro dev` on workerd and
   // auto-exposes the wrangler.jsonc bindings (KV/ASSETS) + .dev.vars — no platformProxy needed.
@@ -47,6 +72,7 @@ export default defineConfig({
   },
 
   integrations: [
+    themeBootstrap,
     svelte(),
     mdx(),
     sitemap({

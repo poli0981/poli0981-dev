@@ -8,12 +8,6 @@
 
   onMount(() => {
     theme = document.documentElement.dataset.theme === "light" ? "light" : "dark";
-    // Reflect theme if a View Transitions swap re-runs the persisted <html> attribute.
-    const sync = () => {
-      theme = document.documentElement.dataset.theme === "light" ? "light" : "dark";
-    };
-    document.addEventListener("astro:after-swap", sync);
-    return () => document.removeEventListener("astro:after-swap", sync);
   });
 
   function toggle() {

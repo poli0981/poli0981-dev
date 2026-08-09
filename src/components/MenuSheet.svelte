@@ -39,14 +39,11 @@
     const onKey = (e) => {
       if (e.key === "Escape" && open) closeMenu();
     };
-    const onSwap = () => closeMenu();
     document.addEventListener("toggle-menu", onToggle);
     document.addEventListener("keydown", onKey);
-    document.addEventListener("astro:after-swap", onSwap);
     return () => {
       document.removeEventListener("toggle-menu", onToggle);
       document.removeEventListener("keydown", onKey);
-      document.removeEventListener("astro:after-swap", onSwap);
       document.body.style.overflow = "";
     };
   });

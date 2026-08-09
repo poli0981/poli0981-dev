@@ -100,16 +100,11 @@
       const el = e.target instanceof Element ? e.target.closest("[data-lightbox-index]") : null;
       if (el) openAt(Number(el.getAttribute("data-lightbox-index")));
     };
-    const onSwap = () => {
-      if (open) close();
-    };
     document.addEventListener("click", onDocClick);
     document.addEventListener("keydown", onKey);
-    document.addEventListener("astro:after-swap", onSwap);
     return () => {
       document.removeEventListener("click", onDocClick);
       document.removeEventListener("keydown", onKey);
-      document.removeEventListener("astro:after-swap", onSwap);
       document.body.style.overflow = "";
     };
   });
