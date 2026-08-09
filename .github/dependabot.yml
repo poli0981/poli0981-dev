@@ -15,6 +15,16 @@ updates:
         patterns: ["astro", "@astrojs/*"]
       dev-tools:
         dependency-type: development
+    ignore:
+      # TypeScript is pinned to 6.0.x on purpose and a major bump can never resolve:
+      #   typescript-eslint peers `>=4.8.4 <6.1.0`  <- the binding constraint
+      #   @astrojs/check    peers `^5.0.0 || ^6.0.0`
+      #   @astrojs/svelte   peers `^5.3.3 || ^6.0.0`
+      # Without this, every dev-tools group PR silently includes typescript@7 and dies
+      # at `npm ci` with ERESOLVE, taking 9 unrelated updates down with it.
+      # Remove this entry once typescript-eslint widens its peer range past 7.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: "/"
