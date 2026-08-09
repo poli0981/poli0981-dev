@@ -9,3 +9,8 @@ package-lock.json
 
 # Spec documentation suite — authored content, not ours to reformat
 poli0981.dev-docs/
+
+# src/content is a git submodule (poli0981/content). Formatting it from here would
+# leave the submodule permanently dirty and the reformat could never be committed
+# from this repo — content is formatted in its own repo.
+src/content/
