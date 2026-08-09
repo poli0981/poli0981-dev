@@ -26,7 +26,6 @@
     "format:check": "prettier --check .",
     "knip": "knip",
     "deploy": "wrangler deploy --config ./dist/server/wrangler.json",
-    "gen-demo-gallery": "node scripts/gen-demo-gallery.mjs",
     "strip-exif": "node scripts/strip-exif.mjs",
     "check-exif": "node scripts/check-exif.mjs"
   },
