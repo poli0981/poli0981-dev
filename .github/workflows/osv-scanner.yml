@@ -12,7 +12,7 @@ on:
   # Re-run when the dependency graph itself changes, so a bad bump is caught on the PR
   # rather than up to a week later.
   pull_request:
-    paths: ["package-lock.json", "osv-scanner.toml"]
+    paths: ["package-lock.json"]
 
 permissions:
   contents: read
