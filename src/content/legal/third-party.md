@@ -19,9 +19,9 @@ Trang web này được xây dựng bằng phần mềm mã nguồn mở. Mỗi 
 | Svelte                                                        | MIT              |
 | Tailwind CSS                                                  | MIT              |
 | Pagefind                                                      | MIT              |
-| @vite-pwa/astro / Workbox                                     | MIT              |
 | Zod                                                           | MIT              |
 | sharp                                                         | Apache-2.0       |
+| Satori + @resvg/resvg-js (build-time OG images)               | MPL-2.0          |
 | Wrangler                                                      | MIT / Apache-2.0 |
 | Bricolage Grotesque, Be Vietnam Pro, Literata, JetBrains Mono | SIL OFL 1.1      |
 

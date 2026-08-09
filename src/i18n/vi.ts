@@ -172,6 +172,7 @@ const vi = {
     disclaimer: "Miễn trừ",
     thirdParty: "Bên thứ ba",
     licenses: "Giấy phép",
+    aiUsage: "Sử dụng AI",
   },
 };
 
