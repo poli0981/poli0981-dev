@@ -13,7 +13,12 @@ const pathname = Astro.url.pathname;
 
 <header class="site-header">
   <div class="page header-inner">
-    <a class="brand" href={homePath(locale)} aria-label="poli0981.dev — home">
+    {
+      /* The accessible name must START with the visible text ("SkullMute"), or voice
+         control cannot act on what the user can see — WCAG 2.5.3 Label in Name (A).
+         Caught by Lighthouse's label-content-name-mismatch. */
+    }
+    <a class="brand" href={homePath(locale)} aria-label={`SkullMute — poli0981.dev`}>
       <svg class="brand-mark" viewBox="0 0 32 12" aria-hidden="true">
         <path
           d="M1 6 H8 L10 2 L13 10 L16 3 L19 9 L22 6 H31"
