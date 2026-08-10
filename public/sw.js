@@ -5,9 +5,12 @@
  *
  * Bump SHELL when the offline page or this file changes so clients update.
  */
-const SHELL = "shell-v1";
+const SHELL = "shell-v2";
 const OFFLINE = "/offline/";
-const PRECACHE = [OFFLINE, "/favicon.svg"];
+// skullhop.js is precached by name rather than warmed like /_astro/*: it only loads on
+// the offline page, which nobody visits while online, so warm-on-fetch would never fire
+// and the game would 404 in the one situation it exists for.
+const PRECACHE = [OFFLINE, "/favicon.svg", "/skullhop.js"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

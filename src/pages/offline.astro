@@ -7,4 +7,76 @@ import ErrorLayout from "@/layouts/ErrorLayout.astro";
   <h1>Không có mạng — nhưng vẫn có thứ để làm.</h1>
   <p class="en">You're offline.</p>
   <p class="code">Kết nối lại rồi thử tải trang một lần nữa nhé.</p>
+
+  <div class="game">
+    <canvas
+      id="skullhop"
+      width="320"
+      height="120"
+      role="img"
+      aria-label="Skull Hop — nhấn Space hoặc chạm để nhảy qua các cột sóng âm"
+      data-over="Hết lượt / Game over"
+    >
+    </canvas>
+    <div class="hud">
+      <span>Điểm / Score <b id="skullhop-score">0</b></span>
+      <span>Tốt nhất / Best <b id="skullhop-best">0</b></span>
+    </div>
+    <button type="button" id="skullhop-start" data-again="Chơi lại / Again"> Chơi / Play </button>
+    <p class="hint">Space hoặc chạm để nhảy. — Space or tap to jump.</p>
+  </div>
+
+  {
+    /* Stable url in public/, not a bundled chunk: the service worker precaches it by
+       name, and a hashed /_astro/ file could never be precached. `is:inline` keeps
+       Astro from processing it; it has a src and no inline body, so CSP `'self'`
+       covers it and no hash is involved. */
+  }
+  <script src="/skullhop.js" defer is:inline></script>
 </ErrorLayout>
+
+<style>
+  .game {
+    margin-block-start: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  #skullhop {
+    inline-size: min(100%, 320px);
+    block-size: auto;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    touch-action: manipulation;
+  }
+  .hud {
+    display: flex;
+    gap: 1.5rem;
+    font-family: var(--ff-mono);
+    font-size: var(--text-small);
+    color: var(--muted);
+  }
+  .hud b {
+    color: var(--accent);
+  }
+  #skullhop-start {
+    font: inherit;
+    font-family: var(--ff-mono);
+    font-size: var(--text-small);
+    color: var(--bg);
+    background: var(--accent);
+    border: 0;
+    border-radius: var(--radius-card);
+    padding: 0.5rem 1.25rem;
+    cursor: pointer;
+  }
+  #skullhop-start:hover {
+    background: var(--accent-strong);
+  }
+  .hint {
+    color: var(--muted);
+    font-size: var(--text-small);
+  }
+</style>

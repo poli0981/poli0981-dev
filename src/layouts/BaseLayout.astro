@@ -198,6 +198,7 @@ const onLegalPage = /\/legal(\/|$)/.test(Astro.url.pathname);
 
     <script>
       import "../lib/bugbuffer"; // installs the client error ring-buffer on load
+      import "../lib/easter"; // console banner + konami, self-installing on idle
 
       // Register the offline-fallback service worker once, after first load.
       if ("serviceWorker" in navigator) {

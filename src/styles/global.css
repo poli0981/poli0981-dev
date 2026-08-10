@@ -231,3 +231,10 @@ body::after {
     scroll-behavior: auto !important;
   }
 }
+
+/* Konami easter egg (src/lib/easter.ts): flips the accent to the horror tone for a
+   beat. Self-reverting after 4s; no layout shift, so reduced-motion needs nothing. */
+:root[data-konami="on"] {
+  --accent: var(--horror);
+  --accent-strong: var(--horror);
+}
