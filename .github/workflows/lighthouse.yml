@@ -1,0 +1,77 @@
+name: Lighthouse
+
+# docs 14 §3: assert the perf budget on a preview build — WARN ONLY, never blocking.
+# Lighthouse numbers move with runner load, so a hard gate here would block deploys on
+# noise rather than on regressions. The job is advisory by construction: assertions are
+# `warn`, and continue-on-error means a red run never fails the check suite.
+# Per the doc, act when it goes red twice in a row rather than on a single bad run.
+on:
+  pull_request:
+    paths-ignore: ["poli0981.dev-docs/**", "*.md", "LICENSE"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    # The whole point: informative, never a blocker.
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive # src/content, or the build has no content to measure
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Generate Cloudflare binding types
+        run: npx wrangler types
+
+      - name: Build
+        run: npm run build
+
+      # `astro preview` boots the built worker in workerd with the real bindings and
+      # _headers, so the numbers reflect production rather than a bare static server.
+      - name: Start preview server
+        run: npm run preview &
+
+      - name: Wait for the server
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf -o /dev/null http://localhost:4321/; then
+              echo "preview up after ${i}s"; exit 0
+            fi
+            sleep 1
+          done
+          echo "preview server never came up"; exit 1
+
+      # Four representative pages (docs 14 §3): home, a blog post, a story chapter,
+      # a gallery album — the heaviest template of each kind.
+      - name: Lighthouse
+        run: |
+          npx --yes @lhci/cli@0.15.x autorun \
+            --collect.url=http://localhost:4321/ \
+            --collect.url=http://localhost:4321/blog/lan-dau-viet-truyen/ \
+            --collect.url=http://localhost:4321/truyen/dem-khong-tieng/chuong-01/ \
+            --collect.url=http://localhost:4321/gallery/game/
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: lighthouse-reports
+          path: .lighthouseci/
+          retention-days: 14
