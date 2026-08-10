@@ -21,6 +21,7 @@ const SEGMENTS = {
   gaming: { vi: "gaming", en: "gaming" },
   dev: { vi: "dev", en: "dev" },
   about: { vi: "about", en: "about" },
+  now: { vi: "now", en: "now" },
   qa: { vi: "qa", en: "qa" },
   links: { vi: "links", en: "links" },
   legal: { vi: "legal", en: "legal" },

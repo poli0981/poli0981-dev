@@ -14,6 +14,7 @@ const en: UIStrings = {
     gaming: "Gaming",
     dev: "Dev",
     about: "About",
+    now: "Now",
     qa: "Q&A",
     links: "Links",
     menu: "Menu",
@@ -177,6 +178,12 @@ const en: UIStrings = {
     thirdParty: "Third-party",
     licenses: "Licenses",
     aiUsage: "AI disclosure",
+  },
+  now: {
+    title: "Now",
+    description: "What I am working on, reading and playing at the moment.",
+    updatedLabel: "Updated",
+    what: "This is a /now page — a snapshot of the present rather than a biography. It going stale is expected; the date above tells you how stale.",
   },
 };
 

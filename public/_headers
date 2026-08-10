@@ -10,6 +10,11 @@
 /sw.js
   Cache-Control: no-cache
 
+# Stable (unhashed) url so the SW can precache it by name — so it needs revalidation
+# for updates to land, same reasoning as sw.js.
+/skullhop.js
+  Cache-Control: no-cache
+
 # RFC 9116 requires text/plain. Wrangler already infers it from the .txt extension at
 # upload time; this is belt-and-braces so a future asset-handling change can't break it.
 /.well-known/security.txt

@@ -29,6 +29,7 @@ export function menuNav(locale: Locale): NavItem[] {
   const t = useTranslations(locale);
   return [
     ...primaryNav(locale),
+    { href: sectionPath("now", locale), label: t.nav.now },
     { href: sectionPath("qa", locale), label: t.nav.qa },
     { href: sectionPath("links", locale), label: t.nav.links },
   ];
