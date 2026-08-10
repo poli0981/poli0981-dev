@@ -92,4 +92,17 @@ const legal = defineCollection({
   }),
 });
 
-export const collections = { blog, stories, projects, faq, gallery, legal };
+// The /now page (nownownow.com convention): what the owner is doing at the moment,
+// refreshed every month or so. One file per locale, paired by translationKey.
+// `updated` is required — a /now page with no visible date is worse than no /now page.
+const now = defineCollection({
+  loader: contentGlob("now"),
+  schema: z.object({
+    title: z.string(),
+    lang: LANG,
+    translationKey: z.string().optional(),
+    updated: z.coerce.date(),
+  }),
+});
+
+export const collections = { blog, stories, projects, faq, gallery, legal, now };

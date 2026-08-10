@@ -1,0 +1,64 @@
+---
+import { getCollection, render } from "astro:content";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Prose from "@/components/Prose.astro";
+import Waveline from "@/components/Waveline.svelte";
+import { useTranslations } from "@/i18n";
+import { formatDate, isoDate } from "@/lib/format";
+import { sectionPath, type Locale } from "@/i18n/routing";
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+
+const entries = await getCollection("now");
+const entry = entries.find((e) => e.data.lang === locale) ?? entries[0];
+if (!entry) throw new Error("No /now entry found — expected src/content/now/now.md");
+const { Content } = await render(entry);
+
+// Both locales exist as a pair, so hreflang is the plain section path.
+const alternates = { vi: sectionPath("now", "vi"), en: sectionPath("now", "en") };
+---
+
+<BaseLayout title={t.now.title} description={t.now.description} {locale} {alternates}>
+  <section class="page narrow py-section" data-pagefind-body>
+    <h1 class="text-h1">{t.now.title}</h1>
+    <div class="wave"><Waveline client:visible height={28} /></div>
+
+    <p class="updated">
+      {t.now.updatedLabel}
+      <time datetime={isoDate(entry.data.updated)}>{formatDate(entry.data.updated, locale)}</time>
+    </p>
+
+    <Prose>
+      <Content />
+    </Prose>
+
+    <p class="what" data-pagefind-ignore>{t.now.what}</p>
+  </section>
+</BaseLayout>
+
+<style>
+  .narrow {
+    max-inline-size: 46rem;
+  }
+  .wave {
+    margin-block: 1rem 1.5rem;
+    max-inline-size: 22rem;
+  }
+  .updated {
+    color: var(--muted);
+    font-family: var(--ff-mono);
+    font-size: var(--text-small);
+    margin-block-end: 2rem;
+  }
+  .what {
+    margin-block-start: 3rem;
+    padding-block-start: 1.25rem;
+    border-block-start: 1px solid var(--line);
+    color: var(--muted);
+    font-size: var(--text-small);
+  }
+</style>

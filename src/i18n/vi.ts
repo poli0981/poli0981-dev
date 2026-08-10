@@ -12,6 +12,7 @@ const vi = {
     gaming: "Gaming",
     dev: "Dev",
     about: "Giới thiệu",
+    now: "Bây giờ",
     qa: "Hỏi đáp",
     links: "Liên kết",
     menu: "Menu",
@@ -173,6 +174,12 @@ const vi = {
     thirdParty: "Bên thứ ba",
     licenses: "Giấy phép",
     aiUsage: "Sử dụng AI",
+  },
+  now: {
+    title: "Bây giờ",
+    description: "Mình đang làm gì, đọc gì, chơi gì ở thời điểm này.",
+    updatedLabel: "Cập nhật",
+    what: "Đây là một trang /now — ảnh chụp hiện tại thay vì tiểu sử. Nó cũ đi là chuyện bình thường; ngày cập nhật ở trên cho bạn biết cũ tới đâu.",
   },
 };
 
