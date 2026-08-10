@@ -76,6 +76,11 @@ jobs:
       - name: Audit (prod deps, high+)
         run: npm audit --omit=dev --audit-level=high
 
+      # THIRD-PARTY-NOTICES.md must match the lockfile, and every license must be either
+      # on the allowlist or explicitly reviewed (docs 08 §6).
+      - name: Third-party notices
+        run: npm run gen-notices -- --check
+
       # Fail if any changed image under src/assets/ still carries GPS or a camera serial.
       - name: Check EXIF (changed images)
         env:

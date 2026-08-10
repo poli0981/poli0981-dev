@@ -17,6 +17,7 @@
     "dev": "astro dev",
     "build": "astro build && node scripts/gen-og.mjs && pagefind --site dist/client && node scripts/check-csp-hashes.mjs",
     "check-csp": "node scripts/check-csp-hashes.mjs",
+    "gen-notices": "node scripts/gen-notices.mjs",
     "gen-og": "node scripts/gen-og.mjs",
     "preview": "astro preview",
     "astro": "astro",
