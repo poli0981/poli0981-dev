@@ -60,13 +60,19 @@ jobs:
 
       # Four representative pages (docs 14 §3): home, a blog post, a story chapter,
       # a gallery album — the heaviest template of each kind.
-      - name: Lighthouse
+      # collect and assert are separate steps on purpose. With `autorun`, a failed
+      # assertion aborts the run before anything is written, so the reports artifact
+      # came back empty in exactly the case you want to read it.
+      - name: Lighthouse — collect
         run: |
-          npx --yes @lhci/cli@0.15.x autorun \
-            --collect.url=http://localhost:4321/ \
-            --collect.url=http://localhost:4321/blog/lan-dau-viet-truyen/ \
-            --collect.url=http://localhost:4321/truyen/dem-khong-tieng/chuong-01/ \
-            --collect.url=http://localhost:4321/gallery/game/
+          npx --yes @lhci/cli@0.15.x collect \
+            --url=http://localhost:4321/ \
+            --url=http://localhost:4321/blog/lan-dau-viet-truyen/ \
+            --url=http://localhost:4321/truyen/dem-khong-tieng/chuong-01/ \
+            --url=http://localhost:4321/gallery/game/
+
+      - name: Lighthouse — assert budget
+        run: npx --yes @lhci/cli@0.15.x assert
 
       - name: Upload reports
         if: always()

@@ -15,7 +15,18 @@ const t = useTranslations(current);
 const { href = alternatePath(Astro.url.pathname, target), label = t.lang.switchTo } = Astro.props;
 ---
 
-<a class="lang-switch" {href} hreflang={target} lang={target} aria-label={t.lang.label}>
+{
+  /* The accessible name must CONTAIN the visible text ("English" / "Tiếng Việt") so
+     voice control can act on what the user sees — WCAG 2.5.3 Label in Name (A).
+     `aria-label="Ngôn ngữ"` alone dropped it entirely. */
+}
+<a
+  class="lang-switch"
+  {href}
+  hreflang={target}
+  lang={target}
+  aria-label={`${label} — ${t.lang.label}`}
+>
   {label}
 </a>
 
