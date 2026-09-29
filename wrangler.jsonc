@@ -30,5 +30,11 @@
   "observability": {
     "enabled": true,
   },
+  "send_email": [
+    {
+      "name": "EMAIL",
+      "remote": true
+    }
+  ]
   // routes / custom_domain -> deferred to the deploy plan
 }
