@@ -15,6 +15,11 @@
 /skullhop.js
   Cache-Control: no-cache
 
+# Turnstile gate client — unhashed url referenced from Worker-rendered markup, so it must
+# revalidate for fixes to reach visitors.
+/gate.js
+  Cache-Control: no-cache
+
 # RFC 9116 requires text/plain. Wrangler already infers it from the .txt extension at
 # upload time; this is belt-and-braces so a future asset-handling change can't break it.
 /.well-known/security.txt

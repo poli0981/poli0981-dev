@@ -22,6 +22,8 @@ Nhắc lại quyết định D8: Custom Errors của Cloudflare cần zone plan 
 
 403/429 do middleware sinh: render template Astro đã **prerender sẵn thành static asset** (`/403` `/429` là trang thật), middleware chỉ `fetch` asset đó qua binding ASSETS rồi trả với status tương ứng — không nhân đôi markup.
 
+Trang xác minh của cổng Turnstile (06 §3b) **không** phải trang lỗi: nó là chính trang được yêu cầu (status 200, `<head>` thật) với `<body>` thay bằng thẻ xác minh. `/offline/` đứng ngoài cổng để service worker luôn precache được.
+
 ## 3. Offline ("No Internet") — service worker
 
 - Dùng `@vite-pwa/astro`, chiến lược **offline fallback tối thiểu** (không precache cả site):

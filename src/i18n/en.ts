@@ -170,9 +170,21 @@ const en: UIStrings = {
   gate: {
     line1: "Content © Kokone (SkullMute), all rights reserved.",
     line2: "Software/brands mentioned belong to their owners; this site is unaffiliated.",
-    line3: "This site uses cookieless analytics.",
+    line3: "Analytics are cookieless; the only cookie is the 48-hour bot-check pass.",
     ack: "Got it",
     more: "Details",
+  },
+  humanCheck: {
+    title: "Checking you're human",
+    lead: "A quick browser check keeps content-scraping bots out. It usually takes a few seconds and is remembered for 48 hours.",
+    verifying: "Verifying…",
+    ok: "Done — opening the page…",
+    error: "Couldn't verify you yet. Please try again.",
+    slowDown: "Too many attempts — wait a minute and try again.",
+    loadFailed: "The check couldn't load. Check your connection (or ad blocker) and try again.",
+    retry: "Try again",
+    noscript: "JavaScript is required to finish the check.",
+    privacy: "Privacy",
   },
   legal: {
     terms: "Terms",

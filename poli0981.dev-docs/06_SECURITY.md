@@ -37,6 +37,32 @@ request → IP = cf-connecting-ip
 
 Turnstile bắt buộc → verify `siteverify` với `TURNSTILE_SECRET` → validate payload bằng Zod (đúng schema `10` §3, size ≤ 32KB) → rate limit §2 → xử lý. Sai bất kỳ bước nào: 400/403/429, message chung chung, không lộ chi tiết.
 
+## 3b. Cổng Turnstile trước mọi trang (`src/lib/gate/`, `src/worker.ts`)
+
+Khách chưa có "vé" thì mọi trang HTML trả về **trang xác minh** thay cho nội dung; qua Turnstile → vé 48 giờ.
+
+```
+GET trang → worker entry (assets.run_worker_first)
+  cổng tắt (GATE_MODE ≠ on/force, hoặc thiếu GATE_SECRET / TURNSTILE_SECRET) → phục vụ bình thường
+  không phải GET · host admin.* · /api/ · /admin · /media/ · /legal/ · /en/legal/   → bỏ qua cổng
+  header x-verified-bot = "true" (Transform Rule, 07 §8b)                            → bỏ qua cổng
+  thiếu header x-verified-bot (rule chưa có) → MỞ cổng + log lỗi (trừ GATE_MODE=force)
+  cookie __Host-gate hợp lệ (HMAC, chưa hết hạn)                                    → phục vụ bình thường
+  /pagefind/*                                                                        → 403 (index chứa toàn văn)
+  trang thật 200 text/html → giữ nguyên <head>, thay <body> bằng giao diện xác minh,
+                             bỏ script src/modulepreload/JSON-LD; 200 + no-store + noindex
+  còn lại (3xx/304/404/không phải HTML)                                              → trả nguyên
+gate.js → Turnstile (action "gate") → POST /api/gate (RL_GATE, Sec-Fetch-Site same-origin)
+        → siteverify (success + action + hostname) → Set-Cookie __Host-gate=v1.<exp>.<nonce>.<sig>
+          (Max-Age 172800, Secure, HttpOnly, SameSite=Lax, Path=/) → reload
+```
+
+- Đứng ngoài cổng ngay ở tầng asset (không gọi Worker): `/_astro/*`, `/og/*`, favicon, `sw.js`, `skullhop.js`, `gate.js`, `/offline*`, robots, sitemap, RSS, `/.well-known/*` — xem `run_worker_first` trong `wrangler.jsonc`.
+- Giữ `<head>` thật ⇒ preview link (kể cả bot không "verified" như Zalo) vẫn đúng title/ảnh; trả **200** vì nhiều bot preview bỏ qua mã khác 2xx.
+- Vé chỉ chứa hạn + nonce + chữ ký, không định danh; đổi `GATE_SECRET` ⇒ mọi vé cũ mất hiệu lực ngay.
+- **Kill switch**: đặt `GATE_MODE` về `"off"` trong `wrangler.jsonc` (deploy) — hoặc sửa biến trên dashboard để tắt tức thì (lần deploy sau sẽ ghi đè).
+- Test: `npm test` (cookie/chính sách) + `npm run smoke` (pha 2 ép cổng bằng secret test của Turnstile, chạy trọn luồng).
+
 ## 4. Secrets & quyền tối thiểu
 
 | Secret | Nơi | Phạm vi |

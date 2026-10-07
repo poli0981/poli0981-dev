@@ -65,6 +65,12 @@
     { "name": "RL_ADMIN", "namespace_id": "981003", "simple": { "limit": 120, "period": 60 } },
     { "name": "RL_API", "namespace_id": "981004", "simple": { "limit": 120, "period": 60 } },
   ],
+  "vars": {
+    // Turnstile gate in front of every page (src/lib/gate): "off" | "on" | "force".
+    // "on" fails open while the zone Transform Rule that sets x-verified-bot is missing;
+    // "force" ignores that (local testing only). Needs GATE_SECRET + TURNSTILE_SECRET.
+    "GATE_MODE": "off",
+  },
   "observability": {
     "enabled": true,
   },

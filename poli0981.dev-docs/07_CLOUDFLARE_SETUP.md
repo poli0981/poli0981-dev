@@ -54,6 +54,16 @@ Ghi chú: các rule này khi khớp sẽ hiện trang chặn mặc định của
 
 Account Home → **Turnstile → Add widget**: domain `poli0981.dev`, mode **Managed**, loại Invisible/Non-interactive tuỳ test. Lưu **Site Key** vào code (public), **Secret Key** → `wrangler secret put TURNSTILE_SECRET`.
 
+Cổng xác minh (06 §3b) **dùng lại widget này** với `action: "gate"` (form báo lỗi dùng `action: "report"`; server kiểm tra action + hostname nên token không dùng chéo được). Secret ký vé: `GATE_SECRET` (chuỗi ngẫu nhiên ≥ 32 byte, không ai cần biết) — `openssl rand -base64 48 | npx wrangler secret put GATE_SECRET`.
+
+## 8b. Transform Rule — đánh dấu bot hợp lệ cho cổng
+
+Rules → **Transform Rules → Modify Request Header** → Create:
+- Tên: `verified-bot-flag` · When: *Custom filter* `(http.host eq "poli0981.dev")`
+- Then: **Set dynamic** · Header `x-verified-bot` · Value `to_string(cf.client.bot)`
+
+Rule ghi đè header cho **mọi** request (client không giả được). Worker thấy `"true"` ⇒ bot đã được Cloudflare xác thực (Googlebot, Bingbot, bot preview Facebook/Discord/X…) ⇒ đi thẳng. Không thấy header ⇒ coi như rule chưa có ⇒ cổng tự mở (fail-open) và log lỗi — tránh khoá công cụ tìm kiếm. Giữ **Block AI bots** bật (§5): bot AI "verified" cũng có `cf.client.bot`, nên chúng phải bị chặn từ WAF chứ không trông vào cổng.
+
 ## 9. Deploy Worker & custom domain
 
 - Local: `npm run build && npx wrangler deploy` (lần đầu wrangler mở OAuth login).

@@ -288,3 +288,70 @@ body::after {
   --accent: var(--horror);
   --accent-strong: var(--horror);
 }
+
+/* ------------------------------------------------------------------ *
+ * Turnstile gate. src/lib/gate/render.ts swaps a page's whole <body> for this markup
+ * (public/gate.js drives it), so it has to live in the global stylesheet every page
+ * already links — the gate can't add a <style> without breaking the page's CSP hashes.
+ * ------------------------------------------------------------------ */
+.human-check {
+  display: grid;
+  place-items: center;
+  min-block-size: 100dvh;
+  padding: 1.5rem;
+}
+.human-check-card {
+  inline-size: min(100%, 27rem);
+  padding: 2rem 1.75rem 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-modal);
+  background: var(--surface);
+  box-shadow: var(--shadow-elevated);
+  text-align: center;
+}
+.human-check-title {
+  margin: 0 0 0.5rem;
+  font-family: var(--ff-display);
+  font-size: var(--text-h3);
+  line-height: 1.2;
+}
+.human-check-lead {
+  margin: 0;
+  color: var(--muted);
+}
+.human-check-widget {
+  display: flex;
+  justify-content: center;
+  min-block-size: 65px; /* Turnstile's managed widget height — no jump when it mounts */
+  margin-block: 1.25rem 0.5rem;
+}
+.human-check-status {
+  min-block-size: 1.6em;
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-meta);
+}
+.human-check-retry {
+  margin-block-start: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--elevated);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.human-check-retry:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.human-check-noscript {
+  color: var(--warn);
+}
+.human-check-note {
+  margin: 1rem 0 0;
+  font-size: var(--text-meta);
+}
+.human-check-note a {
+  color: var(--muted);
+}

@@ -76,6 +76,9 @@ jobs:
       - name: Dead code
         run: npm run knip
 
+      - name: Unit tests
+        run: npm test
+
       - name: Audit (prod deps, high+)
         run: npm audit --omit=dev --audit-level=high
 

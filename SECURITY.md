@@ -34,9 +34,12 @@ no tagged releases and no backports.
 
 Useful context when judging impact — the site is static and stores almost nothing:
 
-- No accounts, no login, no session cookies, no ad or analytics trackers.
-- The only user-submitted input is the bug-report form, which is Turnstile-gated,
-  schema-validated, and forwarded to a private GitHub issue and a Discord webhook.
+- No visitor accounts or logins, no ad or analytics trackers. The only cookie is
+  `__Host-gate`, a signed 48-hour pass set after the Turnstile bot check (expiry, random
+  value and HMAC — no identifier; see `src/lib/gate/`).
+- User-submitted input: the bug-report form (Turnstile-gated, schema-validated, forwarded
+  to a private GitHub issue and a Discord webhook) and the bot-check token exchange at
+  `/api/gate`. Both are rate-limited per client.
 - IP addresses are used transiently for rate limiting and are not stored with reports.
 
 See [`/legal/privacy`](https://poli0981.dev/legal/privacy/) for the full statement.
