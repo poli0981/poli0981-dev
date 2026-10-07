@@ -26,6 +26,10 @@
   --ok: #4c9a6a;
   --warn: #c9822b;
   --err: #c24a4a;
+  /* Scrollbar thumb ≥ 3:1 against --bg (WCAG 1.4.11); accent on hover. */
+  --scrollbar-thumb: color-mix(in oklab, var(--muted) 65%, var(--bg));
+  --scrollbar-thumb-hover: color-mix(in oklab, var(--accent) 85%, var(--bg));
+  --scrollbar-track: transparent;
 }
 
 [data-theme="light"] {
@@ -43,6 +47,9 @@
   --ok: #3f7f57;
   --warn: #a86a1f;
   --err: #a83b3b;
+  --scrollbar-thumb: color-mix(in oklab, var(--muted) 75%, var(--bg));
+  --scrollbar-thumb-hover: var(--accent);
+  --scrollbar-track: transparent;
 }
 
 /* ------------------------------------------------------------------ *
@@ -103,6 +110,49 @@
 html {
   -webkit-text-size-adjust: 100%;
   scrollbar-gutter: stable;
+}
+
+/* Scrollbars, tinted from the palette. `scrollbar-color` inherits, so every inner
+   scroller (menu sheet, search results, code blocks…) picks up the same colours;
+   `scrollbar-width` does not, hence the universal selector. Forced-colors mode ignores
+   both and uses system colours, which is what we want there. The width is gated on
+   scrollbar-color support because Safari honours `scrollbar-width` but not the colour,
+   and a non-auto width would switch off the ::-webkit-scrollbar styling below. */
+:root {
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+@supports (scrollbar-color: auto) {
+  * {
+    scrollbar-width: thin;
+  }
+}
+/* "Hide scrollbar" preference (footer switch → localStorage, applied pre-paint by the
+   bootstrap in astro.config.mjs). Only the page's own bar is hidden — the page still
+   scrolls by wheel, touch and keyboard, and inner scrollers keep their thin bar so a
+   wide code block still shows it can scroll sideways. */
+:root[data-scrollbar="hidden"] {
+  scrollbar-width: none;
+}
+:root[data-scrollbar="hidden"]::-webkit-scrollbar {
+  display: none;
+}
+/* WebKit without the standard properties (Safari < 18.2 for width; no scrollbar-color). */
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+  ::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background: var(--scrollbar-thumb) padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover) padding-box;
+  }
 }
 
 body {

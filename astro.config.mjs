@@ -21,7 +21,9 @@ const BUILD_TIME = new Date().toISOString();
 // because a <meta> CSP does not govern markup that precedes it — fragile by accident.
 // `injectScript("head-inline")` is the one path that is BOTH rendered verbatim inline
 // AND hashed from that same string, so the CSP can never drift from the source.
-const THEME_BOOTSTRAP = `(()=>{try{const t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch{}})();`;
+// It also restores the "hide scrollbar" preference for the same reason (no flash of a
+// scrollbar that then disappears).
+const THEME_BOOTSTRAP = `(()=>{try{const d=document.documentElement,t=localStorage.getItem("theme");if(t==="light"||t==="dark")d.dataset.theme=t;if(localStorage.getItem("scrollbar")==="hidden")d.dataset.scrollbar="hidden"}catch{}})();`;
 
 /** @type {import('astro').AstroIntegration} */
 const themeBootstrap = {
