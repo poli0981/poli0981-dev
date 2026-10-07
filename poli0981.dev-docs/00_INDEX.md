@@ -43,7 +43,7 @@
 | D7 | Giấy phép | Code GPL-3.0 · Nội dung All Rights Reserved |
 | D8 | Error pages | Tự phục vụ từ app (không mua zone Pro) |
 | D9 | API ngoài | Không weather/map; widget YouTube + Steam + GitHub qua cron worker |
-| D10 | Data services | Chỉ **KV** (v1). Không D1, không R2 cho tới khi gallery > ~1 GB |
+| D10 | Data services | **KV** (cache widget, denylist) + **R2** `poli0981-media` cho ảnh upload qua admin (từ 10/2026; AVIF/WebP sinh một lần lúc upload, phục vụ qua `/media`, cache 1 năm). Không D1. Ảnh build-time cũ vẫn ở `src/assets/` |
 
 ## Cách dùng suite
 

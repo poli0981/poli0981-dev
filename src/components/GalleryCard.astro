@@ -1,12 +1,13 @@
 ---
 import { Image } from "astro:assets";
-import type { ImageMetadata } from "astro";
+import MediaImage from "./MediaImage.astro";
 import { type GalleryEntry } from "../lib/collections";
+import type { GalleryPhoto } from "../lib/gallery";
 import { sectionPath, type Locale } from "../i18n/routing";
 
 interface Props {
   entry: GalleryEntry;
-  cover: ImageMetadata;
+  cover: GalleryPhoto;
   locale: Locale;
 }
 const { entry, cover, locale } = Astro.props;
@@ -17,14 +18,20 @@ const year = entry.data.date.getFullYear();
 <article class="card">
   <a class="card-link" href={href}>
     <div class="cover">
-      <Image
-        src={cover}
-        alt=""
-        widths={[400, 800]}
-        sizes="(max-width: 640px) 100vw, 360px"
-        loading="lazy"
-        decoding="async"
-      />
+      {
+        cover.kind === "local" ? (
+          <Image
+            src={cover.image}
+            alt=""
+            widths={[400, 800]}
+            sizes="(max-width: 640px) 100vw, 360px"
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          <MediaImage media={cover.media} alt="" sizes="(max-width: 640px) 100vw, 360px" />
+        )
+      }
     </div>
     <div class="body">
       <h3 class="title">{entry.data.title}</h3>

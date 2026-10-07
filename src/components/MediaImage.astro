@@ -1,0 +1,37 @@
+---
+// A responsive image from R2 (src/lib/media): AVIF for browsers that take it, WebP for
+// the rest, with width/height so the layout never shifts. The variants already exist —
+// they were generated once at upload — so this only writes URLs.
+import { mediaFallbackSrc, mediaSrcset, type MediaRef } from "@/lib/media";
+
+interface Props {
+  media: MediaRef;
+  sizes: string;
+  alt?: string;
+  loading?: "lazy" | "eager";
+  fetchpriority?: "high" | "low" | "auto";
+}
+const { media, sizes, alt = media.alt ?? "", loading = "lazy", fetchpriority } = Astro.props;
+---
+
+<picture class="media-picture">
+  <source type="image/avif" srcset={mediaSrcset(media, "avif")} sizes={sizes} />
+  <img
+    src={mediaFallbackSrc(media)}
+    srcset={mediaSrcset(media, "webp")}
+    sizes={sizes}
+    width={media.w}
+    height={media.h}
+    alt={alt}
+    loading={loading}
+    decoding="async"
+    fetchpriority={fetchpriority}
+  />
+</picture>
+
+<style>
+  /* The wrapper must not change layout: callers style the <img> as before. */
+  .media-picture {
+    display: contents;
+  }
+</style>

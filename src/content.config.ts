@@ -1,8 +1,14 @@
 import { defineCollection, type SchemaContext } from "astro:content";
 import { z } from "astro/zod";
 import { glob } from "astro/loaders";
+import { mediaRefSchema as mediaRef } from "./lib/media-schema";
 
 const LANG = z.enum(["vi", "en"]);
+
+/** A cover is either a local asset (`cover`) or an R2 upload (`coverMedia`), not both. */
+const hasOneCover = (data: { cover?: unknown; coverMedia?: unknown }) =>
+  !(data.cover && data.coverMedia);
+const ONE_COVER = { message: "Set either cover or coverMedia, not both.", path: ["coverMedia"] };
 
 /** Fields shared by long-form content (blog + stories). */
 const base = ({ image }: SchemaContext) =>
@@ -16,6 +22,7 @@ const base = ({ image }: SchemaContext) =>
     updated: z.coerce.date().optional(),
     tags: z.array(z.string()).default([]),
     cover: image().optional(),
+    coverMedia: mediaRef.optional(),
     draft: z.boolean().default(false),
   });
 
@@ -26,37 +33,42 @@ const contentGlob = (dir: string) =>
 const blog = defineCollection({
   loader: contentGlob("blog"),
   // suggested tags: dev-log, diary, share, gaming
-  schema: (ctx) => base(ctx),
+  schema: (ctx) => base(ctx).refine(hasOneCover, ONE_COVER),
 });
 
 const stories = defineCollection({
   loader: contentGlob("stories"),
   schema: (ctx) =>
-    base(ctx).extend({
-      series: z.string().optional(),
-      chapter: z.number().int().positive().optional(),
-      status: z.enum(["ongoing", "complete", "dropped"]).default("ongoing"),
-      contentWarning: z.array(z.string()).default([]), // e.g. ['horror', 'blood']
-    }),
+    base(ctx)
+      .extend({
+        series: z.string().optional(),
+        chapter: z.number().int().positive().optional(),
+        status: z.enum(["ongoing", "complete", "dropped"]).default("ongoing"),
+        contentWarning: z.array(z.string()).default([]), // e.g. ['horror', 'blood']
+      })
+      .refine(hasOneCover, ONE_COVER),
 });
 
 const projects = defineCollection({
   loader: contentGlob("projects"),
   schema: ({ image }) =>
-    z.object({
-      name: z.string().max(120),
-      tagline: z.string().max(200),
-      lang: LANG,
-      translationKey: z.string().optional(),
-      stack: z.array(z.string()).default([]),
-      repo: z.url().optional(),
-      url: z.url().optional(),
-      status: z.enum(["active", "maintained", "archived"]).default("active"),
-      featured: z.boolean().default(false),
-      year: z.number(),
-      cover: image().optional(),
-      draft: z.boolean().default(false),
-    }),
+    z
+      .object({
+        name: z.string().max(120),
+        tagline: z.string().max(200),
+        lang: LANG,
+        translationKey: z.string().optional(),
+        stack: z.array(z.string()).default([]),
+        repo: z.url().optional(),
+        url: z.url().optional(),
+        status: z.enum(["active", "maintained", "archived"]).default("active"),
+        featured: z.boolean().default(false),
+        year: z.number(),
+        cover: image().optional(),
+        coverMedia: mediaRef.optional(),
+        draft: z.boolean().default(false),
+      })
+      .refine(hasOneCover, ONE_COVER),
 });
 
 const faq = defineCollection({

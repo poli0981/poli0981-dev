@@ -9,10 +9,12 @@ import { useTranslations } from "@/i18n";
 const locale = "en" as const;
 const t = useTranslations(locale);
 const albums = await getGalleryAlbums(locale);
-const cards = albums.map((entry) => ({
-  entry,
-  cover: getAlbumCover(entry.data.album, entry.data.coverIndex),
-}));
+const cards = await Promise.all(
+  albums.map(async (entry) => ({
+    entry,
+    cover: await getAlbumCover(entry.data.album, entry.data.coverIndex),
+  })),
+);
 ---
 
 <BaseLayout title={t.nav.gallery} {locale}>

@@ -11,8 +11,9 @@ Tỷ giá tham khảo ~26.000 VND/USD, 2026-07.
 | KV · Turnstile · Web Analytics · Email Routing · WAF free · Bot Fight | — | $0 | Free / trong gói |
 | GitHub private repo + Actions + Dependabot | — | $0 | Free plan (2.000 phút Actions/tháng — CI dùng ~5–10%) |
 | Astro/Svelte/Tailwind/GSAP/font/Pagefind | — | $0 | OSS |
-| R2 | — | $0 | Chưa dùng (kích hoạt khi gallery >1GB, free tới 10GB) |
-| Zone Pro / Sentry / CMS / CDN ảnh | — | $0 | **Cố ý không dùng** — có phương án thay thế trong suite |
+| R2 | `poli0981-media` | $0 | Ảnh upload qua admin (biến thể AVIF/WebP + master). Free 10 GB lưu trữ, 1M thao tác ghi, 10M đọc/tháng — đọc hầu hết trúng Cache API ở edge |
+| Images (binding) | biến đổi lúc upload | $0 | Free 5.000 biến đổi duy nhất/tháng (mỗi ảnh ≈ 6), vượt thì $0.50/1.000. Ảnh trùng (cùng hash) không biến đổi lại |
+| Zone Pro / Sentry / CMS bên thứ ba | — | $0 | **Cố ý không dùng** — admin tự làm (Access + GitHub API), ảnh dùng R2 + Images của chính Cloudflare |
 
 **Tổng phát sinh mới: ~$12–13/năm.** Tổng vận hành thực (gồm Workers đã trả): **~$72–73/năm (~1,9 triệu VND)**.
 

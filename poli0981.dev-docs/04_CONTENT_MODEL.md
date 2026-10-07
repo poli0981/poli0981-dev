@@ -98,6 +98,16 @@ Tiện ích khuyến nghị: snippet VS Code cho từng frontmatter; `npm run ne
 - Chốt chặn CI: `scripts/check-exif.mjs` quét ảnh thay đổi trong PR, thấy GPS/serial → **fail build**. (Repo đang private nhưng ảnh build ra là public — strip từ gốc.)
 - Kích thước: ảnh gốc ≤ 2560px cạnh dài, ≤ 1.5MB sau strip. Khi tổng `src/assets/gallery/` > ~1GB → kích hoạt phương án R2 (`17` §5).
 
+### 6b. Ảnh R2 (upload qua admin)
+
+Ảnh upload qua admin được biến đổi **một lần** (Images binding) rồi lưu R2 `poli0981-media`; site chỉ ghi URL:
+
+- `id` = 16 hex đầu của SHA-256 ảnh gốc (upload trùng ⇒ cùng id, không xử lý lại). Biến thể cố định: AVIF 480/800/1200, WebP 800/1600, không phóng to quá chiều rộng gốc → `/media/v1/<id>/<avif|webp>-<w>`, `Cache-Control: public, max-age=31536000, immutable`. Đổi pipeline ⇒ tiền tố mới (`v2/`), không ghi đè.
+- Ảnh bìa: frontmatter `coverMedia: { id, w, h, alt? }` (blog/stories/projects) — thay cho `cover` (không dùng cả hai). Render bằng `src/components/MediaImage.astro` (`<picture>` AVIF + WebP, có width/height).
+- Ảnh trong bài: admin chèn sẵn snippet `<picture>` (HTML hợp lệ trong .md/.mdx).
+- Gallery: `gallery-photos/<album>.json` trong repo content = `{ "photos": [{ "id", "w", "h", "caption": { "vi", "en" } }] }`, gộp sau ảnh local của album (`src/lib/gallery.ts`); album chỉ có ảnh R2 cũng hợp lệ. Sai schema/thiếu chú thích ⇒ fail build.
+- EXIF: biến thể và master đều bỏ metadata khi biến đổi; R2 không giữ file gốc.
+
 ## 7. Checklist trước khi publish một bài
 
 - [ ] frontmatter đủ + đúng schema (`astro check` pass)

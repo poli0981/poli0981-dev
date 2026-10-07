@@ -2,6 +2,7 @@ import { handle } from "@astrojs/cloudflare/handler";
 import { readPassCookie, verifyPass } from "./lib/gate/cookie";
 import { gateDecision, gateSettings, VERIFIED_BOT_HEADER } from "./lib/gate/policy";
 import { renderGate } from "./lib/gate/render";
+import { serveMedia } from "./lib/media/serve";
 import { withSecurityHeaders } from "./lib/security-headers";
 
 // Custom Worker entry (wrangler.jsonc `main`). With `assets.run_worker_first` every page
@@ -68,6 +69,9 @@ export default {
         url.hostname = url.hostname.slice(4);
         return Response.redirect(url.toString(), 301);
       }
+
+      // R2 image variants (year-long immutable cache; see lib/media/serve).
+      if (url.pathname.startsWith("/media/")) return await serveMedia(request, env, ctx);
 
       const gated = await gate(request, url, env);
       if (gated) return gated;
