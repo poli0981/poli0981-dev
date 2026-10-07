@@ -22,7 +22,7 @@
 - **Font**: chỉ 4 family, subset latin+vietnamese, preload đúng 2 file, `size-adjust` fallback để CLS≈0. Literata chỉ nạp ở trang đọc.
 - **Ảnh**: mọi ảnh qua Astro Image (AVIF ưu tiên), `loading=lazy` trừ LCP (`fetchpriority=high`), khai width/height luôn.
 - **CSS**: Tailwind v4 tự purge; grain/scanline bằng 1 PNG nhỏ + CSS, không canvas chạy nền.
-- **Third-party = 0** ở first paint (YouTube facade, widget đọc KV nội bộ).
+- **Third-party = 0** ở first paint (YouTube facade, widget đọc KV nội bộ). Beacon Web Analytics là module script (tải defer, ~10 KB) nên không chặn render; nó chỉ có trong bản build production (không có trong Lighthouse CI).
 
 ## 3. Kiểm tra
 

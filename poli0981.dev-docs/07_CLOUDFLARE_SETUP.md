@@ -85,7 +85,12 @@ Mail của domain chạy trên **Google Workspace** (MX → `aspmx.l.google.com`
 
 ## 12. Web Analytics
 
-Account → Analytics & Logs → **Web Analytics → Add site** → chọn zone (tự động qua proxy, không cần gắn script — chọn chế độ automatic). Không cookie, khớp Privacy Policy.
+Account → Analytics & Logs → **Web Analytics** → site `poli0981.dev` ở chế độ **JS snippet (manual)** — *tắt* tự động chèn, nếu không mỗi trang sẽ có 2 beacon (và beacon tự chèn là script inline mà CSP chặn).
+
+- Snippet nằm ở `src/components/CfBeacon.astro` (token là site tag công khai, không phải secret), chèn vào `<head>` của `BaseLayout` + `ErrorLayout`.
+- Chỉ render khi build trên Workers Builds nhánh `main` (`WORKERS_CI=1` + `WORKERS_CI_BRANCH=main` → `PUBLIC_CF_BEACON`), nên CI/Lighthouse/preview không làm bẩn số liệu. Ép bật/tắt: biến build `PUBLIC_CF_BEACON=true|false`.
+- CSP: `script-src https://static.cloudflareinsights.com`, `connect-src https://cloudflareinsights.com`.
+- Không cookie, khớp Privacy Policy §2.
 
 ## 13. Checklist nghiệm thu
 

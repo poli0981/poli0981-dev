@@ -1,0 +1,23 @@
+---
+// Cloudflare Web Analytics, manual JS-snippet mode (docs 07 §12). Cookie-free; reports to
+// cloudflareinsights.com, which is why the CSP allows that host for script-src and
+// connect-src. `type="module"` works: the CDN answers CORS with `*`, and the beacon falls
+// back to `querySelector("script[data-cf-beacon]")` when `document.currentScript` is null.
+//
+// Rendered only for production builds made by Workers Builds on main (see PUBLIC_CF_BEACON
+// in astro.config.mjs) so CI, Lighthouse and branch previews never add page views.
+import { PUBLIC_CF_BEACON } from "astro:env/client";
+
+const CF_BEACON_TOKEN = "349c7ecb1c304ff8985c878004df42b3"; // public site tag, not a secret
+---
+
+{
+  PUBLIC_CF_BEACON && (
+    <script
+      is:inline
+      type="module"
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon={JSON.stringify({ token: CF_BEACON_TOKEN })}
+    />
+  )
+}
