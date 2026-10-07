@@ -1,8 +1,6 @@
 import { defineMiddleware } from "astro:middleware";
 import { env } from "cloudflare:workers";
-
-const RATE_LIMIT = 5; // requests per window per IP on /api/*
-const WINDOW_SECONDS = 60;
+import { RATE_LIMIT_WINDOW_SECONDS, allowRequest, apiGroup, clientSubject } from "./lib/ratelimit";
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const { request, url } = context;
@@ -37,20 +35,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (denied !== null) return serveError("/403/", 403);
   }
 
-  // Soft rate-limit on /api/* → custom 429 + Retry-After. (The hard limit is a
-  // Cloudflare zone rule; KV is eventually-consistent, so this is best-effort.)
-  if (url.pathname.startsWith("/api/") && kv) {
-    // Namespace the counter per endpoint group so e.g. widget polling can't exhaust the
-    // report budget (and vice-versa). "/api/report" → "report", "/api/widgets" → "widgets".
-    const group = url.pathname.split("/")[2] || "api";
-    const key = `rl:${group}:${ip}`;
-    const current = Number((await kv.get(key)) ?? "0");
-    if (current >= RATE_LIMIT) {
+  // Per-group rate limit on /api/* (Workers Rate Limiting bindings, see lib/ratelimit) →
+  // custom 429 + Retry-After. The zone WAF rule (docs 07 §6) is the hard outer limit.
+  if (url.pathname.startsWith("/api/")) {
+    const group = apiGroup(url.pathname);
+    if (!(await allowRequest(group, clientSubject(ip)))) {
       const res = await serveError("/429/", 429);
-      res.headers.set("Retry-After", String(WINDOW_SECONDS));
+      res.headers.set("Retry-After", String(RATE_LIMIT_WINDOW_SECONDS));
       return res;
     }
-    await kv.put(key, String(current + 1), { expirationTtl: WINDOW_SECONDS });
   }
 
   const response = await next();

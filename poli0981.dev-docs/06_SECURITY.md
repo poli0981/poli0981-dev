@@ -19,15 +19,19 @@ Không đặt COEP (không cần SharedArrayBuffer; đặt sẽ vỡ embed YouTu
 
 ```
 request → IP = cf-connecting-ip
-  1. KV get denylist:<ip-or-cidr-match>  → có ⇒ 403 (trang 09 §2)
-  2. nếu path bắt đầu /api/:
-       KV rl:<ip> counter (cửa sổ 60s, giới hạn 5)
-       vượt ⇒ 429 + Retry-After (trang 09 §2)
+  1. KV get denylist:<ip>  → có ⇒ 403 (trang 09 §2)
+  2. nếu path bắt đầu /api/<group>:
+       Workers Rate Limiting binding theo nhóm (src/lib/ratelimit.ts), khoá "<group>:<ip>"
+       (IPv6 gộp theo /64):
+         report → RL_REPORT 5/60s · gate → RL_GATE 30/60s · admin → RL_ADMIN 120/60s
+         còn lại → RL_API 120/60s · widgets → không giới hạn (cache edge 5 phút)
+       vượt ⇒ 429 + Retry-After: 60 (trang 09 §2)
   3. tiếp tục; gắn headers §1 vào response
 ```
 
-- KV eventual-consistency → giới hạn có thể "mềm" vài request ở nhiều colo — chấp nhận được cho chống abuse; lớp cứng hơn là zone rate-limit rule (07 §6).
-- Quản lý denylist: `wrangler kv key put --binding=KV "denylist:1.2.3.0/24" "spam 2026-08"` — kèm ghi chú lý do. Chặn theo quốc gia/ASN thì dùng zone custom rule (07 §7) vì middleware chỉ nên giữ list ngắn.
+- Binding đếm **theo từng colo** (không toàn cục) và chỉ cho `period` 10 hoặc 60 s → đây là lớp mềm chống lạm dụng; lớp cứng là zone rate-limit rule (07 §6). Không còn ghi KV cho mỗi request API (bộ đếm KV cũ đọc-rồi-ghi, không nguyên tử, và có thể ném lỗi khi burst vì KV chỉ cho ~1 ghi/giây/khoá).
+- `namespace_id` của mỗi binding chỉ cần duy nhất trong account (981001–981004).
+- Quản lý denylist: `wrangler kv key put --binding=KV "denylist:1.2.3.4" "spam 2026-08"` — kèm ghi chú lý do. Khoá chỉ khớp **đúng IP**; chặn dải (CIDR), quốc gia hay ASN thì dùng WAF IP List / zone custom rule (07 §7) vì middleware chỉ nên giữ list ngắn.
 
 ## 3. Form duy nhất: /api/report (bug)
 

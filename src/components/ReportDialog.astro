@@ -95,23 +95,31 @@ const strings = {
     const copyBtn = document.getElementById("report-copy") as HTMLButtonElement;
 
     let token: string | null = null;
-    let widgetRendered = false;
+    let widget: { api: Awaited<ReturnType<typeof loadTurnstile>>; id: string } | null = null;
 
     const renderTurnstile = async () => {
-      if (widgetRendered) return;
+      if (widget) return;
       try {
-        const ts = await loadTurnstile();
-        ts.render(turnstileEl, {
+        const api = await loadTurnstile();
+        const id = api.render(turnstileEl, {
           sitekey: TURNSTILE_SITE_KEY,
           theme: "auto",
+          action: "report",
           callback: (t: string) => (token = t),
           "error-callback": () => (token = null),
           "expired-callback": () => (token = null),
         });
-        widgetRendered = true;
+        widget = { api, id };
       } catch {
         statusEl.textContent = strings.error;
       }
+    };
+
+    // Tokens are single-use: after any submit (accepted or not) siteverify has spent it,
+    // so a second send in the same session needs a fresh challenge.
+    const resetTurnstile = () => {
+      token = null;
+      widget?.api.reset(widget.id);
     };
 
     const open = () => {
@@ -182,6 +190,7 @@ const strings = {
         statusEl.textContent = strings.error;
         fallback.hidden = false;
       } finally {
+        resetTurnstile();
         submitBtn.disabled = false;
       }
     });

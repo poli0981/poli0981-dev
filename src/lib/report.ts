@@ -50,6 +50,8 @@ interface TurnstileApi {
       "error-callback"?: () => void;
       "expired-callback"?: () => void;
       theme?: "light" | "dark" | "auto";
+      /** Echoed back by siteverify; the server rejects tokens minted for another form. */
+      action?: string;
     },
   ) => string;
   reset: (id?: string) => void;
