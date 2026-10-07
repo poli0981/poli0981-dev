@@ -145,8 +145,12 @@ export const SOCIAL_LINKS: SocialLink[] = [
   },
 ];
 
-/** Topic-scoped contact addresses (Cloudflare Email Routing is configured for all four). */
-export type EmailScope = "general" | "code" | "sponsor" | "games";
+/**
+ * Public, topic-scoped contact addresses — Google Workspace aliases of one mailbox.
+ * The policy addresses (security@, privacy@, legal@, copyright@, dmca@, takedown@) are
+ * deliberately not listed here: they live in security.txt and the legal pages.
+ */
+export type EmailScope = "general" | "collab" | "sponsor" | "press" | "code" | "games";
 
 export interface ContactEmail {
   address: string;
@@ -155,33 +159,27 @@ export interface ContactEmail {
   label: Record<Locale, string>;
 }
 
-const GENERAL_EMAIL: ContactEmail = {
-  address: "contact@poli0981.dev",
-  href: "mailto:contact@poli0981.dev",
-  scope: "general",
-  label: { vi: "Liên hệ chung", en: "General enquiries" },
-};
+function contactEmail(
+  local: string,
+  scope: EmailScope,
+  label: Record<Locale, string>,
+): ContactEmail {
+  const address = `${local}@poli0981.dev`;
+  return { address, href: `mailto:${address}`, scope, label };
+}
+
+const GENERAL_EMAIL = contactEmail("contact", "general", {
+  vi: "Liên hệ chung",
+  en: "General enquiries",
+});
 
 export const CONTACT_EMAILS: ContactEmail[] = [
   GENERAL_EMAIL,
-  {
-    address: "code@poli0981.dev",
-    href: "mailto:code@poli0981.dev",
-    scope: "code",
-    label: { vi: "Mã nguồn & dự án", en: "Source code & projects" },
-  },
-  {
-    address: "sponsor@poli0981.dev",
-    href: "mailto:sponsor@poli0981.dev",
-    scope: "sponsor",
-    label: { vi: "Quảng cáo & hợp tác", en: "Sponsorship & partnerships" },
-  },
-  {
-    address: "games@poli0981.dev",
-    href: "mailto:games@poli0981.dev",
-    scope: "games",
-    label: { vi: "Key/mã game, playtest", en: "Game keys & playtests" },
-  },
+  contactEmail("collab", "collab", { vi: "Hợp tác & công việc", en: "Collaboration & work" }),
+  contactEmail("sponsor", "sponsor", { vi: "Quảng cáo & tài trợ", en: "Sponsorship & ads" }),
+  contactEmail("press", "press", { vi: "Báo chí & truyền thông", en: "Press & media" }),
+  contactEmail("code", "code", { vi: "Mã nguồn & dự án", en: "Source code & projects" }),
+  contactEmail("games", "games", { vi: "Key/mã game, playtest", en: "Game keys & playtests" }),
 ];
 
 /** Socials belonging to one persona (preserves declaration order). */

@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-Email **contact@poli0981.dev**. Please include steps to reproduce and the affected URL.
+Email **security@poli0981.dev**. Please include steps to reproduce and the affected URL.
 Do not open a public issue for a security problem.
 
 Expect an acknowledgement within 7 days. This is a personal site maintained by one

@@ -1,8 +1,8 @@
 ---
 title: "{{TITLE}}"
 description: ""
-lang: { { LANG } }
-date: { { DATE } }
+lang: {{LANG}}
+date: {{DATE}}
 tags: []
 draft: true
 ---

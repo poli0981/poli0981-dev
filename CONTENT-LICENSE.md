@@ -24,7 +24,8 @@ for that page's content, in which case the page's own license prevails.
 Cloning this repository does not grant a content license. If you fork it, remove
 `src/content/**` and `src/assets/**` or replace them with your own.
 
-**Permissions and takedown requests:** contact@poli0981.dev
+**Permissions:** copyright@poli0981.dev · **Copyright infringement (DMCA):** dmca@poli0981.dev ·
+**Other removal requests:** takedown@poli0981.dev
 
 ## Tiếng Việt
 
@@ -39,7 +40,8 @@ trang cụ thể có thể ghi giấy phép khác cho nội dung của trang đ�
 Việc clone repo này không đồng nghĩa với việc được cấp phép nội dung. Nếu bạn fork, hãy xoá
 `src/content/**` và `src/assets/**` hoặc thay bằng nội dung của chính bạn.
 
-**Xin phép & yêu cầu gỡ:** contact@poli0981.dev
+**Xin phép:** copyright@poli0981.dev · **Vi phạm bản quyền (DMCA):** dmca@poli0981.dev ·
+**Yêu cầu gỡ khác:** takedown@poli0981.dev
 
 ---
 

@@ -161,7 +161,7 @@ const en: UIStrings = {
     title: "Contact",
     lead: "The fastest ways to reach me:",
     fast: "Fastest — Discord",
-    business: "Business — contact@poli0981.dev",
+    business: "Business — collab@poli0981.dev",
     all: "Everything — /links",
   },
   gate: {
