@@ -22,6 +22,12 @@ export interface CollectionSpec {
   label: string;
   /** Frontmatter key shown as the entry's title in lists. */
   titleKey: string;
+  /**
+   * Whether "Tạo mới" may add entries. /now is one entry per language and its page
+   * takes the FIRST match, so an extra file would silently replace it; legal pages are
+   * a fixed set; a gallery album needs photos, so it's created from the Gallery page.
+   */
+  creatable: boolean;
   fields: readonly FieldSpec[];
 }
 
@@ -54,11 +60,12 @@ const LONGFORM: readonly FieldSpec[] = [
 ];
 
 export const COLLECTIONS: Record<CollectionId, CollectionSpec> = {
-  blog: { id: "blog", label: "Blog", titleKey: "title", fields: LONGFORM },
+  blog: { id: "blog", label: "Blog", titleKey: "title", creatable: true, fields: LONGFORM },
   stories: {
     id: "stories",
     label: "Truyện",
     titleKey: "title",
+    creatable: true,
     fields: [
       ...LONGFORM,
       { key: "series", label: "Tên bộ truyện", type: "text" },
@@ -76,6 +83,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionSpec> = {
     id: "projects",
     label: "Dự án",
     titleKey: "name",
+    creatable: true,
     fields: [
       { key: "name", label: "Tên", type: "text", required: true, max: 120 },
       { key: "tagline", label: "Mô tả ngắn", type: "textarea", required: true, max: 200 },
@@ -100,6 +108,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionSpec> = {
     id: "faq",
     label: "Hỏi đáp",
     titleKey: "q",
+    creatable: true,
     fields: [
       { key: "q", label: "Câu hỏi", type: "text", required: true },
       LANG,
@@ -117,6 +126,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionSpec> = {
     id: "gallery",
     label: "Album ảnh",
     titleKey: "title",
+    creatable: false,
     fields: [
       { key: "title", label: "Tên album", type: "text", required: true, max: 120 },
       LANG,
@@ -137,6 +147,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionSpec> = {
     id: "legal",
     label: "Pháp lý",
     titleKey: "title",
+    creatable: false,
     fields: [
       { key: "title", label: "Tiêu đề", type: "text", required: true },
       { key: "order", label: "Thứ tự", type: "number" },
@@ -147,6 +158,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionSpec> = {
     id: "now",
     label: "Bây giờ",
     titleKey: "title",
+    creatable: false,
     fields: [
       { key: "title", label: "Tiêu đề", type: "text", required: true },
       LANG,
@@ -177,7 +189,7 @@ export function newEntryPath(
   slug: string,
   series?: string,
 ): string | null {
-  if (!SLUG_PATTERN.test(slug)) return null;
+  if (!COLLECTIONS[collection]?.creatable || !SLUG_PATTERN.test(slug)) return null;
   if (collection === "stories") {
     if (!series || !SLUG_PATTERN.test(series)) return null;
     return `stories/${series}/${slug}.md`;

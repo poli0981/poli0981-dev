@@ -121,7 +121,10 @@ admin.poli0981.dev ─▶ Cloudflare Access (policy email) ─▶ Worker
 
 - **Vì sao host riêng**: cùng origin thì một lỗi XSS ở trang công khai có thể gọi API admin bằng cookie Access. Khác origin + kiểm `Sec-Fetch-Site` ⇒ không.
 - **Hai lớp**: Access chặn ở edge; Worker vẫn tự kiểm JWT ⇒ preview URL/workers.dev (đều tắt) hay header giả đều 403 (smoke test kiểm cả JWT giả).
-- **Token GitHub** (`GITHUB_CONTENT_TOKEN`, fine-grained): `poli0981/content` Contents RW; `poli0981/poli0981-dev` **chỉ** Actions RW + Pull requests R + Commit statuses R. Lộ token ⇒ tệ nhất là sửa nội dung; **không** đẩy được code. Xuất bản đi qua `content-bump.yml` (GITHUB_TOKEN) + CI `build` bắt buộc; diff có file ngoài `.md/.json` (vd. `.mdx` — chạy code lúc build) ⇒ không auto-merge.
+- **Hai token GitHub** (fine-grained — quyền của một token áp cho *mọi* repo nó được chọn, nên không thể "ghi repo này, chỉ dispatch repo kia" bằng một token):
+  - `GITHUB_CONTENT_TOKEN`: chỉ repo `poli0981/content`, **Contents: Read and write** (lưu bài/album).
+  - `GITHUB_PUBLISH_TOKEN`: chỉ repo `poli0981/poli0981-dev`, **Actions: Read and write** (dispatch `content-bump.yml`) — không có Contents ⇒ lộ cũng không đẩy được code.
+  - Đọc trạng thái (PR, check, gitlink) không cần quyền vì hai repo đều public. Thiếu quyền ⇒ admin báo rõ token nào cần quyền gì (lấy từ header `X-Accepted-GitHub-Permissions`). Xuất bản đi qua `content-bump.yml` (GITHUB_TOKEN) + CI `build` bắt buộc; diff có file ngoài `.md/.json` (vd. `.mdx` — chạy code lúc build) ⇒ không auto-merge.
 - **Upload ảnh**: kiểm magic bytes (không SVG), ≤ 20 MB, id = SHA-256 ⇒ trùng thì không biến đổi lại; biến thể + master tái mã hoá (mất EXIF/GPS), không giữ file gốc; `/media` chỉ phục vụ key biến thể, `CSP: sandbox`.
 - **Preview Markdown** dùng `{@html}` trên chính nội dung của chủ site; CSP của trang admin (không `unsafe-inline`) chặn script/handler.
 - Dev (`astro dev`) dùng danh tính giả `dev@localhost` — chỉ khi `import.meta.env.DEV` (luôn false trong bản build).

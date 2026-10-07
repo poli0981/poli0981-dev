@@ -14,6 +14,10 @@ export function errorResponse(error: unknown): Response {
     return json({ error: "conflict", message: error.message }, 409);
   if (error instanceof GitHubError) {
     console.error("[admin] GitHub:", error.message);
+    // 401/403 from a fine-grained token = missing permission or repo not selected.
+    if (error.status === 401 || error.status === 403) {
+      return json({ error: "github_permission", needs: error.needs, message: error.message }, 502);
+    }
     return json({ error: "github", message: error.message }, 502);
   }
   console.error("[admin]", error);

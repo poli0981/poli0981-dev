@@ -59,7 +59,7 @@
     <label
       >Loại
       <select bind:value={collection}>
-        {#each Object.values(COLLECTIONS) as spec (spec.id)}
+        {#each Object.values(COLLECTIONS).filter((spec) => spec.creatable) as spec (spec.id)}
           <option value={spec.id}>{spec.label}</option>
         {/each}
       </select>
@@ -79,7 +79,9 @@
     {newPath
       ? `Sẽ tạo ${newPath}`
       : "Slug: chữ thường không dấu, số và gạch nối (vd. dem-render-dau-tien)."}
-    Bản tiếng Anh nên có slug riêng (vd. thêm <code>-en</code>) và cùng “Khoá bản dịch”.
+    Bản tiếng Anh nên có slug riêng (vd. thêm <code>-en</code>) và cùng “Khoá bản dịch”. “Bây giờ”
+    và các trang pháp lý chỉ sửa bài có sẵn; album mới tạo ở trang
+    <a href="/admin/gallery/">Gallery</a>.
   </p>
 </section>
 
