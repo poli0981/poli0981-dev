@@ -1,4 +1,7 @@
 import { handle } from "@astrojs/cloudflare/handler";
+import { readPassCookie, verifyPass } from "./lib/gate/cookie";
+import { gateDecision, gateSettings, VERIFIED_BOT_HEADER } from "./lib/gate/policy";
+import { renderGate } from "./lib/gate/render";
 import { withSecurityHeaders } from "./lib/security-headers";
 
 // Custom Worker entry (wrangler.jsonc `main`). With `assets.run_worker_first` every page
@@ -12,6 +15,49 @@ import { withSecurityHeaders } from "./lib/security-headers";
 /** On-demand Astro routes: always rendered by the app, never looked up in ASSETS. */
 const APP_PREFIXES = ["/api/", "/admin", "/media/"];
 
+/** Secrets aren't in the generated Env type (wrangler only sees `vars`). */
+type GateEnv = { GATE_MODE?: string; GATE_SECRET?: string; TURNSTILE_SECRET?: string };
+
+let warnedUnconfigured = false;
+
+/**
+ * The Turnstile gate (docs 06 §3b): unless the request carries a valid 48-hour pass, a
+ * page answers with the gate instead of its content. Returns the response to send, or
+ * null to carry on normally.
+ */
+async function gate(request: Request, url: URL, env: Env): Promise<Response | null> {
+  const settings = gateSettings(env as unknown as GateEnv);
+  if (!settings) return null;
+
+  const decision = gateDecision(request.method, url, request.headers, settings.mode);
+  if (decision === "unconfigured") {
+    if (!warnedUnconfigured) {
+      warnedUnconfigured = true;
+      console.error(
+        `[gate] no ${VERIFIED_BOT_HEADER} header — the zone Transform Rule is missing, so the gate is OFF (fail-open)`,
+      );
+    }
+    return null;
+  }
+  if (decision === "pass") return null;
+  if (await verifyPass(readPassCookie(request.headers.get("cookie")), settings.secret)) {
+    return null;
+  }
+
+  // Search fragments hold the full text of every page — no pass, no index.
+  if (url.pathname.startsWith("/pagefind/")) {
+    return withSecurityHeaders(
+      new Response("Forbidden", { status: 403, headers: { "cache-control": "no-store" } }),
+    );
+  }
+
+  // Only a real page becomes the gate; redirects, 304s, 404s and non-HTML pass through.
+  const page = await env.ASSETS.fetch(request);
+  const type = page.headers.get("content-type") ?? "";
+  if (page.status === 200 && type.includes("text/html")) return renderGate(page);
+  return withSecurityHeaders(page);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -22,6 +68,9 @@ export default {
         url.hostname = url.hostname.slice(4);
         return Response.redirect(url.toString(), 301);
       }
+
+      const gated = await gate(request, url, env);
+      if (gated) return gated;
 
       // Serve pages straight from ASSETS with the *original* request. The adapter's own
       // asset lookup fetches by URL string, which drops the method and conditional

@@ -85,6 +85,9 @@ export default defineConfig({
         access: "public",
         default: CF_BEACON_DEFAULT,
       }),
+      // Signs the 48-hour Turnstile-gate pass cookie (src/lib/gate). The gate itself is
+      // switched by the GATE_MODE var in wrangler.jsonc and stays off without this secret.
+      GATE_SECRET: envField.string({ context: "server", access: "secret", optional: true }),
     },
   },
 

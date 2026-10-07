@@ -166,9 +166,22 @@ const vi = {
   gate: {
     line1: "Nội dung © Kokone (SkullMute), bảo lưu mọi quyền.",
     line2: "Phần mềm/thương hiệu được nhắc đến thuộc chủ sở hữu tương ứng; trang không liên kết.",
-    line3: "Trang dùng phân tích không cookie.",
+    line3: "Thống kê không dùng cookie; cookie duy nhất là vé xác minh chống bot (48 giờ).",
     ack: "Đã hiểu",
     more: "Chi tiết",
+  },
+  humanCheck: {
+    title: "Xác minh bạn là người",
+    lead: "Trang kiểm tra nhanh trình duyệt để chặn bot thu thập nội dung. Thường chỉ mất vài giây, và được ghi nhớ trong 48 giờ.",
+    verifying: "Đang xác minh…",
+    ok: "Xong — đang mở trang…",
+    error: "Chưa xác minh được. Thử lại nhé.",
+    slowDown: "Thử quá nhiều lần — đợi một phút rồi thử lại.",
+    loadFailed:
+      "Không tải được bước xác minh. Kiểm tra kết nối (hoặc trình chặn quảng cáo) rồi thử lại.",
+    retry: "Thử lại",
+    noscript: "Cần bật JavaScript để hoàn tất bước xác minh.",
+    privacy: "Quyền riêng tư",
   },
   legal: {
     terms: "Điều khoản",
