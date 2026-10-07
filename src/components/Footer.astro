@@ -6,6 +6,7 @@ import { SOCIAL_LINKS, emailForScope } from "../lib/links";
 import { SITE } from "../lib/seo";
 import Waveline from "./Waveline.svelte";
 import SocialIcon from "./SocialIcon.astro";
+import ScrollbarToggle from "./ScrollbarToggle.svelte";
 
 const locale: Locale = toLocale(Astro.currentLocale);
 const t = useTranslations(locale);
@@ -59,6 +60,10 @@ function relFor(href: string, me?: boolean): string | undefined {
       {legal.map((item) => <a href={item.href}>{item.label}</a>)}
       <button type="button" class="footer-report" data-report-trigger>{t.footer.reportBug}</button>
     </nav>
+    <!-- Scrollbars only take space with a fine pointer; touch devices overlay them. -->
+    <div class="footer-prefs">
+      <ScrollbarToggle client:idle label={t.prefs.hideScrollbar} />
+    </div>
     <p class="copyright">© {year} {SITE.author}. {t.footer.rights}</p>
   </div>
 </footer>
@@ -99,6 +104,14 @@ function relFor(href: string, me?: boolean): string | undefined {
   }
   .footer-report:hover {
     color: var(--accent);
+  }
+  .footer-prefs {
+    display: none;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .footer-prefs {
+      display: block;
+    }
   }
   .footer-nav a:hover,
   .footer-legal a:hover {

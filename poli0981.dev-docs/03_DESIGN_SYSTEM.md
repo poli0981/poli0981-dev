@@ -83,12 +83,17 @@ Type scale (fluid, mobile 360px → desktop 1280px):
 
 Nguyên tắc: **một** khoảnh khắc dàn dựng khi load trang chủ; còn lại là micro-interaction. GSAP chỉ nạp ở island nào cần (Waveline, hero) — không nạp global. Mọi animation phải có nhánh reduced-motion.
 
+### Thanh cuộn
+
+Token `--scrollbar-thumb` / `--scrollbar-thumb-hover` / `--scrollbar-track` khai báo trong từng palette (`global.css`), pha từ `--muted`/`--accent` với `--bg` bằng `color-mix(in oklab, …)`: thumb ≥ 3:1 so với nền (dark: muted 65%, light: muted 75%). `scrollbar-color` (kế thừa) cho mọi vùng cuộn; `scrollbar-width: thin` khi trình duyệt hỗ trợ `scrollbar-color`, còn Safari dùng nhánh `::-webkit-scrollbar`. Tuỳ chọn "Ẩn thanh cuộn" chỉ ẩn thanh của trang (vẫn cuộn bằng chuột/phím); vùng cuộn con giữ thanh mảnh.
+
 ## 7. Component inventory
 
 | Component | Loại | Ghi chú |
 |---|---|---|
 | Header / MobileTabBar / Footer | .astro | TabBar: Home·Blog·Truyện·Menu, ẩn ≥768px |
 | ThemeToggle, LangSwitch | island nhỏ | localStorage `theme`, link hreflang cho lang |
+| ScrollbarToggle | island nhỏ (footer, chỉ hiện khi `pointer: fine`) | switch `role="switch"`; localStorage `scrollbar=hidden` → `html[data-scrollbar="hidden"]`, áp trước first paint cùng bootstrap theme |
 | PostCard / StoryCard / ProjectCard | .astro | StoryCard có badge status + CW |
 | Prose | style | typography cho nội dung md |
 | ReadingControls | island | cỡ chữ (3 mức, localStorage `reader`), theme giấy/sepia/tối, progress bar 2px |

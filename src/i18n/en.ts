@@ -26,6 +26,9 @@ const en: UIStrings = {
     dark: "Dark",
     light: "Light",
   },
+  prefs: {
+    hideScrollbar: "Hide scrollbar",
+  },
   lang: {
     switchTo: "Tiếng Việt",
     label: "Language",

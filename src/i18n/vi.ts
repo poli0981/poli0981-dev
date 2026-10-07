@@ -24,6 +24,9 @@ const vi = {
     dark: "Tối",
     light: "Sáng",
   },
+  prefs: {
+    hideScrollbar: "Ẩn thanh cuộn",
+  },
   lang: {
     switchTo: "English",
     label: "Ngôn ngữ",
