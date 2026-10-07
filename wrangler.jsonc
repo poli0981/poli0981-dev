@@ -69,7 +69,9 @@
     // Turnstile gate in front of every page (src/lib/gate): "off" | "on" | "force".
     // "on" fails open while the zone Transform Rule that sets x-verified-bot is missing;
     // "force" ignores that (local testing only). Needs GATE_SECRET + TURNSTILE_SECRET.
-    "GATE_MODE": "off",
+    // On since 2026-10-07: the Transform Rule's header was confirmed reaching the Worker
+    // (`x-verified-bot: false` for curl and for a spoofed Googlebot UA alike).
+    "GATE_MODE": "on",
   },
   // Uploaded images (src/lib/media): public AVIF/WebP variants under v1/, private
   // metadata-free masters and per-image metadata elsewhere. The bucket has no public
