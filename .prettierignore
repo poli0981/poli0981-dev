@@ -19,3 +19,8 @@ src/content/
 # re-align the tables would put the two tools in permanent disagreement: prettier
 # rewrites the block, then `gen-notices --check` reports drift, on every single run.
 THIRD-PARTY-NOTICES.md
+
+# Frontmatter templates for `npm run new:post`. Their {{PLACEHOLDER}} tokens are not
+# YAML — prettier reads `{{LANG}}` as a nested flow mapping and rewrites it to
+# `{ { LANG } }`, which new-post.mjs then never substitutes.
+docs/templates/

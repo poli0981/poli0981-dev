@@ -28,7 +28,7 @@ Welcome to `poli0981.dev` (the "Site"), operated by Kokone ("I", "me"). By acces
 
 **9. Governing law.** These Terms are governed by the laws of Vietnam.
 
-**Contact:** contact@poli0981.dev
+**Contact:** legal@poli0981.dev (legal matters) · contact@poli0981.dev (anything else)
 
 ---
 
@@ -56,4 +56,4 @@ Chào mừng đến `poli0981.dev` ("Trang web"), do Kokone ("mình") vận hàn
 
 **9. Luật áp dụng.** Điều khoản này chịu sự điều chỉnh của pháp luật Việt Nam.
 
-**Liên hệ:** contact@poli0981.dev
+**Liên hệ:** legal@poli0981.dev (vấn đề pháp lý) · contact@poli0981.dev (việc khác)

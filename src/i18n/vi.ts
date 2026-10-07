@@ -157,7 +157,7 @@ const vi = {
     title: "Liên hệ",
     lead: "Cách nhanh nhất để nhắn mình:",
     fast: "Nhanh nhất — Discord",
-    business: "Công việc — contact@poli0981.dev",
+    business: "Công việc — collab@poli0981.dev",
     all: "Tất cả kênh — /links",
   },
   gate: {

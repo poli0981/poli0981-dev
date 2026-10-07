@@ -59,10 +59,12 @@ Không secret nào trong repo/`wrangler.jsonc`; `.dev.vars` nằm trong `.gitign
 ## 7. security.txt (`public/.well-known/security.txt`)
 
 ```
+Contact: mailto:security@poli0981.dev
 Contact: mailto:contact@poli0981.dev
 Expires: 2027-07-01T00:00:00Z
 Preferred-Languages: vi, en
 Canonical: https://poli0981.dev/.well-known/security.txt
+Policy: https://github.com/poli0981/poli0981-dev/blob/main/SECURITY.md
 ```
 
 ## 8. Checklist hardening trước launch

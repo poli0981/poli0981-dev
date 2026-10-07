@@ -1,11 +1,11 @@
 ---
 name: "{{TITLE}}"
 tagline: ""
-lang: { { LANG } }
+lang: {{LANG}}
 stack: []
 status: active
 featured: false
-year: { { YEAR } }
+year: {{YEAR}}
 draft: true
 ---
 

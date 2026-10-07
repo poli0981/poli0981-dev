@@ -1,6 +1,6 @@
 ---
 q: "{{TITLE}}"
-lang: { { LANG } }
+lang: {{LANG}}
 group: dev
 order: 1
 ---

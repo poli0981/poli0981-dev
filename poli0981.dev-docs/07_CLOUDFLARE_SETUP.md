@@ -67,12 +67,21 @@ My Profile → API Tokens → Create Token → Custom:
 - Account Resources: đúng account của bạn. TTL: 1 năm.
 → Lưu vào GitHub repo secret `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` (bootstrap bằng script ở `08` §4).
 
-## 11. Email Routing
+## 11. Email (Google Workspace)
 
-Zone → Email → Email Routing → Enable:
-- Custom address: `contact@poli0981.dev` → forward tới hộp thư thật (xác minh mail đích).
-- Thêm `business@` nếu muốn tách mail sponsor. Catch-all: **Drop**.
-- DNS MX/SPF do wizard tự thêm — đồng ý. (Chỉ nhận; khi nào cần *gửi* từ domain sẽ tính sau — chưa nằm trong scope.)
+Mail của domain chạy trên **Google Workspace** (MX → `aspmx.l.google.com`, SPF `include:_spf.google.com`, DKIM `google._domainkey`, DMARC `p=none`) — **không** dùng Cloudflare Email Routing (hai bên không thể cùng giữ MX). Một hộp thư, các địa chỉ dưới đây là *alias* (Admin console → Users → Alternate email addresses):
+
+| Địa chỉ | Dùng cho | Xuất hiện ở |
+|---|---|---|
+| `contact@` | Liên hệ chung (fallback) | Footer, /links, /now, trang 403 |
+| `security@` | Báo lỗ hổng | `/.well-known/security.txt`, `SECURITY.md` |
+| `privacy@` | Yêu cầu về dữ liệu cá nhân | Privacy §7–8 |
+| `legal@` | Vấn đề pháp lý | Terms |
+| `copyright@` · `dmca@` · `takedown@` | Xin phép · khiếu nại bản quyền · yêu cầu gỡ khác | Licenses, `CONTENT-LICENSE.md` |
+| `collab@` · `press@` · `sponsor@` | Hợp tác · báo chí · tài trợ | /links, Q&A, footer |
+| `code@` · `games@` | Mã nguồn · key game/playtest | /dev, /gaming, /links |
+
+Địa chỉ công khai trên site lấy từ `src/lib/links.ts` (`CONTACT_EMAILS`); địa chỉ pháp lý nằm trực tiếp trong `content/legal/*.md`. Đổi/bỏ alias → sửa cả hai chỗ + `security.txt` (xem 17 §runbook).
 
 ## 12. Web Analytics
 
@@ -87,6 +96,6 @@ Account → Analytics & Logs → **Web Analytics → Add site** → chọn zone 
 - [ ] Turnstile hoạt động trên form report (site key đúng domain)
 - [ ] Custom domain trỏ Worker, `www` redirect về apex
 - [ ] Cron widgets chạy (Workers → widgets → Logs thấy execution)
-- [ ] `contact@poli0981.dev` nhận mail test
+- [ ] `contact@` và `security@poli0981.dev` nhận mail test
 - [ ] Web Analytics bắt đầu có số liệu sau ~24h
 - [ ] Auto-renew ON + transfer lock ON + 2FA ON
