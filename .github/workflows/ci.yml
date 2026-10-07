@@ -1,10 +1,11 @@
 name: CI
 
-# Docs-only changes skip CI/deploy. NOTE: use `*.md` (root-level) — NOT `**/*.md` —
-# because blog/story content lives at src/content/**/*.{md,mdx} and must still deploy.
+# PRs always run: `build` is a required status check in the main ruleset, so a
+# paths-ignore here would leave docs-only PRs waiting forever for a check that never
+# starts. Pushes to main may still skip docs-only changes. NOTE: use `*.md` (root-level)
+# — NOT `**/*.md` — because blog/story content lives at src/content/**/*.{md,mdx}.
 on:
   pull_request:
-    paths-ignore: ["poli0981.dev-docs/**", "*.md", "LICENSE"]
   push:
     branches: [main]
     paths-ignore: ["poli0981.dev-docs/**", "*.md", "LICENSE"]

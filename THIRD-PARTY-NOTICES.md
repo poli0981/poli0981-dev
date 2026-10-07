@@ -34,7 +34,6 @@ block drifts, so do not edit it by hand.
 | `eslint-plugin-astro` | MIT | build |
 | `eslint-plugin-svelte` | MIT | build |
 | `exifr` | MIT | build |
-| `gray-matter` | MIT | build |
 | `knip` | ISC | build |
 | `lefthook` | MIT | build |
 | `pagefind` | MIT | build |
@@ -50,19 +49,20 @@ block drifts, so do not edit it by hand.
 | `typescript` | Apache-2.0 | build |
 | `typescript-eslint` | MIT | build |
 | `wrangler` | MIT OR Apache-2.0 | build |
+| `yaml` | ISC | build |
 | `zod` | MIT | runtime |
 
 ## License spread across direct dependencies
 
 | License | Packages |
 | ------- | -------- |
-| MIT | 25 |
+| MIT | 24 |
 | Apache-2.0 | 2 |
+| ISC | 2 |
 | MPL-2.0 | 2 |
-| ISC | 1 |
 | MIT OR Apache-2.0 | 1 |
 
-The full resolved tree is **743 packages**. Transitive licenses are not
+The full resolved tree is **630 packages**. Transitive licenses are not
 tallied here on purpose: which packages are installed depends on the platform (npm
 resolves only the matching `@img/sharp-*` / `*-msvc` binaries), so a disk-based survey
 would produce a different file on Windows than in Linux CI and the drift check could

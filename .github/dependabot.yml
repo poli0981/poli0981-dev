@@ -25,6 +25,17 @@ updates:
       # Remove this entry once typescript-eslint widens its peer range past 7.
       - dependency-name: typescript
         update-types: ["version-update:semver-major"]
+      # typescript-eslint 8.71 breaks Svelte linting: with svelte-eslint-parser 1.8.x every
+      # prop/rune that is only read in the template is reported as "assigned a value but
+      # only used as a type" (131 false positives across src/components/*.svelte). 8.70.1
+      # is clean. Lift this once a bump passes `npx eslint .` again.
+      - dependency-name: typescript-eslint
+        versions: [">= 8.71.0"]
+      # prettier-plugin-astro 1.x reflows `<span>{expr}</span>` onto separate lines in 50
+      # .astro files, which inserts whitespace text nodes inside inline elements. That is a
+      # visual change, not a formatting one — it needs its own PR with a rendered diff.
+      - dependency-name: prettier-plugin-astro
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: "/"

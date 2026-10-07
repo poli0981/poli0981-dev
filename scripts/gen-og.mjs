@@ -6,7 +6,7 @@
 import satori from "satori";
 import { html } from "satori-html";
 import { Resvg } from "@resvg/resvg-js";
-import matter from "gray-matter";
+import { parse as parseYaml } from "yaml";
 import { readFileSync, writeFileSync, mkdirSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -85,6 +85,14 @@ const defaultCard = html(
 `),
 );
 
+// Frontmatter only (the body is never needed here). gray-matter was dropped: its js-yaml@3 →
+// argparse@1 → sprintf-js chain carries an advisory with no fixed version. YAML 1.2 core
+// schema is fine — no date fields are read below.
+function frontmatter(src) {
+  const m = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/.exec(src);
+  return (m && parseYaml(m[1])) || {};
+}
+
 async function render(node) {
   const svg = await satori(node, { width: 1200, height: 630, fonts });
   return new Resvg(svg, { fitTo: { mode: "width", value: 1200 } }).render().asPng();
@@ -113,7 +121,7 @@ for (const { dir, section, titleKey } of SECTIONS) {
     const relPosix = String(rel).replace(/\\/g, "/");
     if (!/\.(md|mdx)$/.test(relPosix)) continue;
     if (path.basename(relPosix).startsWith("_")) continue;
-    const { data } = matter(readFileSync(path.join(base, relPosix), "utf8"));
+    const data = frontmatter(readFileSync(path.join(base, relPosix), "utf8"));
     if (data.draft === true) continue;
     const id = relPosix.replace(/\.(md|mdx)$/, "");
     const lang = data.lang === "en" ? "en" : "vi";
