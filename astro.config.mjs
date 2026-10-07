@@ -31,6 +31,12 @@ const themeBootstrap = {
   },
 };
 
+// Cloudflare Web Analytics beacon: only in builds made by Workers Builds for main
+// (WORKERS_CI / WORKERS_CI_BRANCH are injected there), so CI, Lighthouse and branch
+// previews never report page views. Overridable with PUBLIC_CF_BEACON=true|false.
+const CF_BEACON_DEFAULT =
+  process.env.WORKERS_CI === "1" && process.env.WORKERS_CI_BRANCH === "main";
+
 // https://astro.build/config
 export default defineConfig({
   site: "https://poli0981.dev",
@@ -72,6 +78,11 @@ export default defineConfig({
       TURNSTILE_SECRET: envField.string({ context: "server", access: "secret", optional: true }),
       GITHUB_ISSUES_TOKEN: envField.string({ context: "server", access: "secret", optional: true }),
       DISCORD_WEBHOOK_BUG: envField.string({ context: "server", access: "secret", optional: true }),
+      PUBLIC_CF_BEACON: envField.boolean({
+        context: "client",
+        access: "public",
+        default: CF_BEACON_DEFAULT,
+      }),
     },
   },
 
@@ -149,7 +160,8 @@ export default defineConfig({
         // youtube-nocookie: video facade; challenges.cloudflare.com: Turnstile widget iframe.
         "frame-src https://www.youtube-nocookie.com https://challenges.cloudflare.com",
         // challenges.cloudflare.com: Turnstile client XHRs (siteverify is server-side).
-        "connect-src 'self' https://challenges.cloudflare.com",
+        // cloudflareinsights.com: Web Analytics beacon reports (manual snippet mode).
+        "connect-src 'self' https://challenges.cloudflare.com https://cloudflareinsights.com",
         "font-src 'self'",
         "base-uri 'none'",
         "form-action 'self'",
@@ -157,9 +169,15 @@ export default defineConfig({
       ],
       // 'self' keeps dynamically-imported island chunks loadable; 'wasm-unsafe-eval'
       // is pre-baked for Pagefind's WebAssembly; challenges.cloudflare.com loads the
-      // Turnstile api.js (bug-report captcha, docs 10).
+      // Turnstile api.js (bug-report captcha, docs 10); static.cloudflareinsights.com
+      // serves the Web Analytics beacon (src/components/CfBeacon.astro).
       scriptDirective: {
-        resources: ["'self'", "'wasm-unsafe-eval'", "https://challenges.cloudflare.com"],
+        resources: [
+          "'self'",
+          "'wasm-unsafe-eval'",
+          "https://challenges.cloudflare.com",
+          "https://static.cloudflareinsights.com",
+        ],
       },
       styleDirective: { resources: ["'self'"] },
     },

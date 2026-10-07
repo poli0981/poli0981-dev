@@ -2,6 +2,7 @@
 import "../styles/global.css";
 import { Font } from "astro:assets";
 import ReportDialog from "../components/ReportDialog.astro";
+import CfBeacon from "../components/CfBeacon.astro";
 
 interface Props {
   title: string;
@@ -26,6 +27,7 @@ const { title, showLinks = true, showReport = false, ref } = Astro.props;
     {/* Only the body font — no display/reading font, no islands (docs 09 §3.1). */}
     <Font cssVariable="--ff-body" preload />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <CfBeacon />
   </head>
 
   <body>

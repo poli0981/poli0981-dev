@@ -48,7 +48,7 @@ Không secret nào trong repo/`wrangler.jsonc`; `.dev.vars` nằm trong `.gitign
 ## 5. Nội dung nhúng bên thứ ba
 
 - YouTube: **click-to-load facade** (thumb tĩnh từ i.ytimg.com) → bấm mới tạo iframe `youtube-nocookie.com`. Vừa nhanh vừa gọn Privacy Policy.
-- Không font/CDN/script bên ngoài nào khác — mọi asset self-host.
+- Ngoại lệ duy nhất cho script bên ngoài: beacon Cloudflare Web Analytics (`static.cloudflareinsights.com`, báo về `cloudflareinsights.com`) — `type=module` nên tải trễ, không cookie, chỉ có trong bản build production của Workers Builds (`src/components/CfBeacon.astro`). CSP mở đúng 2 host đó (`script-src` + `connect-src`). Còn lại: không font/CDN/script ngoài — mọi asset self-host.
 
 ## 6. Supply chain (repo private — lưu ý riêng)
 

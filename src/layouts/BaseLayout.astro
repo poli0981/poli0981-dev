@@ -9,6 +9,7 @@ import MenuSheet from "../components/MenuSheet.svelte";
 import SearchModal from "../components/SearchModal.svelte";
 import LegalGateSheet from "../components/LegalGateSheet.svelte";
 import ReportDialog from "../components/ReportDialog.astro";
+import CfBeacon from "../components/CfBeacon.astro";
 import { resolveSeo, SITE, hreflangPair, personSchema, type SeoInput } from "../lib/seo";
 import { toLocale, useTranslations } from "../i18n";
 import { menuNav, legalNav } from "../lib/nav";
@@ -63,6 +64,7 @@ const onLegalPage = /\/legal(\/|$)/.test(Astro.url.pathname);
 
     <title>{seo.title}</title>
     <meta name="description" content={seo.description} />
+    <CfBeacon />
     <link rel="canonical" href={seo.canonical} />
     {seo.noindex && <meta name="robots" content="noindex, nofollow" />}
 
