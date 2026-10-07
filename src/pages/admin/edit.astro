@@ -1,0 +1,23 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import Editor from "@/components/admin/Editor.svelte";
+
+export const prerender = false;
+
+// ?path=blog/x.md edits an entry; ?new=<collection>&slug=…&lang=…[&series=…] creates one.
+const params = Astro.url.searchParams;
+const path = params.get("path");
+const collection = params.get("new");
+const create = collection
+  ? {
+      collection,
+      slug: params.get("slug") ?? "",
+      lang: params.get("lang") === "en" ? "en" : "vi",
+      series: params.get("series") ?? undefined,
+    }
+  : null;
+---
+
+<AdminLayout title={path ?? "Tạo mới"}>
+  <Editor client:only="svelte" {path} {create} />
+</AdminLayout>

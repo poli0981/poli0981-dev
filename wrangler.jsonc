@@ -36,6 +36,13 @@
       "!/blog/rss.xml",
       "!/truyen/rss.xml",
       "!/.well-known/*",
+      // Vite dev-server internals (`astro dev`): the Cloudflare Vite plugin applies these
+      // rules before Vite's own middleware, so without them module requests like
+      // /@vite/client or /src/styles/global.css reach the Worker and 404, and no island
+      // hydrates. None of these paths exist in a build.
+      "!/@*",
+      "!/src/*",
+      "!/node_modules/*",
     ],
   },
   "kv_namespaces": [
@@ -72,12 +79,21 @@
     // On since 2026-10-07: the Transform Rule's header was confirmed reaching the Worker
     // (`x-verified-bot: false` for curl and for a spoofed Googlebot UA alike).
     "GATE_MODE": "on",
+    // Cloudflare Access application protecting admin.poli0981.dev (src/lib/admin/access).
+    // Not secrets: the AUD tag only says which app a token must be minted for.
+    "ACCESS_TEAM_DOMAIN": "https://polished-hall-48fd.cloudflareaccess.com",
+    "ACCESS_AUD": "197ec8eae1275e465623bdb77f88238b9b01dd66eec0be2e8c13ccd7b13e48b7",
   },
   // Uploaded images (src/lib/media): public AVIF/WebP variants under v1/, private
   // metadata-free masters and per-image metadata elsewhere. The bucket has no public
   // URL — everything public is served by /media in the Worker. Created with
   // `wrangler r2 bucket create poli0981-media --location apac`.
   "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "poli0981-media" }],
+  // Cloudflare Images, used only by the admin upload to make the AVIF/WebP variants
+  // (never per request). Free tier: 5,000 unique transformations a month. Local in dev
+  // (width/height/format only) — never `remote: true`, the build-time prerender worker
+  // inherits every binding and CI has no Cloudflare credentials.
+  "images": { "binding": "IMAGES" },
   "observability": {
     "enabled": true,
   },

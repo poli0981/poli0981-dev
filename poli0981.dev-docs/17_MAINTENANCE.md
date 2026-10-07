@@ -9,7 +9,7 @@ Mục tiêu: site "để yên vẫn sống". Tổng thời gian bảo trì đị
 | **Hằng tuần** (thứ 2, sau khi Dependabot chạy) | Triage PR Dependabot: patch/minor xanh CI → merge; security alert → xử lý ≤ 48h. Liếc Discord `#site-reports` |
 | **Hằng tháng** | `npm outdated` đọc report weekly; nâng minor còn sót; xem Web Analytics + Core Web Vitals; liếc Workers metrics (request, error rate); kiểm tra cron widgets còn chạy |
 | **Hằng quý** | Nâng major có kế hoạch (Astro/Tailwind/Wrangler — đọc upgrade guide trước); chạy lại ma trận error test `09` §5; backup ngoài (§4) |
-| **Hằng năm** | **Xoay secrets**: GITHUB_ISSUES_TOKEN, CLOUDFLARE_API_TOKEN, STEAM_API_KEY · cập nhật `Expires` trong security.txt · đọc lại 5 văn bản legal (đổi thì tăng `v` của legalAck) · kiểm tra thẻ thanh toán còn hạn cho auto-renew domain |
+| **Hằng năm** | **Xoay secrets**: GITHUB_ISSUES_TOKEN, GITHUB_CONTENT_TOKEN (admin), GATE_SECRET (vô hiệu mọi vé cổng — làm lúc ít khách), STEAM_API_KEY · cập nhật `Expires` trong security.txt · đọc lại 5 văn bản legal (đổi thì tăng `v` của legalAck) · kiểm tra thẻ thanh toán còn hạn cho auto-renew domain |
 
 Đặt reminder: dùng chính hệ notify/cron GitHub Actions quen thuộc — workflow cron tháng/quý/năm bắn Discord nhắc việc (input sẵn trong repo `.github`).
 
@@ -38,8 +38,10 @@ Mục tiêu: site "để yên vẫn sống". Tổng thời gian bảo trì đị
 
 | Sự kiện | Hành động |
 |---|---|
-| `src/assets/gallery/` > ~1GB hoặc build > 10 phút | Chuyển ảnh gốc sang R2 + biến gallery thành load từ R2 (kế hoạch ngủ trong ADR/backlog) |
-| Muốn viết trọn bài từ điện thoại thường xuyên | Xét lại Keystatic (ADR-04) |
+| `src/assets/gallery/` > ~1GB hoặc build > 10 phút | Album mới đã dùng ảnh R2 qua admin; chuyển dần album cũ sang `gallery-photos/<album>.json` |
+| Cổng Turnstile gây phiền / nghi chặn nhầm bot tốt | Kill switch: `GATE_MODE: "off"` (deploy). Kiểm Transform Rule `x-verified-bot` còn tồn tại (`wrangler tail`) |
+| Gần hết 5.000 biến đổi Images/tháng | Upload trùng không tốn thêm; nếu vẫn thiếu thì bật Images Paid ($0.50/1.000) — ghi vào `16` trước |
+| Muốn viết trọn bài từ điện thoại thường xuyên | Dùng admin `admin.poli0981.dev` (đã có) |
 | Spam form vượt rate-limit thường xuyên | Nâng Turnstile lên chế độ khó hơn + thêm custom rule quốc gia cho /api |
 | Repo chuyển public | Bật CodeQL (free cho public) vào caller CI; kiểm tra lại EXIF toàn bộ ảnh lịch sử; xoá secret khỏi lịch sử nếu từng lỡ (không nên có) |
-| Đổi email/mất hộp thư đích | Cập nhật Email Routing + security.txt + legal contact ngay |
+| Đổi email/mất hộp thư đích | Cập nhật alias Google Workspace + `src/lib/links.ts` + security.txt + legal contact ngay (`07` §11) |

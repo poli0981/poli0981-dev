@@ -82,6 +82,14 @@ tags: [horror, short-story]
 - Không có bản dịch → trang index locale kia có mục "Chỉ có bằng tiếng Việt" (hiện tối đa 5 bài gần nhất, tuỳ chọn tắt).
 - Slug: kebab-case không dấu (`dem-khong-tieng`), ổn định vĩnh viễn — đổi title không đổi slug; nếu buộc đổi, thêm redirect trong middleware.
 
+## 5a. Viết qua admin (`admin.poli0981.dev`)
+
+- **Nội dung**: danh sách theo collection → *Tạo mới* (loại, slug, ngôn ngữ; truyện cần slug bộ) hoặc sửa bài có sẵn. Form theo đúng schema (`src/lib/admin/collections.ts`), thân bài Markdown + *Xem trước*, *Chèn ảnh* (chèn `<picture>` từ thư viện), *Ảnh bìa* (`coverMedia`). **Lưu** = commit thẳng vào `poli0981/content` (`main`), giữ nguyên định dạng frontmatter phần không sửa; sửa song song trên GitHub ⇒ báo xung đột (409) thay vì ghi đè.
+- **Ảnh**: kéo-thả nhiều ảnh → nén một lần (AVIF/WebP, bỏ EXIF) → R2; sửa alt, copy snippet, xoá khi không còn bài nào dùng.
+- **Gallery**: tạo album (vi/en + `gallery-photos/<album>.json` trong một commit), thêm/bớt/sắp xếp ảnh R2, chú thích vi/en bắt buộc.
+- **Xuất bản**: nút trên thanh admin ⇒ workflow `content-bump.yml` (xem `08` §0); site cập nhật sau khi CI xanh và Workers Builds deploy (~5–8 phút). Bài mới tạo mặc định `draft: true` — bỏ tick để hiện trên site.
+- Lưu ý: repo content **public** ⇒ bản nháp vẫn đọc được trên GitHub.
+
 ## 5. Quy trình viết (quyết định D2 — Markdown + Git thuần)
 
 1. **Ở PC**: tạo file trong VS Code/Obsidian (vault trỏ thẳng `src/content/`), viết với `draft: true`, xem bằng `npm run dev`.

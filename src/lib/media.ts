@@ -35,7 +35,7 @@ export function variantWidths(format: MediaFormat, width: number): number[] {
 }
 
 /** R2 key of one public variant; the URL path is the same key under /media/. */
-function variantKey(id: string, format: MediaFormat, width: number): string {
+export function variantKey(id: string, format: MediaFormat, width: number): string {
   return `${MEDIA_VERSION}/${id}/${format}-${width}`;
 }
 
@@ -53,4 +53,24 @@ export function mediaSrcset(media: MediaRef, format: MediaFormat): string {
 export function mediaFallbackSrc(media: MediaRef): string {
   const widths = variantWidths("webp", media.w);
   return mediaUrl(media.id, "webp", widths[0]);
+}
+
+const escapeAttr = (text: string) =>
+  text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/**
+ * The same <picture> as MediaImage.astro, as HTML to paste into Markdown/MDX (raw HTML is
+ * valid in both). width/height keep the layout stable; AVIF first, WebP for the rest.
+ */
+export function mediaPictureHtml(
+  media: MediaRef,
+  alt: string,
+  sizes = "(max-width: 768px) 100vw, 720px",
+): string {
+  return [
+    "<picture>",
+    `  <source type="image/avif" srcset="${mediaSrcset(media, "avif")}" sizes="${sizes}" />`,
+    `  <img src="${mediaFallbackSrc(media)}" srcset="${mediaSrcset(media, "webp")}" sizes="${sizes}" width="${media.w}" height="${media.h}" alt="${escapeAttr(alt)}" loading="lazy" decoding="async" />`,
+    "</picture>",
+  ].join("\n");
 }

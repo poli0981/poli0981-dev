@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /admin/
 
 # AI-training crawlers — blocked (content is All Rights Reserved; mirrors the
 # Cloudflare "Block AI Scrapers" toggle, docs 06/07/13).

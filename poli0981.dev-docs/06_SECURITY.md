@@ -105,3 +105,24 @@ Policy: https://github.com/poli0981/poli0981-dev/blob/main/SECURITY.md
 - [ ] IP test trong denylist → 403 trang custom
 - [ ] `wrangler secret list` khớp đúng bảng §4, không thừa
 - [ ] Zone settings khớp `07` checklist
+
+## 9. Admin (`admin.poli0981.dev`)
+
+```
+admin.poli0981.dev ─▶ Cloudflare Access (policy email) ─▶ Worker
+  src/lib/hosts.ts   : host admin chỉ phục vụ /admin*, /api/admin*, /media/*; còn lại 301 về site;
+                       poli0981.dev/admin* ⇒ 301 sang host admin, /api/admin* ⇒ 404
+  src/middleware.ts  : mọi route /admin* & /api/admin* (so theo routePattern) phải có
+                       Cf-Access-Jwt-Assertion hợp lệ — jose + JWKS của team, aud = ACCESS_AUD,
+                       iss = ACCESS_TEAM_DOMAIN, RS256, chưa hết hạn; (tuỳ chọn) ADMIN_EMAILS
+                       request ghi: Sec-Fetch-Site same-origin + Origin đúng (chống CSRF same-site)
+                       RL_ADMIN theo email; Cache-Control no-store; X-Robots-Tag noindex
+```
+
+- **Vì sao host riêng**: cùng origin thì một lỗi XSS ở trang công khai có thể gọi API admin bằng cookie Access. Khác origin + kiểm `Sec-Fetch-Site` ⇒ không.
+- **Hai lớp**: Access chặn ở edge; Worker vẫn tự kiểm JWT ⇒ preview URL/workers.dev (đều tắt) hay header giả đều 403 (smoke test kiểm cả JWT giả).
+- **Token GitHub** (`GITHUB_CONTENT_TOKEN`, fine-grained): `poli0981/content` Contents RW; `poli0981/poli0981-dev` **chỉ** Actions RW + Pull requests R + Commit statuses R. Lộ token ⇒ tệ nhất là sửa nội dung; **không** đẩy được code. Xuất bản đi qua `content-bump.yml` (GITHUB_TOKEN) + CI `build` bắt buộc; diff có file ngoài `.md/.json` (vd. `.mdx` — chạy code lúc build) ⇒ không auto-merge.
+- **Upload ảnh**: kiểm magic bytes (không SVG), ≤ 20 MB, id = SHA-256 ⇒ trùng thì không biến đổi lại; biến thể + master tái mã hoá (mất EXIF/GPS), không giữ file gốc; `/media` chỉ phục vụ key biến thể, `CSP: sandbox`.
+- **Preview Markdown** dùng `{@html}` trên chính nội dung của chủ site; CSP của trang admin (không `unsafe-inline`) chặn script/handler.
+- Dev (`astro dev`) dùng danh tính giả `dev@localhost` — chỉ khi `import.meta.env.DEV` (luôn false trong bản build).
+

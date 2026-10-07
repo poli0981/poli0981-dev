@@ -7,14 +7,14 @@ Website cá nhân `poli0981.dev` cho Kokone: **portfolio dev + blog kiêm nhật
 ## 2. Mục tiêu
 
 1. Một địa chỉ duy nhất đại diện cả hai "mặt": developer (GitHub poli0981) và creator (SkullMute).
-2. Viết được **thoải mái và bền**: blog/nhật ký/truyện bằng Markdown, xuất bản bằng `git push`, không phụ thuộc CMS bên thứ ba.
+2. Viết được **thoải mái và bền**: blog/nhật ký/truyện bằng Markdown, xuất bản bằng `git push` hoặc nút **Xuất bản** của admin tự viết — không phụ thuộc CMS bên thứ ba.
 3. Đẹp có chủ đích ("Phòng đọc lúc nửa đêm"), không giống template, mobile hoàn chỉnh.
 4. Vận hành ~US$12–13/năm phát sinh mới; không thêm dịch vụ trả phí nào khác.
-5. Bảo mật "vừa đủ": headers chuẩn, chống abuse form, chặn IP, không mở bề mặt admin nào ra internet.
+5. Bảo mật "vừa đủ": headers chuẩn, chống abuse form, chặn IP, cổng chống bot; bề mặt admin duy nhất là `admin.poli0981.dev` sau Cloudflare Access (Worker kiểm JWT lần nữa).
 
 ## 3. Non-goals (v1 KHÔNG làm)
 
-- Không CMS/admin UI (Keystatic để ngỏ cho tương lai — xem ADR-04).
+- Không CMS bên thứ ba. Admin tự viết (10/2026) chỉ phục vụ chủ site — xem ADR-04 và `06` §9.
 - Không comment, không form Q&A, không tài khoản người dùng, không newsletter.
 - Không D1/database; không e-commerce/donate (có thể thêm link Ko-fi tĩnh sau).
 - Không tiếng Nhật ở v1 (kiến trúc i18n phải cho phép thêm `ja` sau mà không refactor).

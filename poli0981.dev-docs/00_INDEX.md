@@ -30,12 +30,12 @@
 
 `12_LEGAL/`: `TERMS_OF_USE.md` · `PRIVACY_POLICY.md` · `DISCLAIMER.md` · `THIRD_PARTY_NOTICES.md` · `CONTENT_LICENSE.md`
 
-## Nhật ký quyết định (đã chốt 2026-07-17)
+## Nhật ký quyết định (chốt 2026-07-17, cập nhật 2026-10-07)
 
 | # | Quyết định | Chọn |
 |---|---|---|
 | D1 | Framework/hosting | Astro 7 + Svelte 5 islands, Cloudflare Workers + Static Assets |
-| D2 | Quy trình viết | **Markdown + Git thuần** (không Keystatic). Capture mobile: GitHub web editor + `draft: true` |
+| D2 | Quy trình viết | Markdown + Git (repo `poli0981/content`). Từ 10/2026 thêm **admin tự viết** ở `admin.poli0981.dev` (soạn/sửa → commit repo content; **Xuất bản** → workflow `content-bump.yml` mở PR bump submodule + auto-merge). Không Keystatic/CMS bên thứ ba |
 | D3 | Q&A | FAQ tĩnh + liên hệ qua social/`contact@` — **không form, không D1** |
 | D4 | Ngôn ngữ | VI (mặc định, không prefix) + EN (`/en/`) |
 | D5 | Bình luận blog | Tắt (không Giscus) |
@@ -43,6 +43,11 @@
 | D7 | Giấy phép | Code GPL-3.0 · Nội dung All Rights Reserved |
 | D8 | Error pages | Tự phục vụ từ app (không mua zone Pro) |
 | D9 | API ngoài | Không weather/map; widget YouTube + Steam + GitHub qua cron worker |
+| D11 | Email | Google Workspace (MX Google), một hộp thư + alias theo chủ đề (`07` §11). Không Cloudflare Email Routing |
+| D12 | Chống bot | **Cổng Turnstile** trước mọi trang, vé 48 giờ (`06` §3b); bot đã xác thực đi thẳng nhờ Transform Rule `x-verified-bot` |
+| D13 | Rate limit | Workers Rate Limiting bindings theo nhóm `/api` (`06` §2) thay bộ đếm KV |
+| D14 | Analytics | Cloudflare Web Analytics, **snippet thủ công** chỉ ở bản build production (`07` §12) |
+| D15 | Admin | `admin.poli0981.dev` sau Cloudflare Access + Worker tự kiểm JWT; token GitHub chỉ ghi repo content; ảnh → Images binding → R2 (`06` §9) |
 | D10 | Data services | **KV** (cache widget, denylist) + **R2** `poli0981-media` cho ảnh upload qua admin (từ 10/2026; AVIF/WebP sinh một lần lúc upload, phục vụ qua `/media`, cache 1 năm). Không D1. Ảnh build-time cũ vẫn ở `src/assets/` |
 
 ## Cách dùng suite
