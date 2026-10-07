@@ -1,7 +1,10 @@
-// GitHub access for the admin. The token (GITHUB_CONTENT_TOKEN, fine-grained) can write
-// ONLY the content repo, plus dispatch workflows / read PRs and checks on the site repo:
-// publishing runs .github/workflows/content-bump.yml there, so a leaked token can't push
-// code to poli0981-dev.
+// GitHub access for the admin, with two fine-grained tokens — a fine-grained token's
+// permissions apply to EVERY repository it covers, so one token can't be "write here,
+// dispatch only there":
+//  - GITHUB_CONTENT_TOKEN: only poli0981/content, Contents read & write (saves);
+//  - GITHUB_PUBLISH_TOKEN: only poli0981/poli0981-dev, Actions read & write (dispatches
+//    .github/workflows/content-bump.yml). It has no Contents permission, so even leaked
+//    it can't push code here. Status reads need nothing: both repos are public.
 
 const API = "https://api.github.com";
 const CONTENT_REPO = { owner: "poli0981", name: "content" } as const;
@@ -12,6 +15,8 @@ export class GitHubError extends Error {
   constructor(
     message: string,
     readonly status: number,
+    /** What GitHub says the call needed (X-Accepted-GitHub-Permissions), e.g. "contents=write". */
+    readonly needs: string | null = null,
   ) {
     super(message);
   }
@@ -37,6 +42,7 @@ async function request<T>(token: string, path: string, init: RequestInit = {}): 
     throw new GitHubError(
       `GitHub ${init.method ?? "GET"} ${path} → ${res.status} ${detail.slice(0, 300)}`,
       res.status,
+      res.headers.get("x-accepted-github-permissions"),
     );
   }
   return (res.status === 204 ? null : await res.json()) as T;

@@ -9,7 +9,7 @@ Mục tiêu: site "để yên vẫn sống". Tổng thời gian bảo trì đị
 | **Hằng tuần** (thứ 2, sau khi Dependabot chạy) | Triage PR Dependabot: patch/minor xanh CI → merge; security alert → xử lý ≤ 48h. Liếc Discord `#site-reports` |
 | **Hằng tháng** | `npm outdated` đọc report weekly; nâng minor còn sót; xem Web Analytics + Core Web Vitals; liếc Workers metrics (request, error rate); kiểm tra cron widgets còn chạy |
 | **Hằng quý** | Nâng major có kế hoạch (Astro/Tailwind/Wrangler — đọc upgrade guide trước); chạy lại ma trận error test `09` §5; backup ngoài (§4) |
-| **Hằng năm** | **Xoay secrets**: GITHUB_ISSUES_TOKEN, GITHUB_CONTENT_TOKEN (admin), GATE_SECRET (vô hiệu mọi vé cổng — làm lúc ít khách), STEAM_API_KEY · cập nhật `Expires` trong security.txt · đọc lại 5 văn bản legal (đổi thì tăng `v` của legalAck) · kiểm tra thẻ thanh toán còn hạn cho auto-renew domain |
+| **Hằng năm** | **Xoay secrets**: GITHUB_ISSUES_TOKEN, GITHUB_CONTENT_TOKEN + GITHUB_PUBLISH_TOKEN (admin), GATE_SECRET (vô hiệu mọi vé cổng — làm lúc ít khách), STEAM_API_KEY · cập nhật `Expires` trong security.txt · đọc lại 5 văn bản legal (đổi thì tăng `v` của legalAck) · kiểm tra thẻ thanh toán còn hạn cho auto-renew domain |
 
 Đặt reminder: dùng chính hệ notify/cron GitHub Actions quen thuộc — workflow cron tháng/quý/năm bắn Discord nhắc việc (input sẵn trong repo `.github`).
 

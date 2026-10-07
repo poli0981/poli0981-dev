@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { GITHUB_CONTENT_TOKEN } from "astro:env/server";
+import { GITHUB_CONTENT_TOKEN, GITHUB_PUBLISH_TOKEN } from "astro:env/server";
 import { dispatchPublish, publishStatus } from "@/lib/admin/github";
 import { errorResponse, json } from "@/lib/admin/http";
 
@@ -18,9 +18,12 @@ export const GET: APIRoute = async () => {
 };
 
 export const POST: APIRoute = async () => {
-  if (!GITHUB_CONTENT_TOKEN) return json({ error: "not_configured" }, 503);
+  // Dispatching needs Actions write on the site repo — the publish token's only power.
+  // Falls back to the content token for single-token setups.
+  const token = GITHUB_PUBLISH_TOKEN ?? GITHUB_CONTENT_TOKEN;
+  if (!token) return json({ error: "not_configured" }, 503);
   try {
-    await dispatchPublish(GITHUB_CONTENT_TOKEN);
+    await dispatchPublish(token);
     return json({ dispatched: true }, 202);
   } catch (error) {
     return errorResponse(error);

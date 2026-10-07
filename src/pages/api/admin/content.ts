@@ -63,8 +63,13 @@ export const PUT: APIRoute = async ({ request, locals }) => {
   }
   const collection = collectionOf(input.path);
   if (!collection) return json({ error: "not_editable" }, 400);
-  // New files are Markdown only: MDX runs code at build time.
-  if (input.sha === null && !input.path.endsWith(".md")) return json({ error: "md_only" }, 400);
+  // New files: Markdown only (MDX runs code at build time), and only where adding an
+  // entry is safe (see CollectionSpec.creatable — e.g. a second /now file would replace
+  // the live page).
+  if (input.sha === null) {
+    if (!input.path.endsWith(".md")) return json({ error: "md_only" }, 400);
+    if (!collection.creatable) return json({ error: "not_creatable" }, 400);
+  }
   for (const field of COLLECTIONS[collection.id].fields) {
     if (field.required && (input.frontmatter?.[field.key] ?? "") === "") {
       return json({ error: "missing_field", field: field.key }, 400);

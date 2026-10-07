@@ -57,6 +57,11 @@ export function describeError(error: unknown): string {
     if (error.status === 415) return "Định dạng ảnh không được hỗ trợ.";
     if (error.status === 429) return "Thao tác quá nhanh — đợi một phút.";
     if (error.status === 503) return "Admin chưa được cấu hình (thiếu token).";
+    if (error.data.error === "github_permission") {
+      const needs = error.data.needs ? ` (GitHub cần: ${String(error.data.needs)})` : "";
+      return `Token GitHub thiếu quyền${needs}. Lưu bài cần GITHUB_CONTENT_TOKEN có Contents: Read and write trên poli0981/content; Xuất bản cần GITHUB_PUBLISH_TOKEN có Actions: Read and write trên poli0981/poli0981-dev.`;
+    }
+    if (error.data.error === "not_creatable") return "Mục này chỉ sửa được, không tạo mới.";
     return `Lỗi ${error.status}: ${error.message}`;
   }
   return error instanceof Error ? error.message : String(error);

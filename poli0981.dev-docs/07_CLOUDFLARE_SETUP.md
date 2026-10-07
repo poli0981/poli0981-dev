@@ -106,7 +106,10 @@ Account → Analytics & Logs → **Web Analytics** → site `poli0981.dev` ở c
 
 1. Workers → `poli0981-dev` → Domains & Routes → **Custom domain** `admin.poli0981.dev` (cùng Worker).
 2. Zero Trust → Access → Applications → **Self-hosted**, domain `admin.poli0981.dev` (cả host), policy Allow theo email chủ site (IdP Google hoặc One-time PIN). Lấy **team domain** + **AUD tag** → `vars.ACCESS_TEAM_DOMAIN` / `vars.ACCESS_AUD` trong `wrangler.jsonc` (không phải secret).
-3. GitHub fine-grained PAT (hạn ≤ 1 năm): `poli0981/content` → Contents RW; `poli0981/poli0981-dev` → Actions RW, Pull requests R, Commit statuses R → `npx wrangler secret put GITHUB_CONTENT_TOKEN`. (Tuỳ chọn) `ADMIN_EMAILS` = danh sách email, phân cách dấu phẩy.
+3. Hai GitHub **fine-grained** PAT (hạn ≤ 1 năm; Settings → Developer settings → Fine-grained tokens):
+   - *Content*: Repository access = **Only select repositories → `poli0981/content`**; Repository permissions → **Contents: Read and write** → `npx wrangler secret put GITHUB_CONTENT_TOKEN`.
+   - *Publish*: Repository access = **Only select repositories → `poli0981/poli0981-dev`**; Repository permissions → **Actions: Read and write** → `npx wrangler secret put GITHUB_PUBLISH_TOKEN`.
+   - Sửa quyền của token có sẵn không đổi giá trị token ⇒ không cần đặt lại secret. (Tuỳ chọn) `ADMIN_EMAILS` = danh sách email, phân cách dấu phẩy.
 4. Repo `poli0981-dev` → Settings → Actions → General → bật **Allow GitHub Actions to create and approve pull requests** (cho `content-bump.yml`); quyền mặc định của GITHUB_TOKEN giữ **read**.
 5. R2 `poli0981-media` (`wrangler r2 bucket create poli0981-media --location apac`), không bật public URL. Images binding không cần bật gì thêm (gói Free: 5.000 biến đổi/tháng).
 
