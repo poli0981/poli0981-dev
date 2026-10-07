@@ -1,0 +1,88 @@
+name: Content publish
+
+# "Publish" in the admin (admin.poli0981.dev) dispatches this. It points the src/content
+# submodule at poli0981/content's main, commits that on the content/bump branch, opens
+# (or updates) a PR and, when only Markdown/JSON changed, enables auto-merge. CI then runs
+# on the bump commit; when the required `build` check passes the PR merges itself and
+# Workers Builds deploys main.
+#
+# Why a workflow: the admin's token can write ONLY the content repo (+ dispatch this). If
+# it leaked, the worst case is content edits — never code pushed to this repo. MDX runs
+# code at build time, so anything other than .md/.json waits for a human review.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: content-bump
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push content/bump
+      pull-requests: write # open the PR, enable auto-merge
+      actions: write # run ci.yml on the bump commit
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+
+      - name: Point src/content at content main
+        id: bump
+        run: |
+          git -C src/content fetch --quiet origin main
+          old=$(git rev-parse HEAD:src/content)
+          new=$(git -C src/content rev-parse FETCH_HEAD)
+          echo "new=$new" >> "$GITHUB_OUTPUT"
+          if [ "$old" = "$new" ]; then
+            echo "Already published ($new)."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          files=$(git -C src/content diff --name-only "$old" "$new")
+          echo "$files"
+          if echo "$files" | grep -qvE '\.(md|json)$'; then auto=false; else auto=true; fi
+          git -C src/content checkout --quiet "$new"
+          {
+            echo "changed=true"
+            echo "auto=$auto"
+            echo "files<<EOF"
+            echo "$files"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Commit, open/update the PR, queue CI
+        if: steps.bump.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NEW: ${{ steps.bump.outputs.new }}
+          AUTO: ${{ steps.bump.outputs.auto }}
+          FILES: ${{ steps.bump.outputs.files }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --create content/bump
+          git add src/content
+          git commit --quiet -m "chore(content): publish ${NEW:0:7}" -m "$FILES"
+          git push --force --quiet origin content/bump
+
+          if [ "$(gh pr view content/bump --json state --jq .state 2>/dev/null)" != "OPEN" ]; then
+            gh pr create --base main --head content/bump \
+              --title "chore(content): publish from admin" \
+              --body "Bumps \`src/content\` to poli0981/content@${NEW}. Opened by the admin's **Publish** button (.github/workflows/content-bump.yml)."
+          fi
+
+          if [ "$AUTO" = "true" ]; then
+            gh pr merge content/bump --auto --squash
+          else
+            gh pr merge content/bump --disable-auto 2>/dev/null || true
+            gh pr comment content/bump --body "This publish touches files other than .md/.json (MDX runs code at build time), so it waits for a review instead of auto-merging."
+          fi
+
+          # PRs opened with GITHUB_TOKEN don't trigger pull_request workflows; a dispatch is
+          # the exception, and its `build` check lands on the bump commit for the ruleset.
+          gh workflow run ci.yml --ref content/bump

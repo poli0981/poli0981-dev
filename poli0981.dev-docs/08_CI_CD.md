@@ -1,5 +1,14 @@
 # 08 — CI/CD
 
+## 0. Thực tế đang chạy (10/2026) — các mục sau là kế hoạch ban đầu
+
+- **Deploy**: Cloudflare **Workers Builds** nối repo, build + `wrangler deploy --config ./dist/server/wrangler.json` mỗi lần push `main` (không có job deploy trong GitHub Actions; secrets `CLOUDFLARE_*` trên GitHub không dùng). Nhánh khác có preview build.
+- **`ci.yml`** (PR, push `main`, `workflow_dispatch`): install → `wrangler types --strict-vars=false` → prettier → eslint → `astro check` → typecheck widgets → knip → **unit test** (`npm test`) → `npm audit --omit=dev --audit-level=high` → notices → EXIF → build → **smoke test** (`npm run smoke`: chạy worker đã build bằng `wrangler dev`, kiểm trang/304/HEAD/`/media`/admin 403 và pha ép bật cổng Turnstile). Check `build` là **bắt buộc** (ruleset `main`), nên PR chỉ sửa docs vẫn phải chạy.
+- **`osv-scanner.yml`**: reusable workflow SARIF (tab Security), hằng tuần + khi đổi lockfile.
+- **`lighthouse.yml`**: chỉ cảnh báo.
+- **`content-bump.yml`** (nút **Xuất bản** của admin): trỏ submodule `src/content` về `content/main`, commit lên nhánh `content/bump`, mở/cập nhật PR, auto-merge (squash) nếu diff chỉ `.md/.json`, rồi `gh workflow run ci.yml --ref content/bump` để có check `build` (PR mở bằng GITHUB_TOKEN không kích hoạt `pull_request`). Merge ⇒ Workers Builds deploy.
+- **Bẫy đã gặp**: khi `main` dính advisory, *mọi* PR (cả Dependabot) đỏ vì bước audit ⇒ vá gộp trong một PR rồi đóng các PR Dependabot bị thay thế.
+
 ## 1. Nguyên tắc
 
 - Tái dùng hạ tầng `poli0981/.github`: thêm reusable workflow **`web-astro-ci.yml`** + **`web-astro-deploy.yml`**, repo này chỉ chứa caller stub — đúng mô hình 15 repo hiện tại.

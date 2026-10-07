@@ -113,7 +113,8 @@ Quy tắc gói bên thứ ba: chỉ thêm khi có lý do trong ADR/PR descriptio
 | 01 | Astro thay vì SvelteKit/Next | Content-first, ~0 JS mặc định, Content Collections type-safe, RSS/sitemap first-class | Site biến thành web-app nhiều tương tác |
 | 02 | Workers thay vì Pages | Hướng Cloudflare khuyến nghị cho dự án mới; assets request free; 1 nền tảng cho cả site + cron | — |
 | 03 | Svelte islands thay vì React | Nhẹ hơn, đã quen từ WXT/BookmarkMagic; tránh kéo React runtime vào site tĩnh | Cần lib chỉ có React |
-| 04 | Không Keystatic (v1) | Ít bề mặt tấn công + ít deps; capture mobile đã có đường khác | Sau 1–2 tháng thấy thật sự cần viết trọn bài từ điện thoại |
+| 04 | Admin tự viết thay vì Keystatic (10/2026) | Host riêng sau Access + kiểm JWT; token chỉ ghi repo content, xuất bản qua workflow có CI; ảnh qua Images binding → R2; ít deps (`jose`, `yaml`, `marked`) | Cần nhiều người biên tập / phân quyền |
 | 05 | Không D1/Sentry | Q&A form bị bỏ; bug report đi thẳng GitHub+Discord | Xuất hiện nhu cầu dữ liệu động thật |
 | 06 | GPL-3.0 code / ARR content | Nhất quán hệ sinh thái repo; truyện & ảnh cần bảo hộ chặt | Mở public repo → cân nhắc thêm |
+| 08 | Logic edge ở worker entry (`src/worker.ts`) | Trang tĩnh được adapter phục vụ trước middleware ⇒ cổng Turnstile, `/media`, chuyển host, security headers phải nằm ở entry + `assets.run_worker_first` | Adapter có hook chính thức cho trang tĩnh |
 | 07 | Error pages tự phục vụ | Custom Errors của Cloudflare cần zone plan trả phí; site chạy trên Worker nên tự làm được | Nếu một ngày mua Pro vì lý do khác |

@@ -166,6 +166,17 @@ await withWorker(8788, {}, async (get) => {
     "POST /media → 405",
     (await get(`/media/${MEDIA_KEY}`, { method: "POST" })).status === 405,
   );
+
+  // The admin needs a Cloudflare Access JWT on every request; a build never bypasses it.
+  expect("/admin/ without Access → 403", (await get("/admin/")).status === 403);
+  expect(
+    "/api/admin/content without Access → 403",
+    (await get("/api/admin/content")).status === 403,
+  );
+  const forged = await get("/api/admin/content", {
+    headers: { "cf-access-jwt-assertion": "eyJhbGciOiJSUzI1NiJ9.eyJlbWFpbCI6ImFAYi5jIn0.c2ln" },
+  });
+  expect("/api/admin with a forged JWT → 403", forged.status === 403);
 });
 
 console.log("— phase 2: Turnstile gate forced on (test secret)");

@@ -102,6 +102,14 @@ Account → Analytics & Logs → **Web Analytics** → site `poli0981.dev` ở c
 - CSP: `script-src https://static.cloudflareinsights.com`, `connect-src https://cloudflareinsights.com`.
 - Không cookie, khớp Privacy Policy §2.
 
+## 13b. Admin — `admin.poli0981.dev`
+
+1. Workers → `poli0981-dev` → Domains & Routes → **Custom domain** `admin.poli0981.dev` (cùng Worker).
+2. Zero Trust → Access → Applications → **Self-hosted**, domain `admin.poli0981.dev` (cả host), policy Allow theo email chủ site (IdP Google hoặc One-time PIN). Lấy **team domain** + **AUD tag** → `vars.ACCESS_TEAM_DOMAIN` / `vars.ACCESS_AUD` trong `wrangler.jsonc` (không phải secret).
+3. GitHub fine-grained PAT (hạn ≤ 1 năm): `poli0981/content` → Contents RW; `poli0981/poli0981-dev` → Actions RW, Pull requests R, Commit statuses R → `npx wrangler secret put GITHUB_CONTENT_TOKEN`. (Tuỳ chọn) `ADMIN_EMAILS` = danh sách email, phân cách dấu phẩy.
+4. Repo `poli0981-dev` → Settings → Actions → General → bật **Allow GitHub Actions to create and approve pull requests** (cho `content-bump.yml`); quyền mặc định của GITHUB_TOKEN giữ **read**.
+5. R2 `poli0981-media` (`wrangler r2 bucket create poli0981-media --location apac`), không bật public URL. Images binding không cần bật gì thêm (gói Free: 5.000 biến đổi/tháng).
+
 ## 13. Checklist nghiệm thu
 
 - [ ] `dig poli0981.dev` ra IP Cloudflare; DNSSEC = Success
@@ -113,4 +121,7 @@ Account → Analytics & Logs → **Web Analytics** → site `poli0981.dev` ở c
 - [ ] Cron widgets chạy (Workers → widgets → Logs thấy execution)
 - [ ] `contact@` và `security@poli0981.dev` nhận mail test
 - [ ] Web Analytics bắt đầu có số liệu sau ~24h
+- [ ] Trình duyệt ẩn danh vào `/` → thấy bước xác minh rồi vào trang; `curl -s https://poli0981.dev/ | grep data-human-check` có kết quả; RSS/sitemap/trang pháp lý không bị chặn
+- [ ] Search Console (URL Inspection → Test live URL) thấy trang thật; Facebook Sharing Debugger đúng title/ảnh
+- [ ] `https://admin.poli0981.dev/` → đăng nhập Access → thấy admin; `curl -H 'cf-access-jwt-assertion: x' …/api/admin/content` (qua host chính) → 404/403
 - [ ] Auto-renew ON + transfer lock ON + 2FA ON

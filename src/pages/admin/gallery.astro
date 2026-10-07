@@ -1,0 +1,10 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import GalleryManager from "@/components/admin/GalleryManager.svelte";
+
+export const prerender = false;
+---
+
+<AdminLayout title="Gallery">
+  <GalleryManager client:only="svelte" />
+</AdminLayout>

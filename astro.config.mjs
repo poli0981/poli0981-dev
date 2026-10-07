@@ -80,6 +80,14 @@ export default defineConfig({
       TURNSTILE_SECRET: envField.string({ context: "server", access: "secret", optional: true }),
       GITHUB_ISSUES_TOKEN: envField.string({ context: "server", access: "secret", optional: true }),
       DISCORD_WEBHOOK_BUG: envField.string({ context: "server", access: "secret", optional: true }),
+      // Admin (admin.poli0981.dev): fine-grained token that can write ONLY the content repo
+      // and dispatch the publish workflow; optional extra allowlist on top of Access.
+      GITHUB_CONTENT_TOKEN: envField.string({
+        context: "server",
+        access: "secret",
+        optional: true,
+      }),
+      ADMIN_EMAILS: envField.string({ context: "server", access: "secret", optional: true }),
       PUBLIC_CF_BEACON: envField.boolean({
         context: "client",
         access: "public",

@@ -2,6 +2,7 @@ import { handle } from "@astrojs/cloudflare/handler";
 import { readPassCookie, verifyPass } from "./lib/gate/cookie";
 import { gateDecision, gateSettings, VERIFIED_BOT_HEADER } from "./lib/gate/policy";
 import { renderGate } from "./lib/gate/render";
+import { routeHosts } from "./lib/hosts";
 import { serveMedia } from "./lib/media/serve";
 import { withSecurityHeaders } from "./lib/security-headers";
 
@@ -69,6 +70,9 @@ export default {
         url.hostname = url.hostname.slice(4);
         return Response.redirect(url.toString(), 301);
       }
+
+      const hostRoute = routeHosts(url);
+      if (hostRoute) return withSecurityHeaders(hostRoute);
 
       // R2 image variants (year-long immutable cache; see lib/media/serve).
       if (url.pathname.startsWith("/media/")) return await serveMedia(request, env, ctx);

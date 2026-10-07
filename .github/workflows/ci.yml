@@ -6,6 +6,9 @@ name: CI
 # — NOT `**/*.md` — because blog/story content lives at src/content/**/*.{md,mdx}.
 on:
   pull_request:
+  # Dispatched on content/bump by content-bump.yml (PRs opened with GITHUB_TOKEN don't
+  # trigger pull_request workflows), so the required `build` check exists for them.
+  workflow_dispatch:
   push:
     branches: [main]
     paths-ignore: ["poli0981.dev-docs/**", "*.md", "LICENSE"]

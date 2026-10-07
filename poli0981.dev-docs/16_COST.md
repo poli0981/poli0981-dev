@@ -21,7 +21,9 @@ Tỷ giá tham khảo ~26.000 VND/USD, 2026-07.
 
 | Hạn mức | Gói hiện tại | Site này dự kiến | Khi nào lo |
 |---|---|---|---|
-| Worker requests | 10 triệu/tháng trong gói Paid | vài nghìn–chục nghìn (static assets **không tính**) | Viral rất lớn + nhiều hit /api — gần như không xảy ra |
+| Worker requests | 10 triệu/tháng trong gói Paid | mỗi lượt xem trang + mỗi ảnh `/media` = 1 request (cổng Turnstile chạy trước mọi trang); hashed asset/feeds/OG **không tính** | Viral rất lớn — vẫn còn xa ngưỡng ở quy mô site cá nhân |
+| Cloudflare Access | 50 người dùng miễn phí | 1 (chủ site) | Không áp dụng |
+| Images (binding) | 5.000 biến đổi duy nhất/tháng | ≈ 6 / ảnh upload; ảnh trùng = 0 | Upload > ~800 ảnh mới/tháng |
 | KV reads/writes | hạn mức Paid rộng | cron 45' + vài GET | Không |
 | GitHub Actions phút | 2.000/tháng (private) | ~100–200 | Nếu sau này thêm job nặng — theo dõi ở Settings → Billing |
 | Domain renew | — | $12–13/năm | Thẻ hết hạn ⇒ mất domain — auto-renew ON + lịch nhắc (17) |
