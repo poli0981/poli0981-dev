@@ -25,7 +25,7 @@ Dialog gồm: textarea mô tả (bắt buộc, ≥ 10 ký tự) → checkbox **"
 }
 ```
 
-Worker xử lý theo thứ tự: Turnstile verify → Zod validate (fail 400) → rate-limit KV (5/phút/IP, fail 429) → **tạo GitHub Issue** → **Discord webhook** → 201. Nếu GitHub API lỗi: vẫn bắn Discord (kèm full payload) và trả 202 — không mất báo cáo.
+Worker xử lý theo thứ tự: rate-limit (middleware, binding `RL_REPORT` 5/phút/client, fail 429) → thiếu secret (503) → body > 32 KB (413) → Zod validate (fail 400) → Turnstile siteverify (`src/lib/turnstile-server.ts`: kiểm `success` **+ `action: "report"` + `hostname: poli0981.dev`**, fail 400 `turnstile_failed`) → **tạo GitHub Issue** → **Discord webhook** → 201. Nếu GitHub API lỗi: vẫn bắn Discord (kèm full payload) và trả 202 — không mất báo cáo. Token Turnstile dùng một lần: dialog gọi `turnstile.reset()` sau mỗi lần gửi.
 
 ## 4. GitHub Issue
 
@@ -76,5 +76,6 @@ Kênh riêng `#site-reports` trong server repo. Embed: màu `--color-horror`, ti
 
 - [ ] Lỗi giả (`throw` trong console) xuất hiện trong preview đính kèm
 - [ ] Gửi hợp lệ → issue mở đúng template + Discord nhận embed trong < 5s
-- [ ] Turnstile token sai → 403; 6 lần/phút → 429; payload 40KB → 400
+- [ ] Turnstile token sai → 400 `turnstile_failed`; 6 lần/phút → 429 + `Retry-After`; payload 40KB → 413
+- [ ] Gửi 2 lần trong cùng một lần mở dialog → cả hai qua được (widget được reset)
 - [ ] Tắt GITHUB token (mô phỏng lỗi) → vẫn nhận Discord + client báo "đã ghi nhận"

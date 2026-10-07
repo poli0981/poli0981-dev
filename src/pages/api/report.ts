@@ -1,8 +1,9 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 import { TURNSTILE_SECRET, GITHUB_ISSUES_TOKEN, DISCORD_WEBHOOK_BUG } from "astro:env/server";
+import { verifyTurnstile } from "@/lib/turnstile-server";
 
-// On-demand so middleware runs (rate-limits /api/report at 5/60s/IP). Secrets are optional
+// On-demand so middleware runs (RL_REPORT: 5 per 60 s per client). Secrets are optional
 // at build so the site ships before they're provisioned; when TURNSTILE_SECRET or the GitHub
 // token is missing this route replies 503 and the client dialog degrades to a Discord fallback.
 export const prerender = false;
@@ -44,23 +45,6 @@ function json(data: unknown, status: number): Response {
     status,
     headers: { "content-type": "application/json" },
   });
-}
-
-async function verifyTurnstile(token: string, secret: string, ip?: string): Promise<boolean> {
-  const form = new FormData();
-  form.append("secret", secret);
-  form.append("response", token);
-  if (ip) form.append("remoteip", ip);
-  try {
-    const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-      method: "POST",
-      body: form,
-    });
-    const data = (await res.json()) as { success?: boolean };
-    return data.success === true;
-  } catch {
-    return false;
-  }
 }
 
 async function createIssue(body: ReportBody, token: string): Promise<string | null> {
@@ -153,8 +137,13 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   const ip = request.headers.get("cf-connecting-ip") ?? undefined;
-  const ok = await verifyTurnstile(parsed.turnstileToken, TURNSTILE_SECRET, ip);
-  if (!ok) return json({ error: "turnstile_failed" }, 400);
+  const verdict = await verifyTurnstile({
+    secret: TURNSTILE_SECRET,
+    token: parsed.turnstileToken,
+    action: "report",
+    ip,
+  });
+  if (!verdict.ok) return json({ error: "turnstile_failed", reason: verdict.reason }, 400);
 
   const issueUrl = await createIssue(parsed, GITHUB_ISSUES_TOKEN);
   if (DISCORD_WEBHOOK_BUG) await notifyDiscord(parsed, issueUrl, DISCORD_WEBHOOK_BUG);

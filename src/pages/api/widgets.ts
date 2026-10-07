@@ -9,11 +9,22 @@ import type {
   WidgetsPayload,
 } from "@/lib/widgets";
 
-// On-demand so middleware runs (rate-limits /api/* at 5/60s/IP). The island fetches this
-// once per page view and the 5-minute cache covers repeat views, so it stays under the limit.
+// On-demand: the widget islands fetch this once per page view. The payload is identical
+// for every visitor, so it is not rate-limited (lib/ratelimit) but cached at the edge for
+// 5 minutes instead — repeat views in a colo cost one cache read, not four KV reads.
 export const prerender = false;
 
-export const GET: APIRoute = async () => {
+const MAX_AGE = 300;
+
+export const GET: APIRoute = async ({ request, locals }) => {
+  // `caches` is typed by the DOM lib here; Workers adds the per-colo `default` cache.
+  const cache =
+    typeof caches === "undefined" ? undefined : (caches as unknown as { default: Cache }).default;
+  const cacheKey = new Request(new URL("/api/widgets", request.url), { method: "GET" });
+  const hit = await cache?.match(cacheKey);
+  // Re-wrap: middleware adds security headers, and cached responses' headers are immutable.
+  if (hit) return new Response(hit.body, hit);
+
   const kv = env.KV as KVNamespace | undefined;
   const payload: WidgetsPayload = { yt: null, steam: null, gh: null, status: null };
   if (kv) {
@@ -28,8 +39,10 @@ export const GET: APIRoute = async () => {
     payload.gh = gh;
     payload.status = status;
   }
-  return new Response(JSON.stringify(payload), {
+  const res = new Response(JSON.stringify(payload), {
     status: 200,
-    headers: { "content-type": "application/json", "cache-control": "public, max-age=300" },
+    headers: { "content-type": "application/json", "cache-control": `public, max-age=${MAX_AGE}` },
   });
+  if (cache) locals.cfContext.waitUntil(cache.put(cacheKey, res.clone()));
+  return res;
 };
