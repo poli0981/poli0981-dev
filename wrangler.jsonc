@@ -71,6 +71,11 @@
     // "force" ignores that (local testing only). Needs GATE_SECRET + TURNSTILE_SECRET.
     "GATE_MODE": "off",
   },
+  // Uploaded images (src/lib/media): public AVIF/WebP variants under v1/, private
+  // metadata-free masters and per-image metadata elsewhere. The bucket has no public
+  // URL — everything public is served by /media in the Worker. Created with
+  // `wrangler r2 bucket create poli0981-media --location apac`.
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "poli0981-media" }],
   "observability": {
     "enabled": true,
   },

@@ -70,10 +70,12 @@ export async function projectPaths(locale: Locale) {
  *  alternatePath). Two entries in one locale must not share an `album` value. */
 export async function galleryAlbumPaths(locale: Locale) {
   const albums = await getGalleryAlbums(locale);
-  return albums.map((entry) => ({
-    params: { album: entry.data.album },
-    props: { entry, photos: getAlbumPhotos(entry.data.album) },
-  }));
+  return Promise.all(
+    albums.map(async (entry) => ({
+      params: { album: entry.data.album },
+      props: { entry, photos: await getAlbumPhotos(entry.data.album) },
+    })),
+  );
 }
 
 /**

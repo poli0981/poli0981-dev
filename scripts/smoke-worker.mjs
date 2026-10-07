@@ -3,13 +3,17 @@
 // custom entry (src/worker.ts) fronts every page, so a crash there would take the whole
 // static site down; this runs in CI before anything can merge.
 //
-// Phase 1 runs as configured (gate off). Phase 2 forces the Turnstile gate on with
+// Phase 1 runs as configured (gate off), including /media against a seeded local R2
+// object. Phase 2 forces the Turnstile gate on with
 // Cloudflare's always-pass test secret, so the whole flow — gate page, exemptions,
 // /api/gate → pass cookie → real page — is exercised end to end (siteverify is a real
 // network call; the test secret accepts any token).
 //
 // Usage: npm run build && npm run smoke
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 
 const TEST_TURNSTILE_SECRET = "1x0000000000000000000000000000000AA";
@@ -56,6 +60,29 @@ async function withWorker(port, vars, run) {
   }
 }
 
+// Seed one image variant into the local (simulated) R2 bucket for the /media checks.
+const MEDIA_KEY = "v1/0123456789abcdef/webp-800";
+const seedFile = join(mkdtempSync(join(tmpdir(), "smoke-")), "variant.webp");
+writeFileSync(seedFile, Buffer.from("RIFF\0\0\0\0WEBPVP8 smoke-test-bytes"));
+execFileSync(
+  "npx",
+  [
+    "wrangler",
+    "r2",
+    "object",
+    "put",
+    `poli0981-media/${MEDIA_KEY}`,
+    "--file",
+    seedFile,
+    "--content-type",
+    "image/webp",
+    "--local",
+    "--config",
+    "dist/server/wrangler.json",
+  ],
+  { stdio: "ignore" },
+);
+
 const isGate = (html) => html.includes("data-human-check");
 const isRealPage = (html) => html.includes('class="site-footer"');
 let homeTitle = "";
@@ -99,6 +126,46 @@ await withWorker(8788, {}, async (get) => {
     (await get("/.well-known/security.txt")).status === 200,
   );
   expect("/pagefind/ open while gate off", (await get("/pagefind/pagefind.js")).status === 200);
+
+  const media = await get(`/media/${MEDIA_KEY}`);
+  const mediaEtag = media.headers.get("etag");
+  expect(
+    "/media variant → 200 image/webp",
+    media.status === 200 && media.headers.get("content-type") === "image/webp",
+    `got ${media.status} ${media.headers.get("content-type")}`,
+  );
+  expect(
+    "/media is immutable for a year",
+    (media.headers.get("cache-control") ?? "").includes("max-age=31536000, immutable"),
+  );
+  expect(
+    "/media is sandboxed",
+    (media.headers.get("content-security-policy") ?? "").includes("sandbox"),
+  );
+  expect("/media is nosniff", media.headers.get("x-content-type-options") === "nosniff");
+  const mediaAgain = mediaEtag
+    ? await get(`/media/${MEDIA_KEY}`, { headers: { "if-none-match": mediaEtag } })
+    : null;
+  expect("/media revalidates to 304", mediaAgain?.status === 304, `got ${mediaAgain?.status}`);
+  expect(
+    "HEAD /media → 200",
+    (await get(`/media/${MEDIA_KEY}`, { method: "HEAD" })).status === 200,
+  );
+  expect(
+    "missing variant → 404",
+    (await get("/media/v1/0123456789abcdef/webp-801")).status === 404,
+  );
+  for (const path of [
+    "/media/private/master/0123456789abcdef",
+    "/media/v1/%2e%2e/private/master/0123456789abcdef",
+    "/media/v2/0123456789abcdef/webp-800",
+  ]) {
+    expect(`${path} → 404`, (await get(path)).status === 404);
+  }
+  expect(
+    "POST /media → 405",
+    (await get(`/media/${MEDIA_KEY}`, { method: "POST" })).status === 405,
+  );
 });
 
 console.log("— phase 2: Turnstile gate forced on (test secret)");
@@ -125,6 +192,7 @@ await withWorker(
     expect("unknown page still 404", (await get("/definitely-not-a-page/")).status === 404);
     expect("HEAD / not gated", (await get("/", { method: "HEAD" })).status === 200);
     expect("/pagefind/ without pass → 403", (await get("/pagefind/pagefind.js")).status === 403);
+    expect("/media not gated", (await get(`/media/${MEDIA_KEY}`)).status === 200);
 
     const crossSite = await get("/api/gate", {
       method: "POST",

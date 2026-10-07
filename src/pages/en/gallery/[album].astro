@@ -2,6 +2,8 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import Lightbox from "@/components/Lightbox.svelte";
 import { Image, getImage } from "astro:assets";
+import MediaImage from "@/components/MediaImage.astro";
+import { mediaSrcset, mediaUrl, variantWidths } from "@/lib/media";
 import { galleryAlbumPaths } from "@/lib/pages";
 import type { GalleryEntry } from "@/lib/collections";
 import type { GalleryPhoto } from "@/lib/gallery";
@@ -21,6 +23,17 @@ const t = useTranslations(locale);
 
 const slides = await Promise.all(
   photos.map(async (p) => {
+    if (p.kind === "media") {
+      // R2 photo: the WebP variants (AVIF can't go in a plain <img srcset> safely).
+      const widths = variantWidths("webp", p.media.w);
+      return {
+        src: mediaUrl(p.media.id, "webp", widths[widths.length - 1]),
+        srcset: mediaSrcset(p.media, "webp"),
+        width: p.media.w,
+        height: p.media.h,
+        alt: p.alt[locale],
+      };
+    }
     const full = await getImage({
       src: p.image,
       widths: [640, 1024, 1600, 2000],
@@ -56,15 +69,25 @@ const slides = await Promise.all(
             data-lightbox-index={i}
             aria-label={`${t.gallery.open} — ${p.alt[locale]}`}
           >
-            <Image
-              src={p.image}
-              alt=""
-              widths={[400, 800]}
-              sizes="(max-width: 640px) 50vw, 320px"
-              loading={i === 0 ? "eager" : "lazy"}
-              decoding="async"
-              {...(i === 0 ? { fetchpriority: "high" as const } : {})}
-            />
+            {p.kind === "local" ? (
+              <Image
+                src={p.image}
+                alt=""
+                widths={[400, 800]}
+                sizes="(max-width: 640px) 50vw, 320px"
+                loading={i === 0 ? "eager" : "lazy"}
+                decoding="async"
+                {...(i === 0 ? { fetchpriority: "high" as const } : {})}
+              />
+            ) : (
+              <MediaImage
+                media={p.media}
+                alt=""
+                sizes="(max-width: 640px) 50vw, 320px"
+                loading={i === 0 ? "eager" : "lazy"}
+                {...(i === 0 ? { fetchpriority: "high" as const } : {})}
+              />
+            )}
           </button>
         ))
       }

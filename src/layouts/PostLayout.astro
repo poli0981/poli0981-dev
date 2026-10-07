@@ -1,5 +1,6 @@
 ---
 import { Image } from "astro:assets";
+import MediaImage from "../components/MediaImage.astro";
 import BaseLayout from "./BaseLayout.astro";
 import Prose from "../components/Prose.astro";
 import Waveline from "../components/Waveline.svelte";
@@ -33,7 +34,7 @@ const {
   next = null,
 } = Astro.props;
 const t = useTranslations(locale);
-const { title, description, date, updated, tags, cover } = entry.data;
+const { title, description, date, updated, tags, cover, coverMedia } = entry.data;
 const blogHref = sectionPath("blog", locale);
 
 const pathname = Astro.url.pathname;
@@ -124,15 +125,27 @@ const crumbs = breadcrumbSchema([
     </header>
 
     {
-      cover && (
+      (cover || coverMedia) && (
         <div class="post-cover">
-          <Image
-            src={cover}
-            alt=""
-            widths={[720, 1080, 1440]}
-            sizes="(max-width: 768px) 100vw, 720px"
-            fetchpriority="high"
-          />
+          {cover ? (
+            <Image
+              src={cover}
+              alt=""
+              widths={[720, 1080, 1440]}
+              sizes="(max-width: 768px) 100vw, 720px"
+              fetchpriority="high"
+            />
+          ) : (
+            coverMedia && (
+              <MediaImage
+                media={coverMedia}
+                alt=""
+                sizes="(max-width: 768px) 100vw, 720px"
+                loading="eager"
+                fetchpriority="high"
+              />
+            )
+          )}
         </div>
       )
     }
