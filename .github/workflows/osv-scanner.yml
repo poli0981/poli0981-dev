@@ -10,8 +10,12 @@ on:
     - cron: "17 3 * * 1"
   workflow_dispatch:
   # Re-run when the dependency graph itself changes, so a bad bump is caught on the PR
-  # rather than up to a week later.
+  # rather than up to a week later…
   pull_request:
+    paths: ["package-lock.json"]
+  # …and once it lands, so the Security tab reflects main straight away.
+  push:
+    branches: [main]
     paths: ["package-lock.json"]
 
 permissions:
@@ -23,18 +27,16 @@ concurrency:
 
 jobs:
   scan:
-    runs-on: ubuntu-latest
+    # The repo is public, so code scanning is free: findings are uploaded as SARIF and
+    # show up under Security → Code scanning, and a finding still fails the run.
+    # PR runs skip the upload — Dependabot PRs get a read-only token, so the upload
+    # step would fail there for a reason unrelated to the scan itself.
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@a345acffa64b0eaede81a3d9aae6141214d9c8fc # v2.6.0
     permissions:
+      actions: read
       contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      # The scanner runs directly rather than via google/osv-scanner-action's reusable
-      # SARIF workflow: SARIF upload needs `security-events: write` plus code scanning,
-      # which is not available on this plan. A non-zero exit failing the run is the
-      # alert. Once the repo is public, code scanning becomes free and this can be
-      # switched to the reusable workflow for findings in the Security tab.
-      - uses: google/osv-scanner-action/osv-scanner-action@8deb546fdb875b9996d27d4950be7312dac076a1 # v2.5.0
-        with:
-          scan-args: |-
-            --lockfile=package-lock.json
+      security-events: write
+    with:
+      upload-sarif: ${{ github.event_name != 'pull_request' }}
+      scan-args: |-
+        --lockfile=package-lock.json
