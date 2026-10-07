@@ -3,13 +3,40 @@
   "name": "poli0981-dev",
   "compatibility_date": "2026-07-01",
   "compatibility_flags": ["nodejs_compat"],
-  // Serve only via the custom domain (poli0981.dev) — no poli0981-dev.*.workers.dev URL.
+  // Custom entry wrapping the adapter's handler: www→apex, security headers and (later)
+  // the Turnstile gate and /media for *every* page, which the Astro middleware never
+  // sees for prerendered routes. See src/worker.ts.
+  "main": "./src/worker.ts",
+  // Serve only via the custom domains — no poli0981-dev.*.workers.dev URL, and no
+  // per-version preview URLs either: those live on workers.dev, outside the zone's
+  // WAF/Transform/Access rules. Explicit, because an omitted key keeps the old setting.
   "workers_dev": false,
+  "preview_urls": false,
   "assets": {
     "binding": "ASSETS",
     "directory": "./dist",
     "not_found_handling": "404-page",
     "html_handling": "auto-trailing-slash",
+    // Pages go through the Worker first; files that must stay reachable without it (and
+    // that gain nothing from it) are served straight from the asset layer, which also
+    // keeps them unbilled. Globs are anchored and `!` patterns win. /pagefind/* is NOT
+    // excluded on purpose: its fragments contain the full text of every page.
+    "run_worker_first": [
+      "/*",
+      "!/_astro/*",
+      "!/og/*",
+      "!/favicon.svg",
+      "!/sw.js",
+      "!/skullhop.js",
+      "!/gate.js",
+      "!/offline*",
+      "!/robots.txt",
+      "!/sitemap*",
+      "!/rss.xml",
+      "!/blog/rss.xml",
+      "!/truyen/rss.xml",
+      "!/.well-known/*",
+    ],
   },
   "kv_namespaces": [
     {

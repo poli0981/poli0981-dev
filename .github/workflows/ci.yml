@@ -51,8 +51,10 @@ jobs:
       # KV/ASSETS/SESSION types live in the gitignored worker-configuration.d.ts,
       # generated from wrangler.jsonc. `astro check` fails without them — and there
       # is no @cloudflare/workers-types dependency to fall back on. No auth needed.
+      # --strict-vars=false: `vars` are typed as string, not as their literal value, so code
+      # comparing e.g. GATE_MODE against "on" still typechecks while the config says "off".
       - name: Generate Cloudflare binding types
-        run: npx wrangler types
+        run: npx wrangler types --strict-vars=false
 
       - name: Format check
         run: npx prettier --check .
@@ -90,6 +92,12 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      # src/worker.ts fronts every page, so a crash there would take the static site down
+      # too. Boot the built worker locally (wrangler dev, simulated bindings, no auth) and
+      # probe pages, revalidation, HEAD, redirects, 404s, assets and the API.
+      - name: Smoke test built worker
+        run: npm run smoke
 
       # Deployment is handled by Cloudflare Workers Builds (connected to this repo),
       # not GitHub Actions — this workflow is CI gates only (lint/types/knip/audit/build).

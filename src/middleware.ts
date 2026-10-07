@@ -1,16 +1,12 @@
 import { defineMiddleware } from "astro:middleware";
 import { env } from "cloudflare:workers";
 import { RATE_LIMIT_WINDOW_SECONDS, allowRequest, apiGroup, clientSubject } from "./lib/ratelimit";
+import { applySecurityHeaders } from "./lib/security-headers";
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const { request, url } = context;
 
-  // www → apex (301).
-  if (url.hostname.startsWith("www.")) {
-    const apex = new URL(url);
-    apex.hostname = url.hostname.slice(4);
-    return context.redirect(apex.toString(), 301);
-  }
+  // www → apex happens in the worker entry (src/worker.ts), before any route.
 
   const ip = request.headers.get("cf-connecting-ip") ?? "0.0.0.0";
   // Bindings may be absent under plain `astro dev`; guard so the build/prerender is safe.
@@ -48,17 +44,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   const response = await next();
 
-  // Non-CSP security headers (docs 06 §1.1). The CSP itself is delivered per-page as a
-  // <meta> tag by Astro — do NOT set a Content-Security-Policy header here or it would
-  // clobber the per-page script/style hashes. frame-ancestors isn't enforceable in meta,
-  // so framing is blocked with X-Frame-Options instead.
-  const h = response.headers;
-  h.set("X-Content-Type-Options", "nosniff");
-  h.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  h.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=()");
-  h.set("Cross-Origin-Opener-Policy", "same-origin");
-  h.set("X-Frame-Options", "DENY");
-  h.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
-
+  // Non-CSP security headers (lib/security-headers — no CSP header, see there).
+  applySecurityHeaders(response.headers);
   return response;
 });
