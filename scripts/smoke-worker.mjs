@@ -178,6 +178,18 @@ await withWorker(8788, {}, async (get, port) => {
   expect("/blog/ → 200", (await get("/blog/")).status === 200);
   expect("/en/ → 200", (await get("/en/")).status === 200);
   expect("unknown page → 404", (await get("/definitely-not-a-page/")).status === 404);
+  for (const [path, lang] of [
+    ["/definitely-not-a-page/", "vi"],
+    ["/en/definitely-not-a-page/", "en"],
+  ]) {
+    const missing = await get(path);
+    const body = await missing.text();
+    expect(
+      `${path} → 404 page in ${lang}`,
+      missing.status === 404 && body.includes(`<html lang="${lang}"`),
+      `got ${missing.status}`,
+    );
+  }
 
   const health = await get("/api/health");
   const healthBody = health.status === 200 ? await health.json() : {};

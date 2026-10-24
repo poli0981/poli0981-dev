@@ -19,8 +19,11 @@ import { versionInfo } from "./lib/version";
 // The build-time prerender worker always uses the adapter's own entry, so nothing here
 // runs during `astro build`.
 
-/** On-demand Astro routes: always rendered by the app, never looked up in ASSETS. */
-const APP_PREFIXES = ["/api/", "/admin", "/media/", "/ext-img/"];
+/**
+ * On-demand Astro routes: always rendered by the app, never looked up in ASSETS. Every
+ * `prerender = false` page must live under one of these (tests/worker.test.ts checks).
+ */
+export const APP_PREFIXES = ["/api/", "/admin", "/media/", "/ext-img/"];
 
 /** Secrets aren't in the generated Env type (wrangler only sees `vars`). */
 type GateEnv = { GATE_MODE?: string; GATE_SECRET?: string; TURNSTILE_SECRET?: string };
@@ -137,6 +140,10 @@ export default {
       // Serve pages straight from ASSETS with the *original* request. The adapter's own
       // asset lookup fetches by URL string, which drops the method and conditional
       // headers — every revalidation would turn into a full 200 and HEAD into GET.
+      // A miss is answered here as well: the asset layer sends the nearest 404.html up the
+      // path with status 404 (`not_found_handling: "404-page"`), so /en/... gets the English
+      // page. The app has nothing else for a path outside APP_PREFIXES, and its own lookup of
+      // a localized error page (/en/404/index) is answered with a redirect.
       // In `astro dev` nothing is built yet, so let the app handle everything.
       const isRead = request.method === "GET" || request.method === "HEAD";
       if (
@@ -144,8 +151,7 @@ export default {
         isRead &&
         !APP_PREFIXES.some((prefix) => url.pathname.startsWith(prefix))
       ) {
-        const asset = await env.ASSETS.fetch(request);
-        if (asset.status !== 404) return withSecurityHeaders(asset);
+        return withSecurityHeaders(await env.ASSETS.fetch(request));
       }
     } catch (error) {
       // Fail open: a bug in edge logic must never take the static site down with it.

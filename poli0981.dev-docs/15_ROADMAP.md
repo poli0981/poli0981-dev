@@ -57,6 +57,5 @@ Trạng thái tại 2026-10-24 (v2.0.0): ✅ xong · 🟡 đang làm · ⬜ chư
 | Analytics Engine cho số liệu cổng/báo lỗi | Biết cổng chặn bao nhiêu, báo lỗi đến từ đâu | Không thêm cookie; giữ khớp Privacy Policy |
 | Đếm lượt xem bằng Durable Object | Số đọc cho blog/truyện không cần dịch vụ ngoài | Cập nhật Privacy Policy trước |
 | RSS full-content cho blog | Người đọc qua RSS | Truyện vẫn chỉ mô tả + link (ARR) |
-| Trang 404 riêng cho `/en/` | Hiện 404 song ngữ một trang | Cloudflare phục vụ `404.html` gần nhất theo thư mục |
 | Locale `ja` | Seam i18n đã sẵn (`src/i18n/routing.ts`) | Có nội dung thật để dịch |
 | Bình luận (Giscus) · trang /support (Ko-fi) | Tương tác/ủng hộ | Đổi D5; mở CSP cho host tương ứng |

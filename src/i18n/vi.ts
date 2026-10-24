@@ -26,6 +26,7 @@ const vi = {
     breadcrumb: "Đường dẫn",
     postNav: "Bài cũ hơn và mới hơn",
     chapterNav: "Chương trước và sau",
+    errorNav: "Điều hướng lỗi",
   },
   project: {
     repo: "repo",
@@ -165,6 +166,10 @@ const vi = {
     groupStory: "Truyện",
     groupPage: "Trang",
     countLabel: "{n} kết quả",
+  },
+  notFound: {
+    heading: "Trang này không phát ra tín hiệu.",
+    search: "Tìm bài viết, truyện…",
   },
   qaGroups: {
     channel: "Kênh",

@@ -28,6 +28,7 @@ const en: UIStrings = {
     breadcrumb: "Breadcrumb",
     postNav: "Older and newer posts",
     chapterNav: "Previous and next chapter",
+    errorNav: "Error page navigation",
   },
   project: {
     repo: "repo",
@@ -169,6 +170,10 @@ const en: UIStrings = {
     groupStory: "Stories",
     groupPage: "Pages",
     countLabel: "{n} results",
+  },
+  notFound: {
+    heading: "This page makes no sound.",
+    search: "Search posts and stories…",
   },
   qaGroups: {
     channel: "Channel",

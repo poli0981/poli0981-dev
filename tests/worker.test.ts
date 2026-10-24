@@ -1,6 +1,9 @@
 // The Worker entry (src/worker.ts): everything every page passes through.
 import assert from "node:assert/strict";
+import { readdir, readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { beforeEach, describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
 import { setHandler } from "./support/stubs/cloudflare-handler.ts";
 import {
   captureLogs,
@@ -12,7 +15,7 @@ import {
   installHTMLRewriter,
   type AssetPage,
 } from "./support/fakes.ts";
-import worker from "../src/worker.ts";
+import worker, { APP_PREFIXES } from "../src/worker.ts";
 import { issuePass } from "../src/lib/gate/cookie.ts";
 import { resetDenylistMemo } from "../src/lib/denylist.ts";
 
@@ -22,6 +25,8 @@ const PAGES: Record<string, AssetPage> = {
   "/": { body: HOME },
   "/en/": { body: HOME.replace('lang="vi"', 'lang="en"') },
   "/403/": { status: 200, body: "<html><body>403 page</body></html>" },
+  "/404.html": { body: `<html lang="vi"><body>404 page</body></html>` },
+  "/en/404.html": { body: `<html lang="en"><body>404 page</body></html>` },
   "/data.json": { body: "{}", headers: { "content-type": "application/json" } },
   "/pagefind/pagefind.js": { body: "pagefind", headers: { "content-type": "text/javascript" } },
 };
@@ -99,11 +104,45 @@ describe("worker: routing", () => {
     assert.equal(assets.requests.at(-1)?.method, "HEAD");
   });
 
-  it("falls through to the Astro app on an asset 404 and for app routes", async () => {
-    for (const path of ["/no-such-page/", "/api/health", "/admin/"]) {
+  it("answers a missing page with the nearest 404 page, in that path's language", async () => {
+    for (const [path, lang] of [
+      ["/no-such-page/", "vi"],
+      ["/blog/no-such-post/", "vi"],
+      ["/en/no-such-page/", "en"],
+      ["/en/stories/no-such-story/", "en"],
+    ]) {
+      const { response } = await run(`https://poli0981.dev${path}`);
+      assert.equal(response.status, 404, path);
+      assert.match(await response.text(), new RegExp(`lang="${lang}"`), path);
+      assert.equal(response.headers.get("x-frame-options"), "DENY", path);
+    }
+  });
+
+  it("hands app routes to the Astro app", async () => {
+    for (const path of ["/api/health", "/admin/"]) {
       const host = path === "/admin/" ? "admin.poli0981.dev" : "poli0981.dev";
       const { response } = await run(`https://${host}${path}`);
       assert.match(await response.text(), /from the Astro handler/, path);
+    }
+  });
+
+  it("keeps every on-demand page under APP_PREFIXES", async () => {
+    // A `prerender = false` page elsewhere would never reach the app: the Worker answers
+    // every other path from ASSETS, misses included.
+    const root = fileURLToPath(new URL("../src/pages/", import.meta.url));
+    const files = (await readdir(root, { recursive: true })).filter((f) => /\.(astro|ts)$/.test(f));
+    const onDemand: string[] = [];
+    for (const file of files) {
+      if (/export const prerender = false/.test(await readFile(join(root, file), "utf8"))) {
+        onDemand.push(`/${file.replaceAll("\\", "/").replace(/(index)?\.(astro|ts)$/, "")}`);
+      }
+    }
+    assert.ok(onDemand.length > 10, "found the admin pages and API routes");
+    for (const route of onDemand) {
+      assert.ok(
+        APP_PREFIXES.some((prefix) => route.startsWith(prefix)),
+        route,
+      );
     }
   });
 
