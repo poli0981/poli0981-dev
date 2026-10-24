@@ -1,35 +1,10 @@
 ---
-import LegalLayout from "@/layouts/LegalLayout.astro";
-import { getCollection, render, type CollectionEntry } from "astro:content";
-import { useTranslations } from "@/i18n";
-import { SITE } from "@/lib/seo";
+import LegalPage from "@/components/pages/LegalPage.astro";
+import { legalPaths } from "@/lib/pages";
 
-export async function getStaticPaths() {
-  const docs = await getCollection("legal");
-  return docs.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
-}
+export const getStaticPaths = () => legalPaths();
 
-interface Props {
-  entry: CollectionEntry<"legal">;
-}
-const { entry } = Astro.props as Props;
-const { Content } = await render(entry);
-const locale = "en" as const;
-const t = useTranslations(locale);
-
-const titleMap: Record<string, string> = {
-  terms: t.legal.terms,
-  privacy: t.legal.privacy,
-  disclaimer: t.legal.disclaimer,
-  "third-party": t.legal.thirdParty,
-  licenses: t.legal.licenses,
-  "ai-usage": t.legal.aiUsage,
-};
-const title = titleMap[entry.id] ?? entry.data.title;
-// See the vi route: without this all ten legal pages shared one meta description.
-const description = `${title} — ${SITE.name}. ${entry.data.title}`;
+const { entry } = Astro.props;
 ---
 
-<LegalLayout {title} {description} {locale} effectiveDate={entry.data.effectiveDate}>
-  <Content />
-</LegalLayout>
+<LegalPage locale="en" {entry} />

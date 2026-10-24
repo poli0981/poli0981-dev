@@ -1,3 +1,4 @@
+import { getCollection } from "astro:content";
 import {
   getBlogPosts,
   getStoryChapters,
@@ -57,6 +58,12 @@ export async function blogTagPaths(locale: Locale) {
     params: { tag },
     props: { tag, posts: posts.filter((p) => p.data.tags.includes(tag)) },
   }));
+}
+
+/** getStaticPaths for the legal pages: each document is bilingual, so both locales list all. */
+export async function legalPaths() {
+  const docs = await getCollection("legal");
+  return docs.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
 }
 
 /** getStaticPaths for project detail pages. */

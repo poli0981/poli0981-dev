@@ -169,6 +169,21 @@ describe("static paths", () => {
       ],
     );
   });
+
+  it("lists every legal document, whatever its language", async () => {
+    setCollection("legal", [
+      { id: "privacy", data: { title: { vi: "Riêng tư", en: "Privacy" } } },
+      { id: "terms", data: { title: { vi: "Điều khoản", en: "Terms" } } },
+    ]);
+    const paths = await pages.legalPaths();
+    assert.deepEqual(
+      paths.map((p) => [p.params.slug, p.props.entry.id]),
+      [
+        ["privacy", "privacy"],
+        ["terms", "terms"],
+      ],
+    );
+  });
 });
 
 describe("gallery albums", () => {

@@ -1,0 +1,164 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Waveline from "@/components/Waveline.svelte";
+import { useTranslations } from "@/i18n";
+import type { Locale } from "@/i18n/routing";
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const vi = locale === "vi";
+
+// [year, milestone], oldest first.
+const timeline: Record<Locale, [string, string][]> = {
+  vi: [
+    ["2026", "Dựng poli0981.dev — nhà chung cho dev & kênh."],
+    ["2026", "Bắt đầu series truyện đầu tiên."],
+    ["—", "Và vẫn đang viết tiếp."],
+  ],
+  en: [
+    ["2026", "Built poli0981.dev — a home for the dev & the channel."],
+    ["2026", "Started the first fiction series."],
+    ["—", "And still writing."],
+  ],
+};
+---
+
+<BaseLayout title={t.nav.about} {locale}>
+  <section class="page narrow py-section" data-pagefind-body>
+    <h1 class="text-h1">{t.nav.about}</h1>
+    <p class="lede">
+      {
+        vi ? (
+          <>
+            Mình là <strong>Kokone</strong> — lập trình viên ban ngày, người kể chuyện lúc nửa đêm.
+            Trang này là một địa chỉ duy nhất cho cả hai khuôn mặt đó.
+          </>
+        ) : (
+          <>
+            I'm <strong>Kokone</strong> — a developer by day, a storyteller at midnight. This site
+            is one address for both of those faces.
+          </>
+        )
+      }
+    </p>
+    <div class="wave"><Waveline client:visible height={30} /></div>
+
+    <div class="faces">
+      <article class="face">
+        <h2>Kokone — dev</h2>
+        <p>
+          {
+            vi ? (
+              <>
+                Mình viết code, thích công cụ tối giản và bền. Dự án mở nằm trên GitHub (
+                <code>poli0981</code>). Ưu tiên: ít phụ thuộc, dễ bảo trì, chi phí gần bằng không.
+              </>
+            ) : (
+              <>
+                I write code and like tools that are minimal and durable. Open projects live on
+                GitHub (<code>poli0981</code>). Priorities: few dependencies, easy to maintain,
+                near-zero cost.
+              </>
+            )
+          }
+        </p>
+      </article>
+      <article class="face">
+        <h2>SkullMute — creator</h2>
+        <p>
+          {
+            vi
+              ? "Kênh của mình về những trò chơi kể chuyện chậm rãi — visual novel, JRPG, và indie/psychological horror. Không FPS, không competitive. Đôi khi mình viết truyện ngắn."
+              : "My channel is about slow, story-driven games — visual novels, JRPGs, and indie/psychological horror. No FPS, no competitive. Sometimes I write short fiction."
+          }
+        </p>
+      </article>
+    </div>
+
+    <div class="timeline">
+      <h2 class="timeline-title">{vi ? "Dòng thời gian" : "Timeline"}</h2>
+      <ul>
+        {
+          timeline[locale].map(([year, milestone]) => (
+            <li>
+              <span class="year">{year}</span> {milestone}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .narrow {
+    max-inline-size: 46rem;
+  }
+  .lede {
+    margin-block-start: 1rem;
+    font-size: var(--text-lead);
+    color: var(--muted);
+  }
+  .lede strong {
+    color: var(--text);
+  }
+  .lede code {
+    font-family: var(--ff-mono);
+  }
+  .wave {
+    margin-block: 1.5rem 2.5rem;
+    max-inline-size: 22rem;
+  }
+  .faces {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 700px) {
+    .faces {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .face {
+    padding: 1.25rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+  }
+  .face h2 {
+    font-size: var(--text-lead);
+    margin-block-end: 0.5rem;
+  }
+  .face p {
+    color: var(--muted);
+  }
+  .face code {
+    font-family: var(--ff-mono);
+    color: var(--accent);
+  }
+  .timeline {
+    margin-block-start: 2.5rem;
+  }
+  .timeline-title {
+    font-size: var(--text-h3);
+    margin-block-end: 1rem;
+  }
+  .timeline ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .timeline .year {
+    display: inline-block;
+    inline-size: 3.5rem;
+    color: var(--accent);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+  }
+</style>

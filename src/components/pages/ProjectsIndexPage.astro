@@ -1,0 +1,95 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import ProjectCard from "@/components/ProjectCard.astro";
+import Waveline from "@/components/Waveline.svelte";
+import { getProjects } from "@/lib/collections";
+import { ALL_REPOS_URL } from "@/lib/links";
+import { useTranslations } from "@/i18n";
+import { sectionPath, type Locale } from "@/i18n/routing";
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const projects = await getProjects(locale);
+---
+
+<BaseLayout title={t.nav.projects} {locale}>
+  <section class="page py-section">
+    <div class="head">
+      <h1 class="text-h1">{t.nav.projects}</h1>
+      <a class="all-repos" href={ALL_REPOS_URL} target="_blank" rel="noopener noreferrer">
+        {t.dev.allRepos} ↗
+      </a>
+    </div>
+    <div class="wave"><Waveline client:visible height={28} /></div>
+    {
+      projects.length > 0 ? (
+        <div class="project-grid">
+          {projects.map((entry) => (
+            <ProjectCard {entry} {locale} />
+          ))}
+        </div>
+      ) : locale === "vi" ? (
+        <p class="empty">Chưa có dự án nào.</p>
+      ) : (
+        <div class="empty">
+          <p>{t.post.onlyVi}</p>
+          <a href={sectionPath("projects", "vi")}>Dự án (tiếng Việt) →</a>
+        </div>
+      )
+    }
+  </section>
+</BaseLayout>
+
+<style>
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+  }
+  .all-repos {
+    color: var(--accent);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+    white-space: nowrap;
+  }
+  .all-repos:hover {
+    color: var(--accent-strong);
+  }
+  .wave {
+    margin-block: 1rem 2rem;
+    max-inline-size: 22rem;
+  }
+  .project-grid {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) {
+    .project-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 960px) {
+    .project-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  .empty {
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-card);
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    color: var(--muted);
+  }
+  .empty a {
+    display: inline-block;
+    margin-block-start: 0.75rem;
+    color: var(--accent);
+    font-family: var(--ff-mono);
+  }
+</style>
