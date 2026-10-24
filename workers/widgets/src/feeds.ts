@@ -25,6 +25,12 @@ export interface WidgetsEnv {
   STEAM_API_KEY: string;
   STEAM_ID64: string;
   DISCORD_WEBHOOK_CI?: string;
+  /**
+   * Optional, any fine-grained token with no permissions (public data only). Unauthenticated
+   * the events API allows 60 requests an hour per IP, and Workers share their egress IPs,
+   * so the GitHub feed goes stale for hours at a time without one.
+   */
+  GITHUB_TOKEN?: string;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -36,9 +42,13 @@ const IMAGE_TTL_SECONDS = 14 * 24 * 60 * 60;
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-const get = (url: string, accept?: string) =>
+const get = (url: string, accept?: string, token?: string) =>
   fetch(url, {
-    headers: { "user-agent": UA, ...(accept ? { accept } : {}) },
+    headers: {
+      "user-agent": UA,
+      ...(accept ? { accept } : {}),
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+    },
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
 
@@ -155,17 +165,20 @@ export async function fetchSteam(env: WidgetsEnv): Promise<GameItem[]> {
   return Promise.all(
     games.map(async ({ iconHash, ...game }) => {
       if (!iconHash) return game;
-      const source = `https://media.steampowered.com/steamcommunity/public/images/apps/${game.appid}/${iconHash}.jpg`;
+      // media.steampowered.com answers Workers with 403; Steam's own Cloudflare CDN serves
+      // the same file.
+      const source = `https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/apps/${game.appid}/${iconHash}.jpg`;
       const ok = await mirrorImage(env.KV, `steam:${game.appid}:${iconHash}`, source);
       return { ...game, icon: ok ? `/ext-img/steam/${game.appid}/${iconHash}` : "" };
     }),
   );
 }
 
-export async function fetchGitHub(): Promise<GhItem[]> {
+export async function fetchGitHub(env: Pick<WidgetsEnv, "GITHUB_TOKEN">): Promise<GhItem[]> {
   const res = await get(
     "https://api.github.com/users/poli0981/events/public?per_page=10",
     "application/vnd.github+json",
+    env.GITHUB_TOKEN,
   );
   if (!res.ok) throw new Error(`github ${res.status}`);
   return normalizeGitHub((await res.json()) as GhEvent[]);

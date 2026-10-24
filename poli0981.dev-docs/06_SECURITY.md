@@ -80,6 +80,7 @@ gate.js → Turnstile (action "gate") → POST /api/gate (RL_GATE, Sec-Fetch-Sit
 | GITHUB_PUBLISH_TOKEN | worker site | Fine-grained PAT: **chỉ `poli0981/poli0981-dev`, Actions R/W** (nút Xuất bản). Thiếu ⇒ admin dùng tạm token nội dung và cảnh báo "một token" |
 | ADMIN_EMAILS | worker site | email được vào admin, phân cách dấu phẩy — **bắt buộc**, thiếu là không ai vào được |
 | STEAM_API_KEY, STEAM_ID64, DISCORD_WEBHOOK_CI | worker widgets | key Steam mặc định; webhook cảnh báo cron |
+| GITHUB_TOKEN (tuỳ chọn) | worker widgets | fine-grained PAT **không quyền nào** (chỉ đọc dữ liệu public) — nâng hạn mức API events từ 60/giờ/IP (IP egress của Workers dùng chung, hay bị 403) |
 | SONAR_TOKEN | GitHub Actions secret | phân tích SonarCloud (`08` §0) |
 
 Không secret nào trong repo/`wrangler.jsonc`; `.dev.vars` nằm trong `.gitignore`. Admin chỉ hiện **tên** secret đã/chưa đặt (`/admin/security/`), không bao giờ hiện giá trị.

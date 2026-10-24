@@ -72,7 +72,10 @@ function upstream(
           { type: "PushEvent" },
         ])
       );
-    if (url.startsWith("https://i.ytimg.com/") || url.startsWith("https://media.steampowered.com/"))
+    if (
+      url.startsWith("https://i.ytimg.com/") ||
+      url.startsWith("https://cdn.cloudflare.steamstatic.com/")
+    )
       return overrides.img?.(call) ?? image();
     if (url.startsWith("https://discord.example/"))
       return overrides.discord?.(call) ?? new Response(null, { status: 204 });
@@ -172,9 +175,13 @@ describe("widget sources", () => {
     assert.ok(calls.some((c) => c.url.includes("key=key%26x")));
     // Push, release, release-without-a-tag — WatchEvent skipped, capped at three.
     assert.deepEqual(
-      (await fetchGitHub()).map((e) => e.detail),
+      (await fetchGitHub({})).map((e) => e.detail),
       ["2 commits", "v1", "release"],
     );
+    const gh = calls.find((c) => c.url.startsWith("https://api.github.com/"));
+    assert.equal(gh?.headers.get("authorization"), null);
+    await fetchGitHub({ GITHUB_TOKEN: "ro-token" });
+    assert.equal(calls.at(-1)?.headers.get("authorization"), "Bearer ro-token");
     assert.ok(kv.store.has(`widgets:img:steam:570:${HASH}`));
   });
 
@@ -197,7 +204,7 @@ describe("widget sources", () => {
     });
     await assert.rejects(fetchYouTube(env(kv)), /youtube 500/);
     await assert.rejects(fetchSteam(env(kv)), /steam 403/);
-    await assert.rejects(fetchGitHub(), /github 503/);
+    await assert.rejects(fetchGitHub({}), /github 503/);
   });
 });
 

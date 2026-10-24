@@ -23,7 +23,7 @@ Khách **không bao giờ** gọi thẳng bên thứ ba — kể cả ảnh: nha
 |---|---|---|
 | Video mới (≤3) | `https://www.youtube.com/feeds/videos.xml?channel_id=<UCxxx>` | RSS công khai, **không cần API key**; parse XML lấy id/title/thumb/published |
 | Đang chơi gì | `ISteamUser…/GetRecentlyPlayedGames/v1/?key=…&steamid=…&count=3` | Cần Steam profile → Privacy → **Game details: Public**; key free tại steamcommunity.com/dev |
-| Hoạt động GitHub | `api.github.com/users/poli0981/events/public?per_page=10` | Không cần token (60 req/h/IP đủ cho cron 45'); lọc PushEvent/ReleaseEvent |
+| Hoạt động GitHub | `api.github.com/users/poli0981/events/public?per_page=10` | Token tuỳ chọn `GITHUB_TOKEN` (không quyền nào): không có token thì hạn mức 60 req/h tính theo IP — IP egress của Workers dùng chung nên hay bị 403 ⇒ feed `stale`. Lọc PushEvent/ReleaseEvent |
 
 ## 4. KV schema
 
@@ -33,7 +33,7 @@ Khách **không bao giờ** gọi thẳng bên thứ ba — kể cả ảnh: nha
 | `widgets:steam` | `{updated, items:[{appid,name,playtime2w,icon}]}` | — |
 | `widgets:gh` | `{updated, items:[{type,repo,ts,detail}]}` | — |
 | `widgets:status` | `{yt:"ok"|"stale"|"na", steam:…, gh:…, lastRun}` | — (dashboard admin hiển thị) |
-| `widgets:img:yt:<id>` · `widgets:img:steam:<appid>:<hash>` | bytes ảnh, metadata `{type}` (jpeg/png/webp) | 14 ngày; ảnh > 2 MB hoặc sai kiểu bị bỏ qua |
+| `widgets:img:yt:<id>` · `widgets:img:steam:<appid>:<hash>` | bytes ảnh, metadata `{type}` (jpeg/png/webp) | 14 ngày; ảnh > 2 MB hoặc sai kiểu bị bỏ qua. Icon Steam lấy từ `cdn.cloudflare.steamstatic.com` — `media.steampowered.com` trả 403 cho Workers |
 
 ## 5. Quy tắc bền vững (kế thừa convention tracker của bạn)
 
@@ -51,7 +51,7 @@ Khách **không bao giờ** gọi thẳng bên thứ ba — kể cả ảnh: nha
 
 ## 7. Secrets & cấu hình worker widgets
 
-`wrangler.jsonc`: `triggers: { crons: ["*/45 * * * *"] }`, bind KV chung, `observability.logs` bật. Secrets: `STEAM_API_KEY`, `STEAM_ID64`, `DISCORD_WEBHOOK_CI`. Biến thường: `YT_CHANNEL_ID` (vars, không nhạy cảm). Mỗi lần chạy ghi log JSON `widgets.run` (+ `widgets.source_failed` cho nguồn lỗi). Deploy: `npx wrangler deploy --config workers/widgets/wrangler.jsonc` (không nối Workers Builds).
+`wrangler.jsonc`: `triggers: { crons: ["*/45 * * * *"] }`, bind KV chung, `observability.logs` bật. Secrets: `STEAM_API_KEY`, `STEAM_ID64`, `DISCORD_WEBHOOK_CI`, `GITHUB_TOKEN` (tuỳ chọn). Biến thường: `YT_CHANNEL_ID` (vars, không nhạy cảm). Mỗi lần chạy ghi log JSON `widgets.run` (+ `widgets.source_failed` cho nguồn lỗi). Deploy: `npx wrangler deploy --config workers/widgets/wrangler.jsonc` (không nối Workers Builds).
 
 ## 8. Test
 
