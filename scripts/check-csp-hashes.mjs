@@ -38,6 +38,11 @@ const CONTENT = /\bcontent\s*=\s*(?:"([^"]*)"|'([^']*)')/i;
 // cases below are now asserted on every run instead of being re-reasoned from scratch.
 const SCRIPT = /<script(\s[^>]*)?>([\s\S]*?)<\/script(\s[^>]*)?>/gi;
 const JSON_LD = /type=("|')?application\/ld\+json/i;
+// Inline <style> blocks need their hash in the policy just the same, and Astro misses some:
+// the styles of a component rendered only from MDX content (Callout) shipped unhashed, so the
+// browser dropped them. A style *attribute* can never pass a policy without 'unsafe-inline'.
+const STYLE = /<style(\s[^>]*)?>([\s\S]*?)<\/style(\s[^>]*)?>/gi;
+const STYLE_ATTR = /<[a-z][\w-]*\s(?:[^>]*?\s)?style\s*=/gi;
 
 /** Tag forms a browser executes (or doesn't). Asserted before every real run. */
 const SELFTEST = [
@@ -71,6 +76,24 @@ function selftest() {
   );
   for (const [html, expected] of META_SELFTEST) {
     if (cspOf(html) !== expected) failures.push(`CSP meta: expected ${expected} for ${html}`);
+  }
+  for (const [html, shouldMatch] of [
+    ["<style>X</style>", true],
+    ["<STYLE media=screen>X</style >", true],
+    ["<stylesheet>X</stylesheet>", false],
+  ]) {
+    STYLE.lastIndex = 0;
+    if (STYLE.test(html) !== shouldMatch) failures.push(`style block: wrong result for ${html}`);
+  }
+  for (const [html, shouldMatch] of [
+    ['<p style="color:red">', true],
+    ["<svg viewBox='0 0 1 1' style=x>", true],
+    ['<meta content="style-src x">', false],
+    ['<p data-style="x">', false],
+  ]) {
+    STYLE_ATTR.lastIndex = 0;
+    if (STYLE_ATTR.test(html) !== shouldMatch)
+      failures.push(`style attribute: wrong result for ${html}`);
   }
   if (failures.length > 0) {
     console.error("CSP guard SELFTEST FAILED — a matcher is wrong:\n");
@@ -107,6 +130,7 @@ const offenders = [];
 const withoutCsp = [];
 let pages = 0;
 let scripts = 0;
+let styles = 0;
 
 for (const file of htmlFiles(ROOT)) {
   const html = readFileSync(file, "utf8");
@@ -128,6 +152,17 @@ for (const file of htmlFiles(ROOT)) {
       offenders.push({ file, hash, preview: body.trim().slice(0, 80) });
     }
   }
+
+  for (const [, , body] of html.matchAll(STYLE)) {
+    styles += 1;
+    const hash = `sha256-${createHash("sha256").update(body, "utf8").digest("base64")}`;
+    if (!declared.has(hash)) {
+      offenders.push({ file, hash, preview: `<style> ${body.trim().slice(0, 72)}` });
+    }
+  }
+  for (const [tag] of html.matchAll(STYLE_ATTR)) {
+    offenders.push({ file, hash: "style attribute", preview: tag.slice(0, 80) });
+  }
 }
 
 if (pages === 0) {
@@ -141,15 +176,19 @@ if (withoutCsp.length > 0) {
 }
 
 if (offenders.length > 0) {
-  console.error(`CSP check FAILED — ${offenders.length} inline script(s) missing a hash:\n`);
+  console.error(`CSP check FAILED — ${offenders.length} inline script(s)/style(s) not allowed:\n`);
   for (const o of offenders) {
     console.error(`  ${o.file}\n    ${o.hash}\n    ${o.preview}...\n`);
   }
   console.error(
     "Fix: prefer a processed <script> (Astro bundles + hashes it), or for code that must\n" +
-      "run inline before paint, add it via injectScript('head-inline', ...) in astro.config.mjs.",
+      "run inline before paint, add it via injectScript('head-inline', ...) in astro.config.mjs.\n" +
+      "For styles: move the rules into a stylesheet the page always loads (src/styles/*.css)\n" +
+      "and replace style attributes with classes.",
   );
   process.exit(1);
 }
 
-console.log(`CSP check ok — ${scripts} inline scripts across ${pages} pages, all hashed.`);
+console.log(
+  `CSP check ok — ${scripts} inline scripts and ${styles} style blocks across ${pages} pages, all hashed.`,
+);

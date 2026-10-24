@@ -62,6 +62,9 @@ A platform upgrade, a security pass, a new palette and a rebuilt admin
 - The story reader bar no longer hides behind the sticky header.
 - Modal dialogs (the bug-report dialog) were stuck in the top-left corner; lists in posts had no
   bullets — both caused by Tailwind's preflight.
+- Callouts in MDX posts rendered unstyled: Astro left their inline styles out of the page's CSP, so
+  the browser refused them. The rules moved to the shared prose stylesheet, and the build's CSP
+  check now verifies every inline `<style>` (and forbids style attributes) as well as scripts.
 - Accessibility: the search is an ARIA combobox, the mobile menu is a modal dialog with a focus
   trap, lightbox focus handling, labelled report dialog, a correct "copied" message, Esc no longer
   dismisses the legal notice from elsewhere, landmark and link labels translated.
