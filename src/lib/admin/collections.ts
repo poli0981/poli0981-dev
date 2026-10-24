@@ -1,3 +1,5 @@
+import { MEDIA_ID } from "../media";
+
 // What the admin can edit: per-collection form fields and file-path rules. Shared by the
 // API (validation) and the editor island (form rendering) — no server dependencies.
 // Mirrors src/content.config.ts; the CI build on the publish PR is the final validator.
@@ -200,4 +202,92 @@ export function newEntryPath(
 /** gallery-photos/<album>.json — the R2 photo list of one album. */
 export function galleryPhotosPath(album: string): string | null {
   return SLUG_PATTERN.test(album) ? `gallery-photos/${album}.json` : null;
+}
+
+type FieldErrorCode = "required" | "type" | "option" | "max" | "format";
+
+export interface FieldError {
+  field: string;
+  code: FieldErrorCode;
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const isPositiveInteger = (value: unknown) => Number.isInteger(value) && (value as number) > 0;
+
+/** An R2 media reference as stored in frontmatter (see lib/media-schema). */
+function isMediaRef(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    typeof value.id === "string" &&
+    MEDIA_ID.test(value.id) &&
+    isPositiveInteger(value.w) &&
+    isPositiveInteger(value.h) &&
+    (value.alt === undefined || (typeof value.alt === "string" && value.alt.length <= 300))
+  );
+}
+
+function isHttpUrl(value: string): boolean {
+  try {
+    const { protocol } = new URL(value);
+    return protocol === "https:" || protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+/** What is wrong with one non-empty field value, or null when it fits the field. */
+function checkField(field: FieldSpec, value: unknown): FieldErrorCode | null {
+  switch (field.type) {
+    case "text":
+    case "textarea":
+      if (typeof value !== "string") return "type";
+      return field.max !== undefined && value.length > field.max ? "max" : null;
+    case "url":
+      if (typeof value !== "string") return "type";
+      return isHttpUrl(value) ? null : "format";
+    case "date":
+      // Anything the content schema's z.coerce.date() accepts; the editor sends YYYY-MM-DD.
+      return typeof value === "string" && !Number.isNaN(Date.parse(value)) ? null : "format";
+    case "select":
+      return typeof value === "string" && (field.options ?? []).includes(value) ? null : "option";
+    case "tags":
+      return Array.isArray(value) && value.every((tag) => typeof tag === "string") ? null : "type";
+    case "number":
+      return typeof value === "number" && Number.isFinite(value) ? null : "type";
+    case "checkbox":
+      return typeof value === "boolean" ? null : "type";
+    case "media":
+      return isMediaRef(value) ? null : "type";
+  }
+}
+
+const isEmpty = (value: unknown) =>
+  value === undefined ||
+  value === null ||
+  value === "" ||
+  (Array.isArray(value) && value.length === 0);
+
+/**
+ * Check frontmatter against a collection's fields: required ones present, every known one
+ * of the right shape. Keys the spec doesn't know (e.g. a local `cover`) are left alone —
+ * the content schema on the publish PR's build is the final word on those. Shared by the
+ * API and the editor, so the form flags the same problems the server would refuse.
+ */
+export function validateFrontmatter(
+  spec: CollectionSpec,
+  data: Record<string, unknown>,
+): FieldError[] {
+  const errors: FieldError[] = [];
+  for (const field of spec.fields) {
+    const value = data[field.key];
+    if (isEmpty(value)) {
+      if (field.required) errors.push({ field: field.key, code: "required" });
+      continue;
+    }
+    const code = checkField(field, value);
+    if (code) errors.push({ field: field.key, code });
+  }
+  return errors;
 }

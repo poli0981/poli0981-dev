@@ -20,11 +20,18 @@ interface AccessEnv {
 // One JWKS fetcher per team for the isolate's lifetime; jose caches and refreshes keys.
 const jwksByTeam = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
 
+/** "https://team.cloudflareaccess.com/" → without the trailing slashes (no regex backtracking). */
+function withoutTrailingSlashes(value: string): string {
+  let end = value.length;
+  while (end > 0 && value[end - 1] === "/") end--;
+  return value.slice(0, end);
+}
+
 export async function verifyAccess(
   request: Request,
   env: AccessEnv,
 ): Promise<AdminIdentity | null> {
-  const team = env.ACCESS_TEAM_DOMAIN?.replace(/\/+$/, "");
+  const team = env.ACCESS_TEAM_DOMAIN ? withoutTrailingSlashes(env.ACCESS_TEAM_DOMAIN) : undefined;
   const audience = env.ACCESS_AUD;
   const token = request.headers.get("cf-access-jwt-assertion");
   if (!team || !audience || !token) return null;

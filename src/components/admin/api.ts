@@ -50,20 +50,34 @@ export async function uploadImage(
   return data as unknown as { item: MediaItem; created: boolean };
 }
 
+/** Messages for the specific error codes the admin API returns (checked before statuses). */
+const CODE_MESSAGES: Record<string, string> = {
+  not_creatable: "Mục này chỉ sửa được, không tạo mới.",
+  not_deletable: "Mục này không xoá được từ admin (trang pháp lý, /now, album).",
+  already_exists: "Đã có mục với đường dẫn (slug) này — đổi slug khác.",
+  in_use: "Ảnh đang được dùng trong nội dung — gỡ khỏi bài trước khi xoá.",
+  too_large: "Dữ liệu quá lớn.",
+};
+
 /** Human-readable message for an API failure. */
 export function describeError(error: unknown): string {
   if (error instanceof ApiError) {
+    const code = typeof error.data.error === "string" ? error.data.error : "";
+    if (code in CODE_MESSAGES) return CODE_MESSAGES[code];
+    if (code === "invalid_fields") {
+      const fields = (error.data.fields as { field: string }[] | undefined) ?? [];
+      return `Trường chưa hợp lệ: ${fields.map((f) => f.field).join(", ")}`;
+    }
+    if (code === "github_permission") {
+      const needs = error.data.needs ? ` (GitHub cần: ${String(error.data.needs)})` : "";
+      return `Token GitHub thiếu quyền${needs}. Lưu bài cần GITHUB_CONTENT_TOKEN có Contents: Read and write trên poli0981/content; Xuất bản cần GITHUB_PUBLISH_TOKEN có Actions: Read and write trên poli0981/poli0981-dev.`;
+    }
     if (error.status === 409)
       return "Xung đột: nội dung đã thay đổi ở nơi khác (hoặc ảnh đang được dùng).";
     if (error.status === 413) return "Tệp quá lớn (tối đa 20 MB).";
     if (error.status === 415) return "Định dạng ảnh không được hỗ trợ.";
     if (error.status === 429) return "Thao tác quá nhanh — đợi một phút.";
     if (error.status === 503) return "Admin chưa được cấu hình (thiếu token).";
-    if (error.data.error === "github_permission") {
-      const needs = error.data.needs ? ` (GitHub cần: ${String(error.data.needs)})` : "";
-      return `Token GitHub thiếu quyền${needs}. Lưu bài cần GITHUB_CONTENT_TOKEN có Contents: Read and write trên poli0981/content; Xuất bản cần GITHUB_PUBLISH_TOKEN có Actions: Read and write trên poli0981/poli0981-dev.`;
-    }
-    if (error.data.error === "not_creatable") return "Mục này chỉ sửa được, không tạo mới.";
     return `Lỗi ${error.status}: ${error.message}`;
   }
   return error instanceof Error ? error.message : String(error);

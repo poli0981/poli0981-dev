@@ -2,8 +2,14 @@ import type { APIRoute } from "astro";
 import { GITHUB_CONTENT_TOKEN } from "astro:env/server";
 import { galleryPhotosPath, SLUG_PATTERN } from "@/lib/admin/collections";
 import { buildFile, splitFile } from "@/lib/admin/frontmatter";
-import { commitContent, listContentFiles, type FileChange } from "@/lib/admin/github";
-import { errorResponse, json, readJson } from "@/lib/admin/http";
+import {
+  commitContent,
+  listContentFiles,
+  readContentFile,
+  type FileChange,
+} from "@/lib/admin/github";
+import { errorResponse, isPlainObject, json, readJson } from "@/lib/admin/http";
+import { log } from "@/lib/log";
 import { galleryPhotoListSchema } from "@/lib/media-schema";
 
 // Gallery albums: the vi/en entries (gallery/<file>.md) and the album's R2 photo list
@@ -32,7 +38,13 @@ export const GET: APIRoute = async () => {
       const match = /^gallery-photos\/([a-z0-9-]+)\.json$/.exec(file.path);
       if (!match) continue;
       const entry = albums.get(match[1]) ?? { album: match[1], titles: {}, photos: [], sha: null };
-      const parsed = galleryPhotoListSchema.safeParse(JSON.parse(file.text));
+      let photos: unknown = null;
+      try {
+        photos = JSON.parse(file.text);
+      } catch {
+        // A hand-broken list shows as empty here; the build is what refuses it.
+      }
+      const parsed = galleryPhotoListSchema.safeParse(photos);
       entry.photos = parsed.success ? parsed.data.photos : [];
       entry.sha = file.sha;
       albums.set(match[1], entry);
@@ -56,46 +68,68 @@ interface SaveBody {
   };
 }
 
+const isTitled = (value: unknown): value is { title: string; description?: string } =>
+  isPlainObject(value) &&
+  typeof value.title === "string" &&
+  value.title.trim() !== "" &&
+  value.title.length <= 120 &&
+  (value.description === undefined || typeof value.description === "string");
+
 export const PUT: APIRoute = async ({ request, locals }) => {
   if (!GITHUB_CONTENT_TOKEN) return json({ error: "not_configured" }, 503);
-  const input = await readJson<SaveBody>(request);
-  const path =
-    input && SLUG_PATTERN.test(input.album ?? "") ? galleryPhotosPath(input.album) : null;
-  if (!input || !path) return json({ error: "invalid" }, 400);
-  const parsed = galleryPhotoListSchema.safeParse({ photos: input.photos });
-  if (!parsed.success) return json({ error: "invalid_photos", message: parsed.error.message }, 400);
-
-  const changes: FileChange[] = [
-    { path, text: `${JSON.stringify(parsed.data, null, 2)}\n`, expectSha: input.sha ?? null },
-  ];
-  if (input.create) {
-    const { date, vi, en } = input.create;
-    if (!vi?.title || !en?.title || !/^\d{4}-\d{2}-\d{2}$/.test(date ?? "")) {
-      return json({ error: "invalid_album" }, 400);
-    }
-    for (const [lang, entry, file] of [
-      ["vi", vi, `gallery/${input.album}.md`],
-      ["en", en, `gallery/${input.album}-en.md`],
-    ] as const) {
-      const frontmatter = {
-        title: entry.title,
-        lang,
-        translationKey: input.album,
-        date,
-        description: entry.description,
-        album: input.album,
-        coverIndex: 0,
-      };
-      changes.push({ path: file, text: buildFile(null, frontmatter, ""), expectSha: null });
-    }
-  }
-
   try {
+    const input = await readJson<SaveBody>(request);
+    const path =
+      input && typeof input.album === "string" && SLUG_PATTERN.test(input.album)
+        ? galleryPhotosPath(input.album)
+        : null;
+    if (!input || !path || (input.sha !== null && typeof input.sha !== "string")) {
+      return json({ error: "invalid" }, 400);
+    }
+    const parsed = galleryPhotoListSchema.safeParse({ photos: input.photos });
+    if (!parsed.success) {
+      return json({ error: "invalid_photos", message: parsed.error.message }, 400);
+    }
+
+    const changes: FileChange[] = [
+      { path, text: `${JSON.stringify(parsed.data, null, 2)}\n`, expectSha: input.sha ?? null },
+    ];
+    if (input.create) {
+      const { date, vi, en } = input.create;
+      if (!isTitled(vi) || !isTitled(en) || !/^\d{4}-\d{2}-\d{2}$/.test(date ?? "")) {
+        return json({ error: "invalid_album" }, 400);
+      }
+      const files = [`gallery/${input.album}.md`, `gallery/${input.album}-en.md`];
+      for (const file of files) {
+        if (await readContentFile(GITHUB_CONTENT_TOKEN, file)) {
+          return json({ error: "already_exists", path: file }, 409);
+        }
+      }
+      for (const [lang, entry, file] of [
+        ["vi", vi, files[0]],
+        ["en", en, files[1]],
+      ] as const) {
+        const frontmatter = {
+          title: entry.title.trim(),
+          lang,
+          translationKey: input.album,
+          date,
+          description: entry.description?.trim(),
+          album: input.album,
+          coverIndex: 0,
+        };
+        changes.push({ path: file, text: buildFile(null, frontmatter, ""), expectSha: null });
+      }
+    }
+
+    const email = locals.admin?.email ?? "unknown";
+    const verb = input.create ? "create" : "update";
     const commit = await commitContent(
       GITHUB_CONTENT_TOKEN,
-      `content(gallery): ${input.create ? "create" : "update"} album ${input.album}\n\nvia admin (${locals.admin?.email ?? "unknown"})`,
+      `content(gallery): ${verb} album ${input.album}\n\nvia admin (${email})`,
       changes,
     );
+    log.info("admin.gallery_saved", { album: input.album, verb, commit, admin: email });
     return json({ commit });
   } catch (error) {
     return errorResponse(error);

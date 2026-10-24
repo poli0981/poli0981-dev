@@ -26,8 +26,12 @@ export class GitHubError extends Error {
 /** The content changed under us since the editor loaded it. */
 export class ConflictError extends Error {}
 
+/** A GitHub call that hangs must not hold the admin request (or the isolate) open. */
+const TIMEOUT_MS = 15_000;
+
 async function request<T>(token: string, path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API}${path}`, {
+    signal: AbortSignal.timeout(TIMEOUT_MS),
     ...init,
     headers: {
       accept: "application/vnd.github+json",

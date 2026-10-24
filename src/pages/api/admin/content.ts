@@ -1,9 +1,10 @@
 import type { APIRoute } from "astro";
 import { GITHUB_CONTENT_TOKEN } from "astro:env/server";
-import { collectionOf, COLLECTIONS } from "@/lib/admin/collections";
+import { collectionOf, validateFrontmatter } from "@/lib/admin/collections";
 import { buildFile, splitFile, type Frontmatter } from "@/lib/admin/frontmatter";
 import { commitContent, listContentFiles, readContentFile } from "@/lib/admin/github";
-import { errorResponse, json, readJson } from "@/lib/admin/http";
+import { errorResponse, isPlainObject, json, readJson } from "@/lib/admin/http";
+import { log } from "@/lib/log";
 
 // Content entries of poli0981/content. Saving commits straight to the content repo's
 // main branch; nothing goes live until "Publish" (api/admin/publish).
@@ -57,38 +58,47 @@ interface SaveBody {
 
 export const PUT: APIRoute = async ({ request, locals }) => {
   if (!GITHUB_CONTENT_TOKEN) return json({ error: "not_configured" }, 503);
-  const input = await readJson<SaveBody>(request);
-  if (!input || typeof input.path !== "string" || typeof input.body !== "string") {
-    return json({ error: "invalid" }, 400);
-  }
-  const collection = collectionOf(input.path);
-  if (!collection) return json({ error: "not_editable" }, 400);
-  // New files: Markdown only (MDX runs code at build time), and only where adding an
-  // entry is safe (see CollectionSpec.creatable — e.g. a second /now file would replace
-  // the live page).
-  if (input.sha === null) {
-    if (!input.path.endsWith(".md")) return json({ error: "md_only" }, 400);
-    if (!collection.creatable) return json({ error: "not_creatable" }, 400);
-  }
-  for (const field of COLLECTIONS[collection.id].fields) {
-    if (field.required && (input.frontmatter?.[field.key] ?? "") === "") {
-      return json({ error: "missing_field", field: field.key }, 400);
-    }
-  }
-
   try {
+    const input = await readJson<SaveBody>(request);
+    if (
+      !input ||
+      typeof input.path !== "string" ||
+      typeof input.body !== "string" ||
+      (input.sha !== null && typeof input.sha !== "string") ||
+      !isPlainObject(input.frontmatter)
+    ) {
+      return json({ error: "invalid" }, 400);
+    }
+    const collection = collectionOf(input.path);
+    if (!collection) return json({ error: "not_editable" }, 400);
+    // New files: Markdown only (MDX runs code at build time), and only where adding an
+    // entry is safe (see CollectionSpec.creatable — e.g. a second /now file would replace
+    // the live page).
+    if (input.sha === null) {
+      if (!input.path.endsWith(".md")) return json({ error: "md_only" }, 400);
+      if (!collection.creatable) return json({ error: "not_creatable" }, 400);
+    }
+    const errors = validateFrontmatter(collection, input.frontmatter);
+    if (errors.length > 0) return json({ error: "invalid_fields", fields: errors }, 400);
+
     const original = input.sha ? await readContentFile(GITHUB_CONTENT_TOKEN, input.path) : null;
-    const text = buildFile(original?.text ?? null, input.frontmatter ?? {}, input.body);
+    // Creating a slug that already exists is its own error, not an edit conflict.
+    if (input.sha === null && (await readContentFile(GITHUB_CONTENT_TOKEN, input.path))) {
+      return json({ error: "already_exists" }, 409);
+    }
+    const text = buildFile(original?.text ?? null, input.frontmatter, input.body);
     if (new TextEncoder().encode(text).byteLength > MAX_FILE_BYTES) {
       return json({ error: "too_large" }, 413);
     }
     const verb = input.sha ? "update" : "add";
+    const email = locals.admin?.email ?? "unknown";
     const commit = await commitContent(
       GITHUB_CONTENT_TOKEN,
-      `content(${collection.id}): ${verb} ${input.path}\n\nvia admin (${locals.admin?.email ?? "unknown"})`,
+      `content(${collection.id}): ${verb} ${input.path}\n\nvia admin (${email})`,
       [{ path: input.path, text, expectSha: input.sha }],
     );
     const saved = await readContentFile(GITHUB_CONTENT_TOKEN, input.path);
+    log.info("admin.content_saved", { path: input.path, verb, commit, admin: email });
     return json({ commit, path: input.path, sha: saved?.sha ?? null });
   } catch (error) {
     return errorResponse(error);
@@ -97,16 +107,23 @@ export const PUT: APIRoute = async ({ request, locals }) => {
 
 export const DELETE: APIRoute = async ({ request, locals }) => {
   if (!GITHUB_CONTENT_TOKEN) return json({ error: "not_configured" }, 503);
-  const input = await readJson<{ path: string; sha: string }>(request);
-  if (!input || !collectionOf(input.path) || typeof input.sha !== "string") {
-    return json({ error: "invalid" }, 400);
-  }
   try {
+    const input = await readJson<{ path: string; sha: string }>(request);
+    if (!input || typeof input.path !== "string" || typeof input.sha !== "string") {
+      return json({ error: "invalid" }, 400);
+    }
+    const collection = collectionOf(input.path);
+    if (!collection) return json({ error: "invalid" }, 400);
+    // Only entries the admin may create can be deleted: removing a legal page, the /now
+    // entry or an album's metadata would break the live site (and fail the next build).
+    if (!collection.creatable) return json({ error: "not_deletable" }, 400);
+    const email = locals.admin?.email ?? "unknown";
     const commit = await commitContent(
       GITHUB_CONTENT_TOKEN,
-      `content: delete ${input.path}\n\nvia admin (${locals.admin?.email ?? "unknown"})`,
+      `content: delete ${input.path}\n\nvia admin (${email})`,
       [{ path: input.path, text: null, expectSha: input.sha }],
     );
+    log.info("admin.content_deleted", { path: input.path, commit, admin: email });
     return json({ commit });
   } catch (error) {
     return errorResponse(error);

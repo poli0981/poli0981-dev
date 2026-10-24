@@ -10,7 +10,7 @@ import { variantKey, variantWidths, type MediaFormat, type MediaRef } from "../m
 //   private/meta/<id>.json     id, size, name, alt, variants — the media library index
 // Sizes always come from the transformed output (EXIF rotation applied), never the input.
 
-const MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // the Images binding's input limit
+export const MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // the Images binding's input limit
 
 const QUALITY: Record<MediaFormat, number> = { avif: 60, webp: 80 };
 const MASTER_QUALITY = 92;
