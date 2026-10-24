@@ -53,6 +53,16 @@ describe("gate pass cookie", () => {
     }
   });
 
+  it("rejects signatures atob cannot decode — without throwing", async () => {
+    // A throw here escaped verifyPass, hit the worker's fail-open catch and served the real
+    // page: a gate bypass with one hand-made cookie. Length % 4 === 1 is invalid base64.
+    const expiry = Math.floor(NOW / 1000) + 3600;
+    for (const signature of ["A", "AAAAA", "A".repeat(41), "A".repeat(42), "A".repeat(44)]) {
+      const value = `v1.${expiry}.nonce.${signature}`;
+      assert.equal(await verifyPass(value, SECRET, NOW), false, signature.length.toString());
+    }
+  });
+
   it("builds a __Host- cookie that the parser reads back", async () => {
     const pass = await issuePass(SECRET, NOW);
     const header = passCookieHeader(pass);

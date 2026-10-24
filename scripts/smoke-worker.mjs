@@ -237,6 +237,20 @@ await withWorker(
       "tampered pass → gate",
       isGate(await (await get("/", { headers: { cookie: tampered } })).text()),
     );
+
+    // A pass whose signature `atob` can't decode used to throw past the gate into the
+    // worker's fail-open path and serve the real page.
+    const expiry = Math.floor(Date.now() / 1000) + 3600;
+    for (const signature of ["A", "AAAAA"]) {
+      const forged = await get("/", {
+        headers: { cookie: `__Host-gate=v1.${expiry}.x.${signature}` },
+      });
+      const forgedHtml = await forged.text();
+      expect(
+        `malformed pass (signature "${signature}") → still the gate`,
+        isGate(forgedHtml) && !isRealPage(forgedHtml),
+      );
+    }
   },
 );
 
