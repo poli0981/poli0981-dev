@@ -121,25 +121,47 @@ export function normalizeGitHub(events: GhEvent[]): GhItem[] {
 }
 
 /**
- * Copy one picture into KV under `widgets:img:<key>`; true when it is there afterwards.
- * Failures are quiet (the widget just shows no picture) — the feed itself still updates.
+ * Copy one picture into KV under `widgets:img:<key>`, from the first of `urls` that answers
+ * with an image; true when a copy is there afterwards — a fresh one, or the one an earlier
+ * run stored (a failed refresh keeps showing it until it expires). Failures are quiet: the
+ * widget just shows no picture, and the feed itself still updates.
  */
-export async function mirrorImage(kv: KVNamespace, key: string, url: string): Promise<boolean> {
+export async function mirrorImage(
+  kv: KVNamespace,
+  key: string,
+  urls: string | string[],
+): Promise<boolean> {
+  const stored = `${EXT_IMG_KV_PREFIX}${key}`;
+  for (const url of typeof urls === "string" ? [urls] : urls) {
+    try {
+      const res = await get(url);
+      const type = (res.headers.get("content-type") ?? "").split(";")[0].trim();
+      if (!res.ok || !IMAGE_TYPES.has(type)) continue;
+      const bytes = await res.arrayBuffer();
+      if (bytes.byteLength === 0 || bytes.byteLength > MAX_IMAGE_BYTES) continue;
+      await kv.put(stored, bytes, { expirationTtl: IMAGE_TTL_SECONDS, metadata: { type } });
+      return true;
+    } catch {
+      // try the next source
+    }
+  }
   try {
-    const res = await get(url);
-    const type = (res.headers.get("content-type") ?? "").split(";")[0].trim();
-    if (!res.ok || !IMAGE_TYPES.has(type)) return false;
-    const bytes = await res.arrayBuffer();
-    if (bytes.byteLength === 0 || bytes.byteLength > MAX_IMAGE_BYTES) return false;
-    await kv.put(`${EXT_IMG_KV_PREFIX}${key}`, bytes, {
-      expirationTtl: IMAGE_TTL_SECONDS,
-      metadata: { type },
-    });
-    return true;
+    return (await kv.get(stored, "arrayBuffer")) !== null;
   } catch {
     return false;
   }
 }
+
+/**
+ * Steam serves each game icon from several CDNs, and every one of them refuses requests from
+ * Workers (403) for files it has not cached yet — only an edge cache hit gets through
+ * (probed 2026-10-24). Asking each in turn mirrors whatever one of them holds.
+ */
+const STEAM_ICON_HOSTS = [
+  "https://cdn.cloudflare.steamstatic.com",
+  "https://cdn.akamai.steamstatic.com",
+  "https://media.steampowered.com",
+];
 
 export async function fetchYouTube(env: WidgetsEnv): Promise<VideoItem[]> {
   const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(env.YT_CHANNEL_ID)}`;
@@ -165,10 +187,10 @@ export async function fetchSteam(env: WidgetsEnv): Promise<GameItem[]> {
   return Promise.all(
     games.map(async ({ iconHash, ...game }) => {
       if (!iconHash) return game;
-      // media.steampowered.com answers Workers with 403; Steam's own Cloudflare CDN serves
-      // the same file.
-      const source = `https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/apps/${game.appid}/${iconHash}.jpg`;
-      const ok = await mirrorImage(env.KV, `steam:${game.appid}:${iconHash}`, source);
+      const sources = STEAM_ICON_HOSTS.map(
+        (host) => `${host}/steamcommunity/public/images/apps/${game.appid}/${iconHash}.jpg`,
+      );
+      const ok = await mirrorImage(env.KV, `steam:${game.appid}:${iconHash}`, sources);
       return { ...game, icon: ok ? `/ext-img/steam/${game.appid}/${iconHash}` : "" };
     }),
   );

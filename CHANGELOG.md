@@ -69,9 +69,10 @@ A platform upgrade, a security pass, a new palette and a rebuilt admin
   trap, lightbox focus handling, labelled report dialog, a correct "copied" message, Esc no longer
   dismisses the legal notice from elsewhere, landmark and link labels translated.
 - Gallery albums work without JavaScript; contact lines on /qa and the 403 page are real links.
-- Widgets: Steam game icons are fetched from Steam's Cloudflare CDN (`media.steampowered.com` refuses
-  Workers with 403), and an optional read-only `GITHUB_TOKEN` keeps the GitHub feed from going stale
-  under the per-IP rate limit Workers share.
+- Widgets: Steam's CDNs answer Workers with 403 for any icon they have not cached, so the worker
+  now asks each of Steam's three hosts in turn and keeps the copy an earlier run stored (games
+  without an icon show their name only). An optional read-only `GITHUB_TOKEN` keeps the GitHub feed
+  from going stale under the per-IP rate limit Workers share.
 - Dozens of smaller issues found by SonarCloud and the new tests (error pages served with the
   wrong status under `astro dev`, regex backtracking, scripts that passed without checking).
 
