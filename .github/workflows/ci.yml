@@ -25,6 +25,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # A hung `wrangler dev` in the smoke test must not hold a runner for six hours.
+    timeout-minutes: 30
     # Job-level too, so a second job added later can't silently inherit something wider.
     permissions:
       contents: read
@@ -45,48 +47,53 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
-      # Lifecycle scripts run only for the packages allow-listed in package.json
-      # #allowScripts; .npmrc sets strict-allow-scripts so anything unreviewed is a
-      # hard install failure rather than a warning (docs 06 §6, anti-worm).
+      # No dependency lifecycle script runs in CI at all (docs 06 §6, anti-worm). None is
+      # needed: esbuild, workerd and sharp take their platform binaries from
+      # optionalDependencies — their install scripts only re-verify them — and lefthook's
+      # only installs git hooks. Local installs stay guarded by package.json#allowScripts
+      # plus .npmrc strict-allow-scripts.
       - name: Install
-        run: npm ci
+        run: npm ci --ignore-scripts
 
-      # KV/ASSETS/SESSION types live in the gitignored worker-configuration.d.ts,
-      # generated from wrangler.jsonc. `astro check` fails without them — and there
-      # is no @cloudflare/workers-types dependency to fall back on. No auth needed.
-      # --strict-vars=false: `vars` are typed as string, not as their literal value, so code
-      # comparing e.g. GATE_MODE against "on" still typechecks while the config says "off".
+      # Binding types live in the gitignored worker-configuration.d.ts files, generated from
+      # the wrangler configs; both type checks fail without them. No auth needed.
+      # --strict-vars=false (in the script): `vars` are typed as string, not their literal
+      # value, so code comparing e.g. GATE_MODE against "on" typechecks whatever it is set to.
       - name: Generate Cloudflare binding types
-        run: npx wrangler types --strict-vars=false
+        run: |
+          npm run types
+          npm run types:widgets
 
       - name: Format check
-        run: npx prettier --check .
+        run: npm run format:check
 
       - name: Lint
-        run: npx eslint .
+        run: npm run lint
 
-      - name: Type check
+      # .astro, .svelte and .ts through Volar — the TypeScript 6 API (TS 7.0 has none).
+      - name: Type check (astro check)
         run: npm run check
 
-      # The cron worker is a separate TS project (own tsconfig + Env types) and is
-      # excluded from the root check. Deploy is manual, so typecheck it here as a guard.
-      - name: Typecheck widgets worker
-        working-directory: workers/widgets
+      # Every .ts file again with the native TypeScript 7 compiler, plus the widgets worker
+      # (a separate TS project). The version line makes a bin mix-up impossible to miss.
+      - name: Type check (TypeScript 7)
         run: |
-          npx wrangler types
-          npx tsc -p tsconfig.json --noEmit
+          node node_modules/@typescript/native/bin/tsc --version
+          npm run typecheck
 
       - name: Dead code
         run: npm run knip
 
-      - name: Unit tests
-        run: npm test
+      # node:test + V8 coverage. Fails under 80% lines; writes coverage/lcov.info for the
+      # SonarCloud job below.
+      - name: Unit tests (coverage)
+        run: npm run test:coverage
 
       - name: Audit (prod deps, high+)
         run: npm audit --omit=dev --audit-level=high
 
-      # THIRD-PARTY-NOTICES.md must match the lockfile, and every license must be either
-      # on the allowlist or explicitly reviewed (docs 08 §6).
+      # THIRD-PARTY-NOTICES.md must match the direct dependencies, and every license must be
+      # either on the allowlist or explicitly reviewed (docs 08 §6).
       - name: Third-party notices
         run: npm run gen-notices -- --check
 
@@ -94,18 +101,59 @@ jobs:
       - name: Check EXIF (changed images)
         env:
           DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
-        run: node scripts/check-exif.mjs --changed
+        run: npm run check-exif -- --changed
 
       - name: Build
         run: npm run build
 
       # src/worker.ts fronts every page, so a crash there would take the static site down
       # too. Boot the built worker locally (wrangler dev, simulated bindings, no auth) and
-      # probe pages, revalidation, HEAD, redirects, 404s, assets and the API.
+      # probe pages, revalidation, HEAD, redirects, 404s, assets, the gate and the API.
       - name: Smoke test built worker
         run: npm run smoke
 
-      # Deployment is handled by Cloudflare Workers Builds (connected to this repo),
-      # not GitHub Actions — this workflow is CI gates only (lint/types/knip/audit/build).
-      # Workers Builds must deploy with: wrangler deploy --config ./dist/server/wrangler.json
-      # (the root wrangler.jsonc has no `main`; the adapter writes the real config there).
+      - name: Upload coverage
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage
+          path: coverage/lcov.info
+          retention-days: 7
+          if-no-files-found: error
+
+      # Deployment is Cloudflare Workers Builds (connected to this repo), not GitHub
+      # Actions — this workflow is CI gates only. Workers Builds settings (docs 07): deploy
+      # command `npx wrangler deploy` on main, version command `npx wrangler versions upload`
+      # on every other branch. Plain `wrangler` finds the generated config on its own: the
+      # build writes .wrangler/deploy/config.json pointing at dist/server/wrangler.json.
+
+  # The SonarCloud analysis (automatic analysis is switched off; this is the only one).
+  # Needs SONAR_TOKEN, which Dependabot runs and forks never get, so those skip it, as do
+  # the content/bump dispatches (content only, no code to analyze).
+  sonarcloud:
+    needs: build
+    if: >-
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository &&
+       github.actor != 'dependabot[bot]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # blame data and new-code detection need the whole history
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: coverage
+          path: coverage
+
+      # Settings live in sonar-project.properties. sonar.qualitygate.wait makes this job
+      # fail when the quality gate does, so a red gate is visible on the PR.
+      - name: SonarCloud scan
+        uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

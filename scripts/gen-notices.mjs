@@ -14,6 +14,10 @@
  * Any license outside ALLOWED is reported. That is deliberately noisy: an unexpected
  * license is exactly the thing a human should look at, so it fails rather than being
  * quietly folded into the table. Cleared cases go in REVIEWED with a reason.
+ *
+ * The block holds nothing that changes on a routine version bump (no versions, no package
+ * count): it used to print the size of the resolved tree, so every Dependabot PR that added
+ * or dropped one transitive package failed CI here.
  */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 
@@ -70,8 +74,8 @@ const direct = [
 // disk varies by platform: the lockfile carries every `@img/sharp-*` / `*-msvc` variant
 // and npm installs only the matching one. Surveying installed packages would therefore
 // generate a different file on Windows and on Linux CI, and `--check` would fail forever.
-// So the survey is restricted to direct dependencies, which are installed everywhere, and
-// the transitive tree is reported as a count straight from the lockfile.
+// So the survey is restricted to direct dependencies, which are installed everywhere. The
+// lockfile's resolved count is printed to the console only — see the header comment.
 // Platform binaries are covered in prose in THIRD-PARTY-NOTICES.md instead — notably
 // sharp's prebuilt libvips, which is Apache-2.0 AND LGPL-3.0-or-later.
 const resolvedCount = new Set(
@@ -128,11 +132,10 @@ const lines = [
   "| ------- | -------- |",
   ...licenseSummary,
   "",
-  `The full resolved tree is **${resolvedCount} packages**. Transitive licenses are not`,
-  "tallied here on purpose: which packages are installed depends on the platform (npm",
-  "resolves only the matching `@img/sharp-*` / `*-msvc` binaries), so a disk-based survey",
-  "would produce a different file on Windows than in Linux CI and the drift check could",
-  "never pass. Platform binaries are covered in prose below.",
+  "Transitive dependencies are deliberately not tallied here. Which packages get installed",
+  "depends on the platform (npm resolves only the matching `@img/sharp-*` / `*-msvc`",
+  "binaries), and even a bare count would change with every lockfile bump. The complete",
+  "inventory is `package-lock.json`; platform binaries are covered in prose below.",
   "",
 ];
 
