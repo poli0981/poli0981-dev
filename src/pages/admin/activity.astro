@@ -1,0 +1,10 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import ActivityLog from "@/components/admin/ActivityLog.svelte";
+
+export const prerender = false;
+---
+
+<AdminLayout title="Hoạt động">
+  <ActivityLog client:only="svelte" />
+</AdminLayout>

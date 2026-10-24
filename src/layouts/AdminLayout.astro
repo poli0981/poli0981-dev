@@ -1,7 +1,9 @@
 ---
 import "../styles/global.css";
 import "../styles/admin.css";
+import "../styles/prose.css";
 import { Font } from "astro:assets";
+import AdminChrome from "../components/admin/AdminChrome.svelte";
 import PublishBar from "../components/admin/PublishBar.svelte";
 import ThemeToggle from "../components/ThemeToggle.svelte";
 import { useTranslations } from "../i18n";
@@ -15,16 +17,27 @@ const { title } = Astro.props;
 const email = Astro.locals.admin?.email ?? "";
 const here = Astro.url.pathname;
 const nav = [
+  { href: "/admin/", label: "Tổng quan", match: (p: string) => p === "/admin/" },
   {
-    href: "/admin/",
+    href: "/admin/content/",
     label: "Nội dung",
-    match: (p: string) => p === "/admin/" || p.startsWith("/admin/edit"),
+    match: (p: string) => p.startsWith("/admin/content") || p.startsWith("/admin/edit"),
   },
   { href: "/admin/media/", label: "Ảnh", match: (p: string) => p.startsWith("/admin/media") },
   {
     href: "/admin/gallery/",
     label: "Gallery",
     match: (p: string) => p.startsWith("/admin/gallery"),
+  },
+  {
+    href: "/admin/activity/",
+    label: "Hoạt động",
+    match: (p: string) => p.startsWith("/admin/activity"),
+  },
+  {
+    href: "/admin/security/",
+    label: "Bảo mật",
+    match: (p: string) => p.startsWith("/admin/security"),
   },
 ];
 ---
@@ -38,12 +51,44 @@ const nav = [
     <Font cssVariable="--ff-body" preload />
     <Font cssVariable="--ff-display" />
     <Font cssVariable="--ff-mono" />
+    <Font cssVariable="--ff-reading" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   </head>
   <body class="admin">
+    <a class="skip" href="#admin-main">Bỏ qua tới nội dung</a>
     <header class="admin-bar">
-      <a class="brand" href="/admin/">poli0981 · admin</a>
-      <nav aria-label="Admin">
+      <div class="admin-top">
+        <a class="brand" href="/admin/">
+          <svg viewBox="0 0 32 12" aria-hidden="true">
+            <path
+              d="M1 6 H8 L10 2 L13 10 L16 3 L19 9 L22 6 H31"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"></path>
+          </svg>
+          <span>poli0981 <span class="muted">admin</span></span>
+        </a>
+        <PublishBar client:only="svelte" />
+        <div class="tools">
+          <ThemeToggle client:load labels={useTranslations("vi").theme} />
+          <details class="account">
+            <summary aria-label={`Tài khoản: ${email}`}>
+              <span class="avatar" aria-hidden="true">{email.slice(0, 1).toUpperCase() || "?"}</span
+              >
+            </summary>
+            <div class="account-menu">
+              <span class="who">{email}</span>
+              <a href="https://poli0981.dev/" target="_blank" rel="noopener noreferrer"
+                >Xem site ↗</a
+              >
+              <a href="/cdn-cgi/access/logout">Đăng xuất</a>
+            </div>
+          </details>
+        </div>
+      </div>
+      <nav class="admin-nav" aria-label="Quản trị">
         {
           nav.map((item) => (
             <a href={item.href} aria-current={item.match(here) ? "page" : undefined}>
@@ -52,54 +97,151 @@ const nav = [
           ))
         }
       </nav>
-      <PublishBar client:only="svelte" />
-      <ThemeToggle client:load labels={useTranslations("vi").theme} />
-      <span class="who">
-        {email}
-        <a href="/cdn-cgi/access/logout">Đăng xuất</a>
-      </span>
     </header>
-    <main class="admin-main">
+    <AdminChrome client:only="svelte" />
+    <main id="admin-main" class="admin-main">
       <slot />
     </main>
   </body>
 </html>
 
 <style>
+  .skip {
+    position: absolute;
+    inset-inline-start: 0.5rem;
+    inset-block-start: -3rem;
+    z-index: 50;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-control);
+    background: var(--accent);
+    color: var(--accent-contrast);
+  }
+  .skip:focus {
+    inset-block-start: 0.5rem;
+  }
   .admin-bar {
     position: sticky;
     inset-block-start: 0;
-    z-index: 10;
+    z-index: 20;
+    border-block-end: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(8px);
+  }
+  .admin-top {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.75rem 1.5rem;
-    padding: 0.75rem 1.25rem;
-    border-block-end: 1px solid var(--line);
-    background: var(--surface);
+    gap: 0.5rem 1.25rem;
+    max-inline-size: 80rem;
+    margin-inline: auto;
+    padding: 0.6rem 1.25rem 0.3rem;
   }
   .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
     font-family: var(--ff-display);
     font-weight: 700;
     color: var(--text);
   }
-  nav {
-    display: flex;
-    gap: 1rem;
-  }
-  nav a {
-    color: var(--muted);
-  }
-  nav a[aria-current="page"] {
+  .brand svg {
+    inline-size: 1.75rem;
+    block-size: 0.7rem;
     color: var(--accent);
   }
-  .who {
-    margin-inline-start: auto;
+  .muted {
     color: var(--muted);
+    font-weight: 500;
+  }
+  .tools {
+    order: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-inline-start: auto;
+  }
+  /* The publish status gets a row of its own on a narrow screen, and sits between the
+     brand and the tools on a wide one. (Its <astro-island> is display: contents, so the
+     component's root is the flex item.) */
+  .admin-top :global(.publish) {
+    order: 2;
+    flex-basis: 100%;
+  }
+  @media (min-width: 60rem) {
+    .admin-top :global(.publish) {
+      order: 0;
+      flex-basis: auto;
+    }
+  }
+  .account {
+    position: relative;
+  }
+  .account summary {
+    list-style: none;
+    cursor: pointer;
+    border-radius: 999px;
+  }
+  .account summary::-webkit-details-marker {
+    display: none;
+  }
+  .avatar {
+    display: grid;
+    place-items: center;
+    inline-size: 2rem;
+    block-size: 2rem;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: var(--elevated);
+    color: var(--accent);
+    font-weight: 700;
     font-size: var(--text-meta);
   }
-  .who a {
-    margin-inline-start: 0.5rem;
+  .account-menu {
+    position: absolute;
+    inset-inline-end: 0;
+    inset-block-start: calc(100% + 0.4rem);
+    z-index: 30;
+    display: grid;
+    gap: 0.4rem;
+    min-inline-size: 14rem;
+    padding: 0.75rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-card);
+    background: var(--elevated);
+    box-shadow: var(--shadow-elevated);
+    font-size: var(--text-meta);
+  }
+  .account-menu .who {
+    color: var(--muted);
+    overflow-wrap: anywhere;
+  }
+  .account-menu a:hover {
+    color: var(--accent);
+  }
+  /* One row of tabs; on a phone it scrolls sideways instead of wrapping under the bar. */
+  .admin-nav {
+    display: flex;
+    gap: 0.25rem;
+    max-inline-size: 80rem;
+    margin-inline: auto;
+    padding: 0 1.25rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .admin-nav a {
+    flex: none;
+    padding: 0.5rem 0.7rem;
+    border-block-end: 2px solid transparent;
+    color: var(--muted);
+    font-size: var(--text-meta);
+    font-weight: 500;
+  }
+  .admin-nav a:hover {
+    color: var(--text);
+  }
+  .admin-nav a[aria-current="page"] {
+    border-block-end-color: var(--accent);
+    color: var(--text);
   }
   .admin-main {
     max-inline-size: 80rem;
