@@ -1,0 +1,10 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import ContentList from "@/components/admin/ContentList.svelte";
+
+export const prerender = false;
+---
+
+<AdminLayout title="Nội dung">
+  <ContentList client:only="svelte" />
+</AdminLayout>

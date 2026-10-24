@@ -129,6 +129,22 @@ describe("worker: routing", () => {
     assert.equal(picture.response.headers.get("x-frame-options"), "DENY");
   });
 
+  it("stamps the Ray ID into the 500 page, and only there", async () => {
+    const page = `<p>Reference: <span class="ref" id="ref">—</span></p>`;
+    const html = { "content-type": "text/html; charset=utf-8" };
+    setHandler(async () => new Response(page, { status: 500, headers: html }));
+    const ray = { headers: { "cf-ray": "8f1c2a3b4c5d6e7f-SIN" } };
+    const failed = await run("https://poli0981.dev/api/health", ray);
+    assert.equal(failed.response.status, 500);
+    assert.match(await failed.response.text(), /id="ref">8f1c2a3b4c5d6e7f-SIN</);
+    const noRay = await run("https://poli0981.dev/api/health");
+    assert.match(await noRay.response.text(), /id="ref">—</);
+
+    setHandler(async () => new Response(page, { status: 200, headers: html }));
+    const fine = await run("https://poli0981.dev/api/health", ray);
+    assert.match(await fine.response.text(), /id="ref">—</);
+  });
+
   it("fails open to the Astro app when edge logic throws", async () => {
     const { env } = makeEnv();
     (env as unknown as { ASSETS: { fetch: () => never } }).ASSETS.fetch = () => {

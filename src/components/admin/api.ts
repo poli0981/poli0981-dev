@@ -1,4 +1,5 @@
 // Browser-side helpers for the admin islands: JSON calls to /api/admin/* and uploads.
+import { sessionExpired } from "./ui";
 
 export class ApiError extends Error {
   readonly status: number;
@@ -11,16 +12,29 @@ export class ApiError extends Error {
   }
 }
 
-export async function api<T>(path: string, method = "GET", body?: unknown): Promise<T> {
-  const res = await fetch(path, {
-    method,
-    credentials: "same-origin",
-    headers: body === undefined ? undefined : { "content-type": "application/json" },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+/**
+ * One admin API call. Access answers a lapsed session with a redirect to its login page
+ * (our API never redirects, so `manual` turns that into an opaque response), and the
+ * middleware answers a token it no longer accepts with 403: both mean "sign in again" —
+ * AdminChrome shows the banner, and the islands keep what was typed.
+ */
+async function send(path: string, init: RequestInit): Promise<Record<string, unknown>> {
+  const res = await fetch(path, { ...init, credentials: "same-origin", redirect: "manual" });
+  if (res.type === "opaqueredirect" || res.status === 403) {
+    sessionExpired();
+    throw new ApiError(401, { error: "session_expired" });
+  }
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok) throw new ApiError(res.status, data);
-  return data as T;
+  return data;
+}
+
+export async function api<T>(path: string, method = "GET", body?: unknown): Promise<T> {
+  return (await send(path, {
+    method,
+    headers: body === undefined ? undefined : { "content-type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })) as T;
 }
 
 export interface MediaItem {
@@ -40,18 +54,17 @@ export async function uploadImage(
   const form = new FormData();
   form.append("file", file);
   form.append("alt", alt);
-  const res = await fetch("/api/admin/media", {
-    method: "POST",
-    body: form,
-    credentials: "same-origin",
-  });
-  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-  if (!res.ok) throw new ApiError(res.status, data);
+  const data = await send("/api/admin/media", { method: "POST", body: form });
   return data as unknown as { item: MediaItem; created: boolean };
 }
 
 /** Messages for the specific error codes the admin API returns (checked before statuses). */
 const CODE_MESSAGES: Record<string, string> = {
+  session_expired: "Phiên đăng nhập đã hết hạn — đăng nhập lại để tiếp tục.",
+  self_block: "Không thể chặn dải địa chỉ chứa chính IP của bạn (admin cũng bị chặn theo).",
+  invalid_cover: "Ảnh bìa phải là một ảnh trong album.",
+  not_found: "Không tìm thấy — có thể đã bị xoá ở nơi khác.",
+  invalid: "Dữ liệu gửi lên không hợp lệ.",
   not_creatable: "Mục này chỉ sửa được, không tạo mới.",
   not_deletable: "Mục này không xoá được từ admin (trang pháp lý, /now, album).",
   already_exists: "Đã có mục với đường dẫn (slug) này — đổi slug khác.",

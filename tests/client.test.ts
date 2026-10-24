@@ -30,6 +30,8 @@ const bugbuffer = await import("../src/lib/bugbuffer.ts");
 const report = await import("../src/lib/report.ts");
 const motion = await import("../src/lib/motion.ts");
 const adminApi = await import("../src/components/admin/api.ts");
+const adminFormat = await import("../src/components/admin/format.ts");
+const adminUi = await import("../src/components/admin/ui.ts");
 
 let fetched: ReturnType<typeof mockFetch> | null = null;
 afterEach(() => fetched?.restore());
@@ -119,6 +121,53 @@ describe("motion", () => {
   });
 });
 
+describe("admin display helpers", () => {
+  it("says how long ago, in Vietnamese", () => {
+    const now = Date.parse("2026-10-24T12:00:00Z");
+    assert.equal(adminFormat.ago("2026-10-24T11:59:30Z", now), "30 giây trước");
+    assert.equal(adminFormat.ago("2026-10-24T09:00:00Z", now), "3 giờ trước");
+    assert.match(adminFormat.ago("2026-10-25T12:00:00Z", now), /^ngày mai$/i);
+    assert.equal(adminFormat.ago("2024-10-24T12:00:00Z", now), "2 năm trước");
+    assert.equal(adminFormat.ago(null, now), "");
+    assert.equal(adminFormat.ago("not a date", now), "");
+  });
+
+  it("formats dates and short commit ids", () => {
+    assert.match(adminFormat.dateTime("2026-10-24T12:00:00Z"), /\d{2}\/10\/2026/);
+    assert.equal(adminFormat.dateTime(undefined), "");
+    assert.equal(adminFormat.dateTime("nope"), "");
+    assert.equal(adminFormat.shortSha("8a1316280f298a28"), "8a13162");
+    assert.equal(adminFormat.shortSha(null), "");
+  });
+});
+
+describe("admin UI signals", () => {
+  it("raises toasts and the session banner as window events", () => {
+    const seen: string[] = [];
+    win.addEventListener("admin:toast", (event) => {
+      const { message, kind } = (event as CustomEvent<{ message: string; kind: string }>).detail;
+      seen.push(`${kind}:${message}`);
+    });
+    win.addEventListener("admin:session-expired", () => seen.push("expired"));
+    adminUi.toast("Đã lưu");
+    adminUi.toast("Lỗi", "error");
+    adminUi.sessionExpired();
+    assert.deepEqual(seen, ["ok:Đã lưu", "error:Lỗi", "expired"]);
+  });
+
+  it("asks through the dialog when it is there, else window.confirm", async () => {
+    const listener = (event: Event) => {
+      event.preventDefault();
+      (event as CustomEvent<{ resolve: (ok: boolean) => void }>).detail.resolve(true);
+    };
+    win.addEventListener("admin:confirm", listener);
+    assert.equal(await adminUi.confirmAction("Xoá?", { danger: true }), true);
+    win.removeEventListener("admin:confirm", listener);
+    win.confirm = () => false;
+    assert.equal(await adminUi.confirmAction("Xoá?"), false);
+  });
+});
+
 describe("admin API client", () => {
   it("sends JSON and turns failures into ApiError", async () => {
     fetched = mockFetch((call) =>
@@ -151,6 +200,21 @@ describe("admin API client", () => {
       item: { id: "x" },
       created: true,
     });
+  });
+
+  it("reports a lapsed Access session instead of a confusing error", async () => {
+    let expired = 0;
+    win.addEventListener("admin:session-expired", () => (expired += 1));
+    fetched = mockFetch(() => new Response("Forbidden", { status: 403 }));
+    await assert.rejects(adminApi.api("/api/admin/content"), (error: unknown) => {
+      return error instanceof adminApi.ApiError && error.data.error === "session_expired";
+    });
+    assert.equal(expired, 1);
+    assert.equal(fetched.calls[0].redirect, "manual");
+    assert.match(
+      adminApi.describeError(new adminApi.ApiError(401, { error: "session_expired" })),
+      /đăng nhập lại/,
+    );
   });
 
   it("describes every error the admin API returns", () => {

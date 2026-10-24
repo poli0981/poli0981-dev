@@ -69,7 +69,7 @@ export class FakeKV {
     this.store.delete(key);
   }
 
-  async list(options: { prefix?: string } = {}): Promise<{
+  async list(options: { prefix?: string; limit?: number } = {}): Promise<{
     keys: { name: string; metadata?: unknown }[];
     list_complete: true;
   }> {
@@ -77,6 +77,7 @@ export class FakeKV {
     const keys = [...this.store.keys()]
       .filter((name) => name.startsWith(options.prefix ?? ""))
       .sort()
+      .slice(0, options.limit ?? 1000)
       .map((name) => ({ name, metadata: this.store.get(name)?.metadata }));
     return { keys, list_complete: true };
   }
@@ -311,6 +312,7 @@ export interface FetchCall {
   method: string;
   headers: Headers;
   body: string;
+  redirect: RequestRedirect;
 }
 
 type Route = (call: FetchCall) => Response | Promise<Response>;
@@ -331,7 +333,13 @@ export function mockFetch(route: Route) {
       init,
     );
     const body = init?.body instanceof FormData ? formText(init.body) : await request.text();
-    const call = { url: request.url, method: request.method, headers: request.headers, body };
+    const call = {
+      url: request.url,
+      method: request.method,
+      headers: request.headers,
+      body,
+      redirect: request.redirect,
+    };
     calls.push(call);
     return route(call);
   }) as typeof fetch;
@@ -366,9 +374,10 @@ interface FakeElement {
 }
 
 /**
- * Just enough of workerd's HTMLRewriter for src/lib/gate/render.ts: the selectors it uses
- * (`html`, `head script[src]`, `link[rel="modulepreload"]`, `script[type="application/ld+json"]`,
- * `body`) applied to the whole document with string surgery.
+ * Just enough of workerd's HTMLRewriter for src/lib/gate/render.ts and src/lib/error-ref.ts:
+ * the selectors they use (`html`, `head script[src]`, `link[rel="modulepreload"]`,
+ * `script[type="application/ld+json"]`, `body`, `#ref`) applied to the whole document with
+ * string surgery.
  */
 export class FakeHTMLRewriter {
   private readonly handlers: [string, ElementHandlers][] = [];
@@ -452,6 +461,21 @@ function applySelector(
       return replaceTags(/<link\b[^>]*rel="modulepreload"[^>]*>/g);
     case 'script[type="application/ld+json"]':
       return replaceScripts((tag) => attribute(tag, "type") === "application/ld+json");
+    case "#ref": {
+      const id = html.indexOf(' id="ref"');
+      if (id === -1) return html;
+      const open = html.indexOf(">", id) + 1;
+      const close = html.indexOf("</", open);
+      let inner = html.slice(open, close);
+      handler({
+        getAttribute: () => null,
+        remove() {},
+        setInnerContent: (content) => {
+          inner = content.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+        },
+      });
+      return html.slice(0, open) + inner + html.slice(close);
+    }
     case "body":
       return html.replace(
         /(<body[^>]*>)[\s\S]*(<\/body>)/,

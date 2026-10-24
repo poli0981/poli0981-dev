@@ -3,7 +3,9 @@
 
   /**
    * @type {{
-   *   strings: { line1: string, line2: string, line3: string, ack: string },
+   *   strings: {
+   *     line1: string, line2: string, line3: string, ack: string, label: string, linksLabel: string
+   *   },
    *   links: { href: string, label: string }[]
    * }}
    */
@@ -12,6 +14,7 @@
   // Bump when the legal texts change materially → the sheet reappears for everyone.
   const VERSION = 1;
   let visible = $state(false);
+  let sheetEl = $state(null);
 
   function dismiss() {
     visible = false;
@@ -36,8 +39,10 @@
     const timer = setTimeout(() => {
       visible = true;
     }, 800);
+    // Esc acknowledges only from inside the sheet: the same key also closes the search and
+    // the menu, and must not count as reading the notice.
     const onKey = (e) => {
-      if (e.key === "Escape" && visible) dismiss();
+      if (e.key === "Escape" && visible && sheetEl?.contains(document.activeElement)) dismiss();
     };
     document.addEventListener("keydown", onKey);
     return () => {
@@ -48,12 +53,12 @@
 </script>
 
 {#if visible}
-  <aside class="gate" role="note" aria-label="Legal notice">
+  <aside bind:this={sheetEl} class="gate" role="note" aria-label={strings.label}>
     <div class="gate-body">
       <p>{strings.line1}</p>
       <p>{strings.line2}</p>
       <p>{strings.line3}</p>
-      <nav class="gate-links" aria-label="Legal links">
+      <nav class="gate-links" aria-label={strings.linksLabel}>
         {#each links as l (l.href)}
           <a href={l.href}>{l.label}</a>
         {/each}

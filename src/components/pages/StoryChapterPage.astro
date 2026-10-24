@@ -1,0 +1,29 @@
+---
+import StoryReaderLayout from "@/layouts/StoryReaderLayout.astro";
+import { render } from "astro:content";
+import { findTranslation } from "@/lib/collections";
+import type { StoryPageProps } from "@/lib/pages";
+import { sectionPath, type Locale } from "@/i18n/routing";
+
+interface Props extends StoryPageProps {
+  locale: Locale;
+}
+const { locale, entry, prev, next, seriesTocHref } = Astro.props;
+const { Content } = await render(entry);
+const translation = await findTranslation("stories", entry);
+const translationHref = translation
+  ? sectionPath("stories", translation.data.lang, ...translation.id.split("/"))
+  : null;
+---
+
+<StoryReaderLayout
+  {entry}
+  {locale}
+  {prev}
+  {next}
+  {seriesTocHref}
+  seriesHref={seriesTocHref}
+  {translationHref}
+>
+  <Content />
+</StoryReaderLayout>

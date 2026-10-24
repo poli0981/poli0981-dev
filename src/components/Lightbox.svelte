@@ -5,7 +5,7 @@
   /**
    * @type {{
    *   slides: { src: string, srcset: string, width: number, height: number, alt: string }[],
-   *   labels: { close: string, prev: string, next: string, counter: string }
+   *   labels: { viewer: string, close: string, prev: string, next: string, counter: string }
    * }}
    */
   let { slides = [], labels } = $props();
@@ -34,11 +34,19 @@
     if (opener && typeof opener.focus === "function") opener.focus();
     opener = null;
   }
+  // Reaching either end disables the arrow that was just used; keep focus inside the dialog
+  // rather than letting it drop to <body>.
+  async function keepFocus() {
+    await tick();
+    if (!dialogEl?.contains(document.activeElement)) dialogEl?.querySelector(".close")?.focus();
+  }
   function next() {
     if (index < slides.length - 1) index += 1;
+    keepFocus();
   }
   function prev() {
     if (index > 0) index -= 1;
+    keepFocus();
   }
 
   // --- pointer swipe (skipped under reduced motion) — offset via CSSOM var, never inline style ---
@@ -79,8 +87,9 @@
       e.preventDefault();
       prev();
     } else if (e.key === "Tab") {
-      // Minimal focus trap across the dialog's buttons.
-      const f = dialogEl?.querySelectorAll("button");
+      // Minimal focus trap across the dialog's enabled buttons (a disabled arrow at either
+      // end cannot take focus, so it must not count as first or last).
+      const f = dialogEl?.querySelectorAll("button:not(:disabled)");
       if (!f || !f.length) return;
       const first = f[0];
       const last = f[f.length - 1];
@@ -95,10 +104,16 @@
   }
 
   onMount(() => {
-    // Delegated open trigger for the static thumbnails (CSP-safe: no inline onclick).
+    // Delegated open trigger for the static thumbnails (CSP-safe: no inline onclick). They
+    // are links to the full image; a plain click opens the lightbox instead, while a
+    // modified or middle click keeps its usual meaning (new tab, download…).
     const onDocClick = (e) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)
+        return;
       const el = e.target instanceof Element ? e.target.closest("[data-lightbox-index]") : null;
-      if (el) openAt(Number(el.getAttribute("data-lightbox-index")));
+      if (!el) return;
+      e.preventDefault();
+      openAt(Number(el.getAttribute("data-lightbox-index")));
     };
     document.addEventListener("click", onDocClick);
     document.addEventListener("keydown", onKey);
@@ -116,8 +131,23 @@
 </script>
 
 {#if open && current}
-  <div class="backdrop" onclick={close} aria-hidden="true" role="presentation"></div>
-  <div class="lb" bind:this={dialogEl} role="dialog" aria-modal="true" aria-label={current.alt}>
+  <!-- Photos read best on dark: both layers pin the dark palette whatever the site theme. -->
+  <div
+    class="backdrop"
+    data-theme="dark"
+    onclick={close}
+    aria-hidden="true"
+    role="presentation"
+  ></div>
+  <div
+    class="lb"
+    data-theme="dark"
+    bind:this={dialogEl}
+    role="dialog"
+    aria-modal="true"
+    aria-label={labels.viewer}
+    aria-describedby="lb-caption"
+  >
     <div class="bar">
       <span class="count" aria-live="polite">{counter}</span>
       <button type="button" class="close" onclick={close} aria-label={labels.close}>✕</button>
@@ -158,7 +188,7 @@
       aria-label={labels.next}>›</button
     >
 
-    <p class="caption">{current.alt}</p>
+    <p class="caption" id="lb-caption">{current.alt}</p>
   </div>
 {/if}
 
@@ -167,7 +197,7 @@
     position: fixed;
     inset: 0;
     z-index: 50;
-    background: rgb(0 0 0 / 0.82);
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
   }
   .lb {
     position: fixed;
@@ -188,16 +218,16 @@
     padding: 0.75rem;
   }
   .count {
-    color: #fff;
+    color: var(--text);
     font-family: var(--ff-mono);
     font-size: var(--text-meta);
   }
   .close,
   .nav {
     background: transparent;
-    border: 1px solid rgb(255 255 255 / 0.3);
+    border: 1px solid var(--line-strong);
     border-radius: var(--radius-control);
-    color: #fff;
+    color: var(--text);
     cursor: pointer;
     line-height: 1;
   }
@@ -212,7 +242,7 @@
   }
   .close:hover,
   .nav:not(:disabled):hover {
-    border-color: #fff;
+    border-color: var(--accent);
   }
   .nav:disabled {
     opacity: 0.3;
@@ -242,7 +272,7 @@
     grid-column: 1 / -1;
     grid-row: 3;
     text-align: center;
-    color: #fff;
+    color: var(--text);
     padding: 0.75rem;
     font-size: var(--text-meta);
   }

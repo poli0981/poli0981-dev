@@ -44,7 +44,13 @@ import {
 } from "../src/lib/seo.ts";
 import { blogFeedItem, storyFeedItem, RSS_XMLNS } from "../src/lib/rss.ts";
 import { DEFAULT_OG, ogKey, ogUrl } from "../src/lib/og.ts";
-import { alternatePath, homePath, localeFromPath, sectionPath } from "../src/i18n/routing.ts";
+import {
+  alternatePath,
+  homePath,
+  localeFromPath,
+  sectionFallbackPath,
+  sectionPath,
+} from "../src/i18n/routing.ts";
 import { toLocale, useTranslations } from "../src/i18n/index.ts";
 import vi from "../src/i18n/vi.ts";
 import en from "../src/i18n/en.ts";
@@ -388,6 +394,14 @@ describe("i18n and nav", () => {
     assert.equal(alternatePath("/truyen/x/", "en"), "/en/stories/x/");
     assert.equal(alternatePath("/unknown/x/", "en"), "/en/unknown/x/");
     assert.equal(alternatePath("/blog/", "vi"), "/blog/");
+  });
+
+  it("sends a language switch without a counterpart to the same section", () => {
+    assert.equal(sectionFallbackPath("/blog/chi-tieng-viet/", "en"), "/en/blog/");
+    assert.equal(sectionFallbackPath("/blog/tag/diary/", "en"), "/en/blog/");
+    assert.equal(sectionFallbackPath("/en/stories/series/ch-1/", "vi"), "/truyen/");
+    assert.equal(sectionFallbackPath("/unknown/x/", "en"), "/en/");
+    assert.equal(sectionFallbackPath("/en/", "vi"), "/");
   });
 
   it("falls back to Vietnamese and keeps both dictionaries in step", () => {

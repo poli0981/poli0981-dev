@@ -187,6 +187,11 @@ export function socialsForPersona(persona: Persona): SocialLink[] {
   return SOCIAL_LINKS.filter((l) => l.persona === persona);
 }
 
+/** The community Discord: the quickest way to reach the owner (/qa contact box). */
+export const COMMUNITY_DISCORD = SOCIAL_LINKS.find(
+  (l) => l.platform === "discord" && l.persona === "game",
+);
+
 /** The contact address for a topic; always defined (falls back to general). */
 export function emailForScope(scope: EmailScope): ContactEmail {
   return CONTACT_EMAILS.find((e) => e.scope === scope) ?? GENERAL_EMAIL;

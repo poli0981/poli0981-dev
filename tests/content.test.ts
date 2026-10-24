@@ -159,6 +159,14 @@ describe("static paths", () => {
     assert.equal(paths[0].props.seriesTocHref, "/truyen/");
   });
 
+  it("gives one-shot stories their own reader route", async () => {
+    const paths = await pages.oneShotStoryPaths("vi");
+    assert.deepEqual(
+      paths.map((p) => [p.params.slug, p.props.prev, p.props.next, p.props.seriesTocHref]),
+      [["one-shot", null, null, "/truyen/"]],
+    );
+  });
+
   it("builds album pages with their photos", async () => {
     const paths = await pages.galleryAlbumPaths("vi");
     assert.deepEqual(
@@ -166,6 +174,21 @@ describe("static paths", () => {
       [
         ["r2only", 1],
         ["trip", 3],
+      ],
+    );
+  });
+
+  it("lists every legal document, whatever its language", async () => {
+    setCollection("legal", [
+      { id: "privacy", data: { title: { vi: "Riêng tư", en: "Privacy" } } },
+      { id: "terms", data: { title: { vi: "Điều khoản", en: "Terms" } } },
+    ]);
+    const paths = await pages.legalPaths();
+    assert.deepEqual(
+      paths.map((p) => [p.params.slug, p.props.entry.id]),
+      [
+        ["privacy", "privacy"],
+        ["terms", "terms"],
       ],
     );
   });

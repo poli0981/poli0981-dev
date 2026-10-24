@@ -1,0 +1,32 @@
+---
+import LegalLayout from "@/layouts/LegalLayout.astro";
+import { render, type CollectionEntry } from "astro:content";
+import { useTranslations } from "@/i18n";
+import { SITE } from "@/lib/seo";
+import type { Locale } from "@/i18n/routing";
+
+interface Props {
+  locale: Locale;
+  entry: CollectionEntry<"legal">;
+}
+const { entry, locale } = Astro.props as Props;
+const { Content } = await render(entry);
+const t = useTranslations(locale);
+
+const titleMap: Record<string, string> = {
+  terms: t.legal.terms,
+  privacy: t.legal.privacy,
+  disclaimer: t.legal.disclaimer,
+  "third-party": t.legal.thirdParty,
+  licenses: t.legal.licenses,
+  "ai-usage": t.legal.aiUsage,
+};
+const title = titleMap[entry.id] ?? entry.data.title;
+// Without this every legal page inherited the site-wide default description, so all
+// ten shared one duplicate meta description.
+const description = `${title} — ${SITE.name}. ${entry.data.title}`;
+---
+
+<LegalLayout {title} {description} {locale} effectiveDate={entry.data.effectiveDate}>
+  <Content />
+</LegalLayout>

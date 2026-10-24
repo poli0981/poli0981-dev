@@ -12,6 +12,7 @@ import ReportDialog from "../components/ReportDialog.astro";
 import CfBeacon from "../components/CfBeacon.astro";
 import { resolveSeo, SITE, hreflangPair, personSchema, type SeoInput } from "../lib/seo";
 import { toLocale, useTranslations } from "../i18n";
+import { sectionFallbackPath } from "../i18n/routing";
 import { menuNav, legalNav } from "../lib/nav";
 
 interface Props extends SeoInput {
@@ -45,6 +46,10 @@ const withSlash = (p: string): string =>
 const autoAlt = alternates === undefined ? hreflangPair(Astro.url.pathname) : alternates;
 const alt =
   autoAlt?.vi && autoAlt.en ? { vi: withSlash(autoAlt.vi), en: withSlash(autoAlt.en) } : null;
+// The header's language switch: the page's counterpart when there is one, else the same
+// section in the other language — never a 404 for a post written in one language only.
+const otherLocale = lang === "vi" ? "en" : "vi";
+const langHref = alt ? alt[otherLocale] : sectionFallbackPath(Astro.url.pathname, otherLocale);
 const menuItems = menuNav(lang);
 const legalItems = legalNav(lang);
 // The legal-notice gate is a reminder layer — never shown on the legal pages themselves.
@@ -177,7 +182,7 @@ const onLegalPage = /\/legal(\/|$)/.test(Astro.url.pathname);
 
   <body>
     <SkipLink label={t.actions.skipToContent} />
-    <Header />
+    <Header {langHref} />
     <main id="main" class={mainClass}>
       <slot />
     </main>

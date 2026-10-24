@@ -5,7 +5,7 @@
  *
  * Bump SHELL when the offline page or this file changes so clients update.
  */
-const SHELL = "shell-v3";
+const SHELL = "shell-v4";
 const OFFLINE = "/offline/";
 // skullhop.js is precached by name rather than warmed like /_astro/*: it only loads on
 // the offline page, which nobody visits while online, so warm-on-fetch would never fire

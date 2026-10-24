@@ -46,10 +46,16 @@
   const css = (name, fallback) =>
     getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
 
-  let bone = css("--text", "#e9e4d9");
-  let accent = css("--accent", "#e8a33d");
-  let line = css("--line", "#2a2f3a");
-  let muted = css("--muted", "#8b93a1");
+  // Palette colours (src/lib/palette.ts, dark values as the fallback). Read again on every
+  // start, so a theme that followed the OS while the page was open is picked up.
+  let bone, accent, line, muted;
+  function readPalette() {
+    bone = css("--text", "#e6edf5");
+    accent = css("--accent", "#2dd4bf");
+    line = css("--line", "#223047");
+    muted = css("--muted", "#94a3b8");
+  }
+  readPalette();
 
   let best = 0;
   try {
@@ -86,6 +92,7 @@
   }
 
   function reset() {
+    readPalette();
     y = 0;
     vy = 0;
     score = 0;

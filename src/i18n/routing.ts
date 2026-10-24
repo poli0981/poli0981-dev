@@ -67,6 +67,18 @@ function sectionFromSegment(segment: string, locale: Locale): Section | null {
 }
 
 /**
+ * Where a language switch goes from a page with no counterpart (a post written in one
+ * language only, a tag page): the same section in the target locale, else its home.
+ */
+export function sectionFallbackPath(pathname: string, target: Locale): string {
+  const current = localeFromPath(pathname);
+  const parts = pathname.split("/").filter(Boolean);
+  const first = current === DEFAULT_LOCALE ? parts[0] : parts[1];
+  const section = first ? sectionFromSegment(first, current) : null;
+  return section ? sectionPath(section, target) : homePath(target);
+}
+
+/**
  * The counterpart of `pathname` in the target locale — handles the /en/ prefix and
  * the per-locale segment swap (truyen ↔ stories). For content pages whose slugs differ
  * across languages, pass the translationKey-resolved href explicitly instead.

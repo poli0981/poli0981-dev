@@ -1,3 +1,4 @@
+import { getCollection } from "astro:content";
 import {
   getBlogPosts,
   getStoryChapters,
@@ -18,14 +19,17 @@ interface NavLink {
 const storyHref = (locale: Locale, entry: StoryEntry) =>
   sectionPath("stories", locale, ...entry.id.split("/"));
 
+/** What a story reader page gets from getStaticPaths (StoryChapterPage). */
+export interface StoryPageProps {
+  entry: StoryEntry;
+  prev: NavLink | null;
+  next: NavLink | null;
+  seriesTocHref: string;
+}
+
 interface StoryChapterPath {
   params: { series: string; slug: string };
-  props: {
-    entry: StoryEntry;
-    prev: NavLink | null;
-    next: NavLink | null;
-    seriesTocHref: string;
-  };
+  props: StoryPageProps;
 }
 
 /** getStaticPaths for blog post detail pages, with prev/next (older/newer) links. */
@@ -59,6 +63,12 @@ export async function blogTagPaths(locale: Locale) {
   }));
 }
 
+/** getStaticPaths for the legal pages: each document is bilingual, so both locales list all. */
+export async function legalPaths() {
+  const docs = await getCollection("legal");
+  return docs.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
 /** getStaticPaths for project detail pages. */
 export async function projectPaths(locale: Locale) {
   const projects = await getProjects(locale);
@@ -78,17 +88,33 @@ export async function galleryAlbumPaths(locale: Locale) {
   );
 }
 
+/** getStaticPaths for one-shot stories (/truyen/[slug]): entries outside a series folder. */
+export async function oneShotStoryPaths(locale: Locale) {
+  const all = await getStoryChapters(locale);
+  return all
+    .filter((entry) => parseStoryId(entry.id).series === null)
+    .map((entry) => {
+      const props: StoryPageProps = {
+        entry,
+        prev: null,
+        next: null,
+        seriesTocHref: sectionPath("stories", locale),
+      };
+      return { params: { slug: entry.id }, props };
+    });
+}
+
 /**
  * getStaticPaths for story chapter reader pages (/truyen/[series]/[slug]).
- * Only chapters that live in a series folder produce routes; prev/next walk the
- * chapter order within the same series.
+ * Only chapters that live in a series folder produce routes here (one-shots get
+ * /truyen/[slug], above); prev/next walk the chapter order within the same series.
  */
 export async function storyChapterPaths(locale: Locale) {
   const all = await getStoryChapters(locale);
   const bySeries = new Map<string, StoryEntry[]>();
   for (const chapter of all) {
     const { series } = parseStoryId(chapter.id);
-    if (!series) continue; // one-shots without a series folder are skipped for this route
+    if (!series) continue;
     const existing = bySeries.get(series);
     if (existing) existing.push(chapter);
     else bySeries.set(series, [chapter]);

@@ -147,4 +147,9 @@ const { title, showLinks = true, showReport = false, ref } = Astro.props;
   :global(.err .ref) {
     color: var(--accent);
   }
+  :global(.err .code a) {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
 </style>

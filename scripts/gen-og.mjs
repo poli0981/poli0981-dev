@@ -11,6 +11,7 @@ import { readFileSync, writeFileSync, mkdirSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { ogKey } from "../src/lib/og.ts";
+import { PALETTE } from "../src/lib/palette.ts";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const fontsDir = path.join(root, "src/assets/fonts");
@@ -29,6 +30,23 @@ const fonts = [
   },
 ];
 
+// Cards are always dark: they show up in feeds of either theme, and dark carries the
+// brand. Colours come from the site palette (src/lib/palette.ts).
+const C = PALETTE.dark;
+
+/** `a` blended into `b` at `weight` (0–1), as #rrggbb — Satori has no color-mix(). */
+function mix(a, b, weight) {
+  const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  const [x, y] = [rgb(a), rgb(b)];
+  return `#${x
+    .map((v, i) =>
+      Math.round(v * weight + y[i] * (1 - weight))
+        .toString(16)
+        .padStart(2, "0"),
+    )
+    .join("")}`;
+}
+
 const BADGES = {
   blog: { vi: "Blog", en: "Blog" },
   story: { vi: "Truyện", en: "Story" },
@@ -36,14 +54,14 @@ const BADGES = {
 };
 
 // The signature Waveline motif, as an inline SVG (Satori renders paths; resvg rasterizes).
-const WAVE = `<svg width="240" height="26" viewBox="0 0 120 20" fill="none"><path d="M2 10 H30 L38 3 L50 17 L62 4 L74 15 L84 10 H118" stroke="#e8a33d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const WAVE = `<svg width="240" height="26" viewBox="0 0 120 20" fill="none"><path d="M2 10 H30 L38 3 L50 17 L62 4 L74 15 L84 10 H118" stroke="${C.accent}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 function esc(s) {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 const SHELL = (inner) =>
-  `<div style="display:flex; flex-direction:column; justify-content:space-between; width:1200px; height:630px; background:#0d1117; padding:72px; font-family:Bricolage;">${inner}</div>`;
+  `<div style="display:flex; flex-direction:column; justify-content:space-between; width:1200px; height:630px; background:${C.bg}; padding:72px; font-family:Bricolage;">${inner}</div>`;
 
 // NOTE: satori-html's `html` must be called as a function on a plain string —
 // its tagged-template form escapes interpolated HTML fragments (the wave/strip).
@@ -51,21 +69,21 @@ function entryCard({ title, badge, cw }) {
   const t = esc(title);
   const size = t.length > 70 ? 50 : t.length > 45 ? 60 : 74;
   const strip = cw
-    ? `<div style="display:flex; align-items:center; align-self:flex-start; padding:6px 18px; border-radius:999px; background:#3a1720; color:#e79aa4; font-size:22px; font-weight:500;">CW · ${esc(cw)}</div>`
+    ? `<div style="display:flex; align-items:center; align-self:flex-start; padding:6px 18px; border-radius:999px; background:${mix(C.horror, C.bg, 0.18)}; color:${C.horror}; font-size:22px; font-weight:500;">CW · ${esc(cw)}</div>`
     : "";
   return html(
     SHELL(`
     <div style="display:flex; align-items:center; justify-content:space-between;">
-      <div style="display:flex; padding:10px 22px; border:2px solid #2a3242; border-radius:999px; color:#98a0ae; font-size:26px; font-weight:500;">${esc(badge)}</div>
+      <div style="display:flex; padding:10px 22px; border:2px solid ${C.line}; border-radius:999px; color:${C.muted}; font-size:26px; font-weight:500;">${esc(badge)}</div>
       ${WAVE}
     </div>
     <div style="display:flex; flex-direction:column; gap:20px;">
       ${strip}
-      <span style="color:#e9e4d8; font-size:${size}px; font-weight:700; line-height:1.08;">${t}</span>
+      <span style="color:${C.text}; font-size:${size}px; font-weight:700; line-height:1.08;">${t}</span>
     </div>
     <div style="display:flex; justify-content:space-between; align-items:center;">
-      <span style="color:#e8a33d; font-size:30px; font-weight:700;">poli0981.dev</span>
-      <span style="color:#98a0ae; font-size:24px; font-weight:500;">Kokone · SkullMute</span>
+      <span style="color:${C.accent}; font-size:30px; font-weight:700;">poli0981.dev</span>
+      <span style="color:${C.muted}; font-size:24px; font-weight:500;">Kokone · SkullMute</span>
     </div>
   `),
   );
@@ -75,10 +93,10 @@ const defaultCard = html(
   SHELL(`
   <div style="display:flex; justify-content:flex-end;">${WAVE}</div>
   <div style="display:flex; flex-direction:column; gap:14px;">
-    <span style="color:#e9e4d8; font-size:88px; font-weight:700;">Kokone · SkullMute</span>
-    <span style="color:#98a0ae; font-size:34px; font-weight:500;">~ dev &amp; storyteller ~</span>
+    <span style="color:${C.text}; font-size:88px; font-weight:700;">Kokone · SkullMute</span>
+    <span style="color:${C.muted}; font-size:34px; font-weight:500;">~ dev &amp; storyteller ~</span>
   </div>
-  <div style="display:flex;"><span style="color:#e8a33d; font-size:30px; font-weight:700;">poli0981.dev</span></div>
+  <div style="display:flex;"><span style="color:${C.accent}; font-size:30px; font-weight:700;">poli0981.dev</span></div>
 `),
 );
 

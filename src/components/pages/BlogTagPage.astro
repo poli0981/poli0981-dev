@@ -1,0 +1,38 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import PostGrid from "@/components/PostGrid.astro";
+import { useTranslations } from "@/i18n";
+import { sectionPath, type Locale } from "@/i18n/routing";
+import type { BlogEntry } from "@/lib/collections";
+
+interface Props {
+  locale: Locale;
+  tag: string;
+  posts: BlogEntry[];
+}
+const { tag, posts, locale } = Astro.props as Props;
+const t = useTranslations(locale);
+---
+
+{/* Tags are per-locale (a vi tag has no guaranteed en page) → no hreflang. */}
+<BaseLayout title={`#${tag}`} {locale} alternates={null}>
+  <section class="page py-section">
+    <p class="crumb"><a href={sectionPath("blog", locale)}>{t.nav.blog}</a> / #{tag}</p>
+    <h1 class="text-h1">#{tag}</h1>
+    <div class="grid-wrap"><PostGrid {posts} {locale} /></div>
+  </section>
+</BaseLayout>
+
+<style>
+  .crumb {
+    color: var(--muted);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+  }
+  .crumb a:hover {
+    color: var(--accent);
+  }
+  .grid-wrap {
+    margin-block-start: 2rem;
+  }
+</style>

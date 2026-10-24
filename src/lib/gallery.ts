@@ -51,6 +51,13 @@ function localPhotos(album: string): GalleryPhoto[] {
   });
 }
 
+/** Photos in the album's asset folder. coverIndex counts them first, so the admin (which
+ *  only manages R2 photos) offsets a cover picked from its list by this many. */
+export function localPhotoCount(album: string): number {
+  const prefix = `/src/assets/gallery/${album}/`;
+  return Object.keys(IMAGES).filter((path) => path.startsWith(prefix)).length;
+}
+
 /** R2 photos listed in gallery-photos/<album>.json, in file order. */
 function mediaPhotos(album: string): GalleryPhoto[] {
   const file = `/src/content/gallery-photos/${album}.json`;

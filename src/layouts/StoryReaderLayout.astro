@@ -67,7 +67,7 @@ const storySchema = {
   jsonLd={storySchema}
   image={ogUrl("story", entry.id)}
 >
-  {/* Sticky reader bar. The "Aa" reading controls trigger is added in M5. */}
+  {/* Sticky reader bar: back to the series, chapter title, reading controls. */}
   <div class="reader-bar">
     <a class="back" href={seriesHref ?? seriesTocHref ?? "#"}>
       ← <span>{series ?? t.nav.stories}</span>
@@ -103,7 +103,7 @@ const storySchema = {
         {next}
         prevText={t.post.prev}
         nextText={t.post.next}
-        ariaLabel="Chapter navigation"
+        ariaLabel={t.landmarks.chapterNav}
       />
       {
         seriesTocHref && (
@@ -119,7 +119,7 @@ const storySchema = {
 <style>
   .reader-bar {
     position: sticky;
-    inset-block-start: 0;
+    inset-block-start: var(--header-h); /* under the sticky site header, not behind it */
     z-index: 30;
     display: flex;
     align-items: center;
@@ -170,7 +170,9 @@ const storySchema = {
     --reader-fs: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
   }
 
-  /* Reader background — independent of the site theme (redefines the local palette). */
+  /* Reader background — independent of the site theme. "paper" and "dark" take the
+     site's light and dark palettes (global.css lists [data-reader-theme] next to
+     [data-theme]); sepia is the reader's own warm palette. */
   .reader[data-reader-theme] {
     background: var(--bg);
     color: var(--text);
@@ -178,32 +180,18 @@ const storySchema = {
     border-radius: var(--radius-card);
     margin-block: 1rem 2rem;
   }
-  .reader[data-reader-theme="paper"] {
-    --bg: #f5efe2;
-    --surface: #fffdf7;
-    --elevated: #ffffff;
-    --line: #e2d9c5;
-    --text: #26221a;
-    --muted: #6e6757;
-    --accent: #9a6414;
-  }
   .reader[data-reader-theme="sepia"] {
+    color-scheme: light;
     --bg: #f2e6cf;
     --surface: #f8efdb;
     --elevated: #fbf3e0;
     --line: #dcc9a0;
+    --line-strong: #8f7a52;
     --text: #3a2f1d;
     --muted: #6b5a3d;
     --accent: #8a5a12;
-  }
-  .reader[data-reader-theme="dark"] {
-    --bg: #0d1117;
-    --surface: #12161f;
-    --elevated: #1a2030;
-    --line: #242b38;
-    --text: #e9e4d8;
-    --muted: #98a0ae;
-    --accent: #e8a33d;
+    --accent-strong: #6f4808;
+    --accent-contrast: #ffffff;
   }
   .reader-head {
     margin-block-end: 1.75rem;

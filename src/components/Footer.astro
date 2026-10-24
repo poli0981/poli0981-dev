@@ -29,7 +29,7 @@ function relFor(href: string, me?: boolean): string | undefined {
     <Waveline client:visible height={34} />
   </div>
   <div class="page footer-inner">
-    <nav class="footer-nav" aria-label="Footer">
+    <nav class="footer-nav" aria-label={t.landmarks.footer}>
       {nav.map((item) => <a href={item.href}>{item.label}</a>)}
     </nav>
 

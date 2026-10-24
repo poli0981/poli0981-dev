@@ -110,3 +110,20 @@ export async function loadDenylist(kv: KVNamespace, now = Date.now()): Promise<D
 export function resetDenylistMemo(): void {
   memo = null;
 }
+
+/** The stored list as the admin edits it: straight from KV, no edge cache, no memo. */
+export async function readDenylist(kv: KVNamespace): Promise<DenyEntry[]> {
+  return parseDenylist(await kv.get<unknown>(DENYLIST_KEY, { type: "json" }));
+}
+
+/** Store the list, dropping entries that have already expired; returns what was kept. */
+export async function writeDenylist(
+  kv: KVNamespace,
+  entries: DenyEntry[],
+  now = Date.now(),
+): Promise<DenyEntry[]> {
+  const live = entries.filter((entry) => !entry.until || Date.parse(entry.until) > now);
+  await kv.put(DENYLIST_KEY, JSON.stringify(live));
+  resetDenylistMemo();
+  return live;
+}

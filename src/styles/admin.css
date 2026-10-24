@@ -1,10 +1,10 @@
-/* Admin (admin.poli0981.dev) — controls and preview typography on top of global.css.
-   Only AdminLayout imports this, so none of it reaches the public site. */
-.admin input:not([type="checkbox"]):not([type="file"]),
+/* Admin (admin.poli0981.dev) — controls, shared building blocks and preview typography on
+   top of global.css. Only AdminLayout imports this, so none of it reaches the public site. */
+.admin input:not([type="checkbox"]):not([type="file"]):not([type="radio"]),
 .admin select,
 .admin textarea {
   padding: 0.45rem 0.6rem;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius-control);
   background: var(--bg);
   color: var(--text);
@@ -17,37 +17,132 @@
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
-.admin button {
+.admin [aria-invalid="true"] {
+  border-color: var(--err);
+}
+.admin button,
+.admin .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
   padding: 0.4rem 0.8rem;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius-control);
   background: var(--elevated);
   color: var(--text);
   font: inherit;
   font-size: var(--text-meta);
+  line-height: 1.4;
   cursor: pointer;
 }
-.admin button:hover:not(:disabled) {
+.admin button:hover:not(:disabled),
+.admin .button:hover {
   border-color: var(--accent);
 }
 .admin button:disabled {
   opacity: 0.55;
   cursor: default;
 }
-.admin .prose {
-  line-height: 1.75;
+/* Variants: one filled primary action per view, a red outline for destructive ones. */
+.admin button.primary,
+.admin .button.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 600;
 }
-.admin .prose :is(h1, h2, h3) {
-  font-family: var(--ff-display);
-  line-height: 1.25;
+.admin button.primary:hover:not(:disabled) {
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
 }
-.admin .prose img {
-  max-inline-size: 100%;
-  block-size: auto;
+.admin button.danger {
+  border-color: var(--err);
+  background: transparent;
+  color: var(--err);
 }
-.admin .prose pre {
-  overflow-x: auto;
-  padding: 0.75rem;
-  border-radius: var(--radius-control);
+.admin button.danger:hover:not(:disabled) {
+  border-color: var(--err);
+  background: color-mix(in srgb, var(--err) 12%, transparent);
+}
+.admin button.ghost {
+  border-color: transparent;
+  background: transparent;
+}
+
+/* Cards and page headings shared by the dashboard, activity and security pages. */
+.admin .page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-block-end: 1.25rem;
+}
+.admin .page-head h1 {
+  margin: 0;
+  font-size: var(--text-h3);
+}
+.admin .page-head p {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: var(--text-meta);
+}
+.admin .card {
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
   background: var(--surface);
+}
+.admin .card h2 {
+  margin: 0 0 0.75rem;
+  font-family: var(--ff-body);
+  font-size: var(--text-body);
+  font-weight: 600;
+}
+.admin .muted {
+  color: var(--muted);
+}
+.admin .error-text {
+  color: var(--err);
+}
+.admin .pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0 0.45rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  font-size: var(--text-meta);
+  white-space: nowrap;
+}
+.admin .pill[data-tone="ok"] {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+.admin .pill[data-tone="warn"] {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+.admin .pill[data-tone="err"] {
+  border-color: var(--err);
+  color: var(--err);
+}
+/* Loading placeholder: a block that pulses (still under reduced motion). */
+.admin .skeleton {
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--line) 70%, transparent);
+  animation: admin-pulse 1.4s ease-in-out infinite;
+}
+@keyframes admin-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* The editor's preview frame (Editor.svelte) renders its document with these classes; the
+   text itself is styled by prose.css, shared with the site. */
+.admin.preview-body {
+  min-block-size: auto;
+  padding: 1rem 1.25rem;
 }

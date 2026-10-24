@@ -26,6 +26,9 @@ export class FakeGitHub {
   buildCheck: { status: string; conclusion: string | null } | null = null;
   lastRun: { status: string; conclusion: string | null } | null = null;
   readonly dispatched: string[] = [];
+  /** Commits made through the API, newest first (GET …/commits). */
+  readonly history: { sha: string; message: string }[] = [];
+  private pendingMessage = "";
   readonly calls: FetchCall[];
   readonly restore: () => void;
 
@@ -73,6 +76,7 @@ export class FakeGitHub {
       return jsonResponse({ sha: "new-tree" }, 201);
     }
     if (path === `${CONTENT}/git/commits` && call.method === "POST") {
+      this.pendingMessage = String(body.message);
       return jsonResponse({ sha: `commit-${this.commits + 1}`, message: body.message }, 201);
     }
     if (path === `${CONTENT}/git/refs/heads/main` && call.method === "PATCH") {
@@ -86,9 +90,19 @@ export class FakeGitHub {
       }
       this.commits += 1;
       this.head = String(body.sha);
+      this.history.unshift({ sha: this.head, message: this.pendingMessage });
       return jsonResponse({ object: { sha: this.head } });
     }
 
+    if (path === `${CONTENT}/commits`) {
+      return jsonResponse(
+        this.history.map((c) => ({
+          sha: c.sha,
+          html_url: `https://github.com/poli0981/content/commit/${c.sha}`,
+          commit: { message: c.message, author: { name: "admin", date: "2026-10-24T00:00:00Z" } },
+        })),
+      );
+    }
     if (path === `${SITE}/contents/src/content`) return jsonResponse({ sha: this.publishedSha });
     if (path === `${SITE}/pulls`) {
       return jsonResponse(

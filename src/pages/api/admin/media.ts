@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
 import { GITHUB_CONTENT_TOKEN } from "astro:env/server";
+import { recordAudit } from "@/lib/admin/audit";
 import { listContentFiles } from "@/lib/admin/github";
 import { errorResponse, json, readJson } from "@/lib/admin/http";
 import { assertDeclaredSize, BodyTooLargeError } from "@/lib/body";
@@ -22,9 +23,20 @@ export const prerender = false;
 /** Multipart framing (boundaries, the alt field, headers) on top of the file itself. */
 const FORM_OVERHEAD_BYTES = 64 * 1024;
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ url }) => {
   try {
-    return json({ items: await listMedia(env) });
+    const items = await listMedia(env);
+    if (!url.searchParams.has("usage")) return json({ items });
+    // ?usage: which content files mention each image (the library's "used in" line, and
+    // the same test DELETE applies before removing one).
+    const usage: Record<string, string[]> = {};
+    if (GITHUB_CONTENT_TOKEN) {
+      const { files } = await listContentFiles(GITHUB_CONTENT_TOKEN);
+      for (const item of items) {
+        usage[item.id] = files.filter((file) => file.text.includes(item.id)).map((f) => f.path);
+      }
+    }
+    return json({ items, usage });
   } catch (error) {
     return errorResponse(error);
   }
@@ -49,6 +61,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
       alt,
     });
     if (created) {
+      await recordAudit(env.KV, {
+        admin: locals.admin?.email ?? "unknown",
+        action: "media.upload",
+        target: record.id,
+        detail: record.name,
+      });
       log.info("admin.media_uploaded", {
         id: record.id,
         bytes: record.bytes,
@@ -63,7 +81,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 };
 
-export const PATCH: APIRoute = async ({ request }) => {
+export const PATCH: APIRoute = async ({ request, locals }) => {
   try {
     const input = await readJson<{ id: string; alt: string }>(request);
     if (
@@ -78,6 +96,12 @@ export const PATCH: APIRoute = async ({ request }) => {
     if (!record) return json({ error: "not_found" }, 404);
     record.alt = input.alt.trim().slice(0, 300);
     await writeMediaRecord(env, record);
+    await recordAudit(env.KV, {
+      admin: locals.admin?.email ?? "unknown",
+      action: "media.alt",
+      target: record.id,
+      detail: record.alt,
+    });
     return json({ item: record });
   } catch (error) {
     return errorResponse(error);
@@ -98,6 +122,11 @@ export const DELETE: APIRoute = async ({ request, url, locals }) => {
       if (usedIn.length) return json({ error: "in_use", usedIn }, 409);
     }
     await deleteMedia(env, input.id, url.origin);
+    await recordAudit(env.KV, {
+      admin: locals.admin?.email ?? "unknown",
+      action: "media.delete",
+      target: input.id,
+    });
     log.info("admin.media_deleted", { id: input.id, admin: locals.admin?.email });
     return json({ deleted: input.id });
   } catch (error) {

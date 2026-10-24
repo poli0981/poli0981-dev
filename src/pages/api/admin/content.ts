@@ -1,5 +1,7 @@
 import type { APIRoute } from "astro";
+import { env } from "cloudflare:workers";
 import { GITHUB_CONTENT_TOKEN } from "astro:env/server";
+import { recordAudit } from "@/lib/admin/audit";
 import { collectionOf, validateFrontmatter } from "@/lib/admin/collections";
 import { buildFile, splitFile, type Frontmatter } from "@/lib/admin/frontmatter";
 import { commitContent, listContentFiles, readContentFile } from "@/lib/admin/github";
@@ -98,6 +100,12 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       [{ path: input.path, text, expectSha: input.sha }],
     );
     const saved = await readContentFile(GITHUB_CONTENT_TOKEN, input.path);
+    await recordAudit(env.KV, {
+      admin: email,
+      action: "content.save",
+      target: input.path,
+      detail: commit,
+    });
     log.info("admin.content_saved", { path: input.path, verb, commit, admin: email });
     return json({ commit, path: input.path, sha: saved?.sha ?? null });
   } catch (error) {
@@ -123,6 +131,12 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
       `content: delete ${input.path}\n\nvia admin (${email})`,
       [{ path: input.path, text: null, expectSha: input.sha }],
     );
+    await recordAudit(env.KV, {
+      admin: email,
+      action: "content.delete",
+      target: input.path,
+      detail: commit,
+    });
     log.info("admin.content_deleted", { path: input.path, commit, admin: email });
     return json({ commit });
   } catch (error) {
