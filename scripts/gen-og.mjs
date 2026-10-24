@@ -36,7 +36,7 @@ const C = PALETTE.dark;
 
 /** `a` blended into `b` at `weight` (0–1), as #rrggbb — Satori has no color-mix(). */
 function mix(a, b, weight) {
-  const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  const rgb = (hex) => [1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16));
   const [x, y] = [rgb(a), rgb(b)];
   return `#${x
     .map((v, i) =>
