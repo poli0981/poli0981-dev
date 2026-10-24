@@ -1,52 +1,69 @@
 @import "tailwindcss";
 
-/* We toggle themes with a [data-theme] attribute (not the OS media query), so the
-   dark/light variants must key off that attribute. */
+/* The theme is resolved into a [data-theme] attribute (the OS setting is only the
+   default, a saved choice wins), so the dark/light variants key off that attribute. */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 @custom-variant light (&:where([data-theme="light"], [data-theme="light"] *));
 
 /* ------------------------------------------------------------------ *
- * Runtime palettes — the single source that flips on [data-theme].
+ * Runtime palettes ("Glacier Teal") — the single source that flips on [data-theme].
  * Components reference the semantic tokens below (var(--bg), var(--accent)…)
  * or the Tailwind utilities generated from the @theme block further down.
+ * src/lib/palette.ts mirrors the values for code outside CSS; tests/palette.test.ts
+ * keeps the two in step and checks the WCAG AA pairs.
+ *
+ * The pre-paint bootstrap (astro.config.mjs) resolves [data-theme] from the saved
+ * choice or, by default, the OS setting, and keeps following the OS while the choice
+ * is "system". Without JS the page stays dark. Any element can pin a palette for its
+ * subtree: the story reader's "paper"/"dark" backgrounds and the always-dark lightbox.
  * ------------------------------------------------------------------ */
 :root,
-[data-theme="dark"] {
+[data-theme="dark"],
+[data-reader-theme="dark"] {
   color-scheme: dark;
-  /* Dark — "mực đêm" (midnight ink), the default */
-  --bg: #0d1117;
-  --surface: #12161f;
-  --elevated: #1a2030;
-  --line: #242b38;
-  --text: #e9e4d8;
-  --muted: #98a0ae;
-  --accent: #e8a33d;
-  --accent-strong: #f4b860;
-  --horror: #8c2f39;
-  --ok: #4c9a6a;
-  --warn: #c9822b;
-  --err: #c24a4a;
+  /* Dark — glacier night, the no-JS default */
+  --bg: #0b1220;
+  --surface: #0f192a;
+  --elevated: #16233a;
+  --line: #223047;
+  --line-strong: #5b6f8f;
+  --text: #e6edf5;
+  --muted: #94a3b8;
+  --accent: #2dd4bf;
+  --accent-strong: #5eead4;
+  --accent-contrast: #042f2e;
+  --horror: #fb7185;
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --err: #f87171;
+  --overlay: rgb(2 6 23 / 0.66);
+  --shadow-color: rgb(0 0 0 / 0.45);
   /* Scrollbar thumb ≥ 3:1 against --bg (WCAG 1.4.11); accent on hover. */
   --scrollbar-thumb: color-mix(in oklab, var(--muted) 65%, var(--bg));
   --scrollbar-thumb-hover: color-mix(in oklab, var(--accent) 85%, var(--bg));
   --scrollbar-track: transparent;
 }
 
-[data-theme="light"] {
+[data-theme="light"],
+[data-reader-theme="paper"] {
   color-scheme: light;
-  /* Light — "trang giấy cũ" (old paper). Accent is darker to hold AA on light. */
-  --bg: #f5efe2;
-  --surface: #fffdf7;
+  /* Light — glacier day. Accent and status colours are deeper to hold AA on white. */
+  --bg: #f4f8fb;
+  --surface: #ffffff;
   --elevated: #ffffff;
-  --line: #e2d9c5;
-  --text: #26221a;
-  --muted: #6e6757;
-  --accent: #9a6414;
-  --accent-strong: #7c4f10;
-  --horror: #8c2f39;
-  --ok: #3f7f57;
-  --warn: #a86a1f;
-  --err: #a83b3b;
+  --line: #d6e0ea;
+  --line-strong: #7c8ca3;
+  --text: #0f1b2d;
+  --muted: #4a5a70;
+  --accent: #0f766e;
+  --accent-strong: #115e59;
+  --accent-contrast: #ffffff;
+  --horror: #be123c;
+  --ok: #047857;
+  --warn: #b45309;
+  --err: #b91c1c;
+  --overlay: rgb(15 27 45 / 0.42);
+  --shadow-color: rgb(15 27 45 / 0.14);
   --scrollbar-thumb: color-mix(in oklab, var(--muted) 75%, var(--bg));
   --scrollbar-thumb-hover: var(--accent);
   --scrollbar-track: transparent;
@@ -61,10 +78,12 @@
   --color-surface: var(--surface);
   --color-elevated: var(--elevated);
   --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
   --color-text: var(--text);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
   --color-accent-strong: var(--accent-strong);
+  --color-accent-contrast: var(--accent-contrast);
   --color-horror: var(--horror);
   --color-ok: var(--ok);
   --color-warn: var(--warn);
@@ -95,7 +114,7 @@
   --radius-card: 10px;
   --radius-modal: 16px;
 
-  --shadow-elevated: 0 8px 30px rgb(0 0 0 / 0.35);
+  --shadow-elevated: 0 8px 30px var(--shadow-color);
 
   /* Motion (docs 03 §6). Primary ease ~ cubic-bezier(0.22, 1, 0.36, 1). */
   --ease-site: cubic-bezier(0.22, 1, 0.36, 1);
@@ -110,6 +129,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   scrollbar-gutter: stable;
+  /* Native checkboxes, radios and range inputs take the palette accent. */
+  accent-color: var(--accent);
 }
 
 /* Scrollbars, tinted from the palette. `scrollbar-color` inherits, so every inner
@@ -198,7 +219,7 @@ a {
 
 ::selection {
   background: var(--accent);
-  color: #0d1117;
+  color: var(--accent-contrast);
 }
 
 /* Visible, consistent focus ring for keyboard users (docs 03 §8). */

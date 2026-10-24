@@ -22,9 +22,10 @@ const en: UIStrings = {
     openMenu: "Open menu",
   },
   theme: {
-    toggle: "Toggle light/dark theme",
-    dark: "Dark",
+    toggle: "Theme",
+    system: "System",
     light: "Light",
+    dark: "Dark",
   },
   prefs: {
     hideScrollbar: "Hide scrollbar",

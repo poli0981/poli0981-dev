@@ -3,6 +3,8 @@ import "../styles/global.css";
 import "../styles/admin.css";
 import { Font } from "astro:assets";
 import PublishBar from "../components/admin/PublishBar.svelte";
+import ThemeToggle from "../components/ThemeToggle.svelte";
+import { useTranslations } from "../i18n";
 
 // Layout for admin.poli0981.dev (behind Cloudflare Access; middleware re-checks the JWT
 // on every request). No analytics, no service worker, no Turnstile gate, noindex.
@@ -51,6 +53,7 @@ const nav = [
         }
       </nav>
       <PublishBar client:only="svelte" />
+      <ThemeToggle client:load labels={useTranslations("vi").theme} />
       <span class="who">
         {email}
         <a href="/cdn-cgi/access/logout">Đăng xuất</a>

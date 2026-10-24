@@ -221,7 +221,8 @@ const strings = {
     padding: 1.5rem;
   }
   .report::backdrop {
-    background: color-mix(in srgb, var(--bg) 70%, transparent);
+    /* ::backdrop inherits custom properties only in 2024+ engines, hence the fallback. */
+    background: var(--overlay, rgb(2 6 23 / 0.66));
     backdrop-filter: blur(3px);
   }
   .report-form {
@@ -242,7 +243,7 @@ const strings = {
   .report-desc {
     inline-size: 100%;
     padding: 0.7rem 0.9rem;
-    border: 1px solid var(--line);
+    border: 1px solid var(--line-strong);
     border-radius: var(--radius-control);
     background: var(--bg);
     color: var(--text);
@@ -316,7 +317,7 @@ const strings = {
   }
   .report-btn.primary:hover {
     background: var(--accent);
-    color: var(--bg);
+    color: var(--accent-contrast);
   }
   .report-btn.ghost:hover {
     border-color: var(--accent);

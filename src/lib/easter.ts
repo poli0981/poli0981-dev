@@ -7,6 +7,7 @@
  * Deliberately cheap: one console.log at idle, and a keydown listener holding a single
  * integer. Nothing here is allowed to cost the perf budget (docs 14).
  */
+import { PALETTE } from "./palette";
 
 const SKULL = String.raw`
    .-"""""-.
@@ -30,12 +31,16 @@ const KONAMI = [
   "a",
 ];
 
+/** A palette colour as the page currently resolves it (light or dark). */
+function cssVar(name: string, fallback: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+}
+
 function banner(): void {
-  const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
   // Two args, one %c run: keeps it to a single console entry instead of a wall.
   console.log(
     `%c${SKULL}\n  poli0981.dev — mã nguồn: https://github.com/poli0981/poli0981-dev\n  Thấy gì lạ? /legal/ai-usage · báo lỗi ở footer.\n`,
-    `color:${accent || "#e8a33d"};font-family:ui-monospace,monospace;line-height:1.15`,
+    `color:${cssVar("--accent", PALETTE.dark.accent)};font-family:ui-monospace,monospace;line-height:1.15`,
   );
 }
 
@@ -54,7 +59,10 @@ function konami(): void {
     // beat. No layout shift, and it respects reduced-motion by simply not animating.
     const root = document.documentElement;
     root.dataset.konami = "on";
-    console.log("%c☠ Đêm không tiếng.", "color:#c2415a;font-family:ui-monospace,monospace");
+    console.log(
+      "%c☠ Đêm không tiếng.",
+      `color:${cssVar("--horror", PALETTE.dark.horror)};font-family:ui-monospace,monospace`,
+    );
     window.setTimeout(() => delete root.dataset.konami, 4000);
   });
 }

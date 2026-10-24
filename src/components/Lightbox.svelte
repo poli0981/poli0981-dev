@@ -116,8 +116,22 @@
 </script>
 
 {#if open && current}
-  <div class="backdrop" onclick={close} aria-hidden="true" role="presentation"></div>
-  <div class="lb" bind:this={dialogEl} role="dialog" aria-modal="true" aria-label={current.alt}>
+  <!-- Photos read best on dark: both layers pin the dark palette whatever the site theme. -->
+  <div
+    class="backdrop"
+    data-theme="dark"
+    onclick={close}
+    aria-hidden="true"
+    role="presentation"
+  ></div>
+  <div
+    class="lb"
+    data-theme="dark"
+    bind:this={dialogEl}
+    role="dialog"
+    aria-modal="true"
+    aria-label={current.alt}
+  >
     <div class="bar">
       <span class="count" aria-live="polite">{counter}</span>
       <button type="button" class="close" onclick={close} aria-label={labels.close}>✕</button>
@@ -167,7 +181,7 @@
     position: fixed;
     inset: 0;
     z-index: 50;
-    background: rgb(0 0 0 / 0.82);
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
   }
   .lb {
     position: fixed;
@@ -188,16 +202,16 @@
     padding: 0.75rem;
   }
   .count {
-    color: #fff;
+    color: var(--text);
     font-family: var(--ff-mono);
     font-size: var(--text-meta);
   }
   .close,
   .nav {
     background: transparent;
-    border: 1px solid rgb(255 255 255 / 0.3);
+    border: 1px solid var(--line-strong);
     border-radius: var(--radius-control);
-    color: #fff;
+    color: var(--text);
     cursor: pointer;
     line-height: 1;
   }
@@ -212,7 +226,7 @@
   }
   .close:hover,
   .nav:not(:disabled):hover {
-    border-color: #fff;
+    border-color: var(--accent);
   }
   .nav:disabled {
     opacity: 0.3;
@@ -242,7 +256,7 @@
     grid-column: 1 / -1;
     grid-row: 3;
     text-align: center;
-    color: #fff;
+    color: var(--text);
     padding: 0.75rem;
     font-size: var(--text-meta);
   }

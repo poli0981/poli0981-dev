@@ -20,9 +20,10 @@ const vi = {
     openMenu: "Mở menu",
   },
   theme: {
-    toggle: "Đổi giao diện sáng/tối",
-    dark: "Tối",
+    toggle: "Giao diện",
+    system: "Theo hệ thống",
     light: "Sáng",
+    dark: "Tối",
   },
   prefs: {
     hideScrollbar: "Ẩn thanh cuộn",

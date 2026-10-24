@@ -2,6 +2,7 @@
 import { alternatePath, localeFromPath, type Locale } from "../i18n/routing";
 import { sameAsUrls } from "./links";
 import { DEFAULT_OG } from "./og";
+import { PALETTE } from "./palette";
 
 export const SITE = {
   url: "https://poli0981.dev",
@@ -11,9 +12,10 @@ export const SITE = {
     vi: "Trang cá nhân của Kokone — dev, người viết, và kênh SkullMute.",
     en: "Kokone's personal site — dev, storyteller, and the SkullMute channel.",
   },
+  /** Browser chrome colour per OS scheme: the page background. */
   themeColor: {
-    dark: "#0d1117",
-    light: "#f5efe2",
+    dark: PALETTE.dark.bg,
+    light: PALETTE.light.bg,
   },
   /** X handle used for twitter:site / twitter:creator (the dev persona account). */
   twitter: "@tech9191010985",

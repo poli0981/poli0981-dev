@@ -5,6 +5,7 @@ import svelte from "@astrojs/svelte";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
+import { THEME_BOOTSTRAP } from "./src/lib/theme.ts";
 
 // Error/system pages that must never appear in the sitemap.
 const NON_INDEXED = /\/(404|500|403|429|offline)\/?$/;
@@ -22,8 +23,8 @@ const BUILD_TIME = new Date().toISOString();
 // `injectScript("head-inline")` is the one path that is BOTH rendered verbatim inline
 // AND hashed from that same string, so the CSP can never drift from the source.
 // It also restores the "hide scrollbar" preference for the same reason (no flash of a
-// scrollbar that then disappears).
-const THEME_BOOTSTRAP = `(()=>{try{const d=document.documentElement,t=localStorage.getItem("theme");if(t==="light"||t==="dark")d.dataset.theme=t;if(localStorage.getItem("scrollbar")==="hidden")d.dataset.scrollbar="hidden"}catch{}})();`;
+// scrollbar that then disappears). The script itself lives in src/lib/theme.ts, next to
+// the rules it shares with ThemeToggle.svelte.
 
 /** @type {import('astro').AstroIntegration} */
 const themeBootstrap = {

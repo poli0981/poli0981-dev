@@ -85,7 +85,8 @@
     color: var(--text);
   }
   dialog::backdrop {
-    background: rgb(0 0 0 / 0.6);
+    /* ::backdrop inherits custom properties only in 2024+ engines, hence the fallback. */
+    background: var(--overlay, rgb(2 6 23 / 0.66));
   }
   .top {
     display: flex;

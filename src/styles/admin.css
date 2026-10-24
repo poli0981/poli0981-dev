@@ -4,7 +4,7 @@
 .admin select,
 .admin textarea {
   padding: 0.45rem 0.6rem;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius-control);
   background: var(--bg);
   color: var(--text);

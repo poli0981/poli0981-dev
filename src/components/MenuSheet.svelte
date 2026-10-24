@@ -83,7 +83,7 @@
     position: fixed;
     inset: 0;
     z-index: 50;
-    background: rgb(0 0 0 / 0.5);
+    background: var(--overlay);
     opacity: 0;
     visibility: hidden;
     transition:

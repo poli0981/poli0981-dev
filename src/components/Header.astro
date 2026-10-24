@@ -57,7 +57,7 @@ const pathname = Astro.url.pathname;
           ></path>
         </svg>
       </button>
-      <ThemeToggle client:load label={t.theme.toggle} />
+      <ThemeToggle client:load labels={t.theme} />
       <LangSwitch />
       <button
         type="button"
