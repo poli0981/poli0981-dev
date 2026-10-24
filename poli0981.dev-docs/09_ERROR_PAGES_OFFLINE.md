@@ -15,12 +15,12 @@ Nhắc lại quyết định D8: Custom Errors của Cloudflare cần zone plan 
 | Trang | Trigger | Headline (VI / EN) | Ghi chú riêng |
 |---|---|---|---|
 | **404** `404.astro` | route không tồn tại | "Trang này không phát ra tín hiệu." / "This page makes no sound." | + ô search (mở Pagefind), gợi ý 3 bài mới. Assets config `not_found_handling: "404-page"` để request tĩnh lạc cũng nhận trang này (P0 Spike 3 verify) |
-| **500** `500.astro` | exception khi render on-demand / api | "Có gì đó vỡ trong im lặng." / "Something broke, quietly." | Astro tự dùng 500.astro khi SSR lỗi; api route bọc try/catch trả JSON lỗi gọn. In mã tham chiếu = `crypto.randomUUID().slice(0,8)` để người dùng đính vào bug report |
-| **403** middleware render | IP nằm trong `denylist:*` (KV) | "Cửa này đang khoá." / "This door is locked." | Kèm dòng: nếu nghĩ là nhầm → contact@. Không nêu lý do cụ thể |
+| **500** `500.astro` | exception khi render on-demand / api | "Có gì đó vỡ trong im lặng." / "Something broke, quietly." | Astro tự dùng 500.astro khi SSR lỗi; api route bọc try/catch trả JSON lỗi gọn. Mã tham chiếu = **Cloudflare Ray ID** của request, worker đóng dấu vào `#ref` (`src/lib/error-ref.ts`) — trùng field `ray` trong Workers Logs, ReportDialog tự đính vào báo lỗi |
+| **403** worker entry | IP/dải nằm trong denylist (KV `denylist`, `06` §2) | "Cửa này đang khoá." / "This door is locked." | Kèm link `mailto:contact@` nếu nghĩ là nhầm. Không nêu lý do cụ thể |
 | **429** middleware render | vượt rate-limit app (5 req/phút/IP trên /api) | "Chậm lại một nhịp." / "Take a breath." | Header `Retry-After: 60`; hiện đồng hồ đếm ngược 60s (vanilla JS inline) |
 | **/offline** | service worker fallback | "Không có mạng — nhưng vẫn có thứ để làm." / "You're offline." | Xem §3–4 |
 
-403/429 do middleware sinh: render template Astro đã **prerender sẵn thành static asset** (`/403` `/429` là trang thật), middleware chỉ `fetch` asset đó qua binding ASSETS rồi trả với status tương ứng — không nhân đôi markup.
+403 (worker entry) và 429 (middleware) dùng template Astro đã **prerender sẵn thành static asset** (`/403/` `/429/` là trang thật): chỉ `fetch` asset đó qua binding ASSETS rồi trả với status tương ứng + `no-store` — không nhân đôi markup (đường `astro dev` dùng `rewrite` cũng được bọc lại status).
 
 Trang xác minh của cổng Turnstile (06 §3b) **không** phải trang lỗi: nó là chính trang được yêu cầu (status 200, `<head>` thật) với `<body>` thay bằng thẻ xác minh. `/offline/` đứng ngoài cổng để service worker luôn precache được.
 

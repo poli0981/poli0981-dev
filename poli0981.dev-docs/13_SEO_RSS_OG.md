@@ -47,7 +47,7 @@ Item: title, link, pubDate, description, `<language>` theo bài, category = tags
 
 ## 5. OG image tự sinh
 
-- Build-time bằng Satori + resvg (hoặc `astro-og-canvas` nếu gọn hơn lúc triển khai): template 1200×630, nền mực đêm + Waveline + title (Bricolage) + badge khu (Blog/Truyện/Project) + `poli0981.dev`.
+- Build-time bằng Satori + resvg (hoặc `astro-og-canvas` nếu gọn hơn lúc triển khai): template 1200×630, nền glacier night (palette tối) + Waveline + title (Bricolage) + badge khu (Blog/Truyện/Project) + `poli0981.dev`.
 - Truyện có contentWarning: OG thêm dải màu horror + nhãn CW (không spoil chi tiết).
 - Cache theo hash(title+khu) để build nhanh.
 

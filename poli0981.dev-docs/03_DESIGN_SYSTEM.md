@@ -1,36 +1,48 @@
-# 03 — Design System: "Phòng đọc lúc nửa đêm"
+# 03 — Design System: "Phòng đọc lúc nửa đêm" — Glacier Teal
 
 ## 1. Concept
 
-SkullMute = âm thanh bị tắt có chủ đích. Site mang cảm giác **phòng đọc tối, ấm, chỉ có ngọn đèn bàn** — tĩnh lặng, không neon cyberpunk, không portfolio template. Boldness dồn vào **một** signature (Waveline §5); mọi thứ còn lại kỷ luật và yên tĩnh.
+SkullMute = âm thanh bị tắt có chủ đích. Site mang cảm giác **phòng đọc lúc nửa đêm** — tĩnh lặng, không neon cyberpunk, không portfolio template. Boldness dồn vào **một** signature (Waveline §5); mọi thứ còn lại kỷ luật và yên tĩnh.
 
-## 2. Màu (token trong `@theme` của Tailwind v4)
+Từ 10/2026 (v2.0) palette chuyển từ "ngọn đèn bàn" ấm sang **Glacier Teal**: nền xanh đêm, chữ trắng lạnh, accent teal như ánh màn hình. Bản sáng là "băng ban ngày" — trắng xanh nhạt, accent teal đậm. Tinh thần giữ nguyên: một màu nhấn, phần còn lại im lặng.
 
-### Dark — mặc định ("mực đêm")
+## 2. Màu — nguồn và quy tắc
+
+Token runtime khai báo trong `src/styles/global.css` (khối `:root, [data-theme="dark"]` và `[data-theme="light"]`), sinh utility Tailwind qua `@theme inline`. **`src/lib/palette.ts` giữ cùng giá trị** cho code ngoài CSS (meta `theme-color`, ảnh OG, easter egg). `tests/palette.test.ts` fail khi hai nơi lệch nhau hoặc khi một cặp chữ/control dưới chuẩn: chữ (text, muted, accent, accent-strong, horror, ok, warn, err) ≥ 4.5:1 trên `bg`/`surface`/`elevated`; `line-strong` ≥ 3:1 (WCAG 1.4.11); `accent-contrast` trên `accent` ≥ 4.5:1.
+
+### Dark — "glacier night" (mặc định khi không có JS)
 
 | Token | Hex | Dùng cho |
 |---|---|---|
-| `--color-bg` | `#0D1117` | nền trang |
-| `--color-surface` | `#12161F` | card, header |
-| `--color-elevated` | `#1A2030` | modal, hover card |
-| `--color-line` | `#242B38` | border, divider |
-| `--color-text` | `#E9E4D8` | chữ chính (ngà ấm) |
-| `--color-muted` | `#98A0AE` | meta, caption |
-| `--color-accent` | `#E8A33D` | link, CTA, "ánh đèn bàn" |
-| `--color-accent-strong` | `#F4B860` | hover/focus của accent |
-| `--color-horror` | `#8C2F39` | tag horror, content-warning |
+| `--bg` | `#0B1220` | nền trang, `theme-color` |
+| `--surface` | `#0F192A` | card, header |
+| `--elevated` | `#16233A` | modal, menu, toast |
+| `--line` | `#223047` | border trang trí, divider |
+| `--line-strong` | `#5B6F8F` | viền control (input, nút) — ≥ 3:1 |
+| `--text` | `#E6EDF5` | chữ chính |
+| `--muted` | `#94A3B8` | meta, caption |
+| `--accent` | `#2DD4BF` | link, CTA, focus ring |
+| `--accent-strong` | `#5EEAD4` | hover/focus của accent |
+| `--accent-contrast` | `#042F2E` | chữ trên nền accent (selection, nút primary) |
+| `--horror` | `#FB7185` | tag horror, content-warning |
+| `--ok` / `--warn` / `--err` | `#34D399` / `#FBBF24` / `#F87171` | trạng thái |
+| `--overlay` · `--shadow-color` | `rgb(2 6 23 / .66)` · `rgb(0 0 0 / .45)` | backdrop modal · bóng elevated |
 
-### Light — "trang giấy cũ" (ưu tiên cho reading mode)
+### Light — "glacier day"
 
-| Token | Hex | Ghi chú |
-|---|---|---|
-| bg `#F5EFE2` · surface `#FFFDF7` · line `#E2D9C5` | | |
-| text `#26221A` · muted `#6E6757` | | |
-| accent `#9A6414` | accent phải **đậm hơn** bản dark để đạt AA trên nền sáng |
+| Token | Hex |
+|---|---|
+| bg `#F4F8FB` · surface `#FFFFFF` · elevated `#FFFFFF` · line `#D6E0EA` · line-strong `#7C8CA3` | |
+| text `#0F1B2D` · muted `#4A5A70` | |
+| accent `#0F766E` · accent-strong `#115E59` · accent-contrast `#FFFFFF` | accent đậm hơn bản dark để đạt AA trên nền sáng |
+| horror `#BE123C` · ok `#047857` · warn `#B45309` · err `#B91C1C` | |
+| overlay `rgb(15 27 45 / .42)` · shadow-color `rgb(15 27 45 / .14)` | |
 
-Quy tắc contrast: text/bg ≥ 7:1, muted ≥ 4.5:1, accent-làm-chữ ≥ 4.5:1 — kiểm tra bằng tooling khi chốt hex cuối (giá trị trên là điểm xuất phát, được phép tinh chỉnh ±10% lightness, không đổi hue).
+### Palette riêng theo vùng
 
-Semantic phụ: `--color-ok #4C9A6A`, `--color-warn #C9822B`, `--color-err #C24A4A` (dùng ít).
+- **Lớp đọc truyện** (`ReadingControls`): "Giấy" = palette sáng, "Tối" = palette tối (global.css áp cùng khối token cho `[data-reader-theme="paper|dark"]`), "Sepia" là palette ấm riêng trong `StoryReaderLayout.astro` (cũng được test AA).
+- **Lightbox** luôn dùng palette tối (`data-theme="dark"` trên chính nó) — ảnh xem tốt nhất trên nền tối.
+- **Ảnh OG** (`scripts/gen-og.mjs`) và favicon dùng palette tối.
 
 ## 3. Typography (đều có subset `vietnamese` — P0 Spike 2 phải test dấu trên máy thật)
 
@@ -60,13 +72,13 @@ Type scale (fluid, mobile 360px → desktop 1280px):
 ## 4. Spacing / hình khối
 
 - Space scale 4px: 1,2,3,4,6,8,12,16,24,32 (×4px). Section padding: `clamp(3rem, 8vw, 6rem)`.
-- Radius: 6 (control) / 10 (card) / 16 (modal). Border 1px `--color-line`; shadow chỉ ở elevated, tối và mềm (`0 8px 30px rgb(0 0 0 / .35)`).
+- Radius: 6 (control) / 10 (card) / 16 (modal). Border 1px `--line` (trang trí) hoặc `--line-strong` (control); shadow chỉ ở elevated: `--shadow-elevated` = `0 8px 30px var(--shadow-color)`.
 - Grain: overlay noise PNG 2–3% opacity toàn trang (một element `body::after`, `pointer-events:none`). Khu `/gaming` được phép thêm scanline 2% — nơi duy nhất.
 - Layout: container 72rem; trang chủ dùng lưới 12 cột với 1–2 phần tử cố ý lệch/đè (hero title đè lên Waveline) — bất đối xứng có kiểm soát, không "mọi thứ đều nghiêng".
 
 ## 5. Signature — Waveline (motif "sóng âm bị tắt")
 
-- Một đường SVG ngang 1.5px màu `--color-line`, giữa có đoạn `--color-accent`.
+- Một đường SVG ngang 1.5px màu `--line`, giữa có đoạn `--accent`.
 - **Idle**: flatline. **Hover/scroll-into-view**: 1.2s "sống dậy" thành waveform 5–7 nhịp (path morph hoặc `stroke-dashoffset` + `d` keyframes bằng GSAP) rồi tắt về flatline — đúng một nhịp, không loop.
 - Xuất hiện tại: hero (dưới tagline), divider giữa section, footer. **Không** dùng trong card/list.
 - `prefers-reduced-motion`: luôn flatline tĩnh.
@@ -83,6 +95,12 @@ Type scale (fluid, mobile 360px → desktop 1280px):
 
 Nguyên tắc: **một** khoảnh khắc dàn dựng khi load trang chủ; còn lại là micro-interaction. GSAP chỉ nạp ở island nào cần (Waveline, hero) — không nạp global. Mọi animation phải có nhánh reduced-motion.
 
+### Theme (sáng/tối/theo hệ thống)
+
+- Lựa chọn lưu ở `localStorage.theme` (`light`/`dark`; không có = **theo hệ thống**). Bootstrap inline trong `<head>` (`src/lib/theme.ts`, được hash vào CSP) đặt `data-theme-pref` (lựa chọn) và `data-theme` (palette đang hiện) trước first paint, và nghe `prefers-color-scheme` để đổi theo hệ điều hành khi đang ở chế độ hệ thống.
+- `ThemeToggle` xoay vòng hệ thống → sáng → tối; icon chọn bằng CSS theo `data-theme-pref` nên đúng ngay trước khi island hydrate. Khi ghim sáng/tối, hai thẻ `meta[name=theme-color]` cùng trỏ màu nền đã chọn để thanh trình duyệt khớp trang.
+- Không có JS: trang hiện bản tối.
+
 ### Thanh cuộn
 
 Token `--scrollbar-thumb` / `--scrollbar-thumb-hover` / `--scrollbar-track` khai báo trong từng palette (`global.css`), pha từ `--muted`/`--accent` với `--bg` bằng `color-mix(in oklab, …)`: thumb ≥ 3:1 so với nền (dark: muted 65%, light: muted 75%). `scrollbar-color` (kế thừa) cho mọi vùng cuộn; `scrollbar-width: thin` khi trình duyệt hỗ trợ `scrollbar-color`, còn Safari dùng nhánh `::-webkit-scrollbar`. Tuỳ chọn "Ẩn thanh cuộn" chỉ ẩn thanh của trang (vẫn cuộn bằng chuột/phím); vùng cuộn con giữ thanh mảnh.
@@ -91,15 +109,16 @@ Token `--scrollbar-thumb` / `--scrollbar-thumb-hover` / `--scrollbar-track` khai
 
 | Component | Loại | Ghi chú |
 |---|---|---|
-| Header / MobileTabBar / Footer | .astro | TabBar: Home·Blog·Truyện·Menu, ẩn ≥768px |
-| ThemeToggle, LangSwitch | island nhỏ | localStorage `theme`, link hreflang cho lang |
+| Header / MobileTabBar / Footer | .astro | TabBar: Home·Blog·Truyện·Menu, ẩn ≥768px; nav chính của header hiện từ 960px (dưới đó dùng nút menu — bản EN cần ~900px) |
+| ThemeToggle, LangSwitch | island nhỏ / .astro | ThemeToggle 3 trạng thái (§6); LangSwitch nhận href đã giải bản dịch từ BaseLayout |
 | ScrollbarToggle | island nhỏ (footer, chỉ hiện khi `pointer: fine`) | switch `role="switch"`; localStorage `scrollbar=hidden` → `html[data-scrollbar="hidden"]`, áp trước first paint cùng bootstrap theme |
 | PostCard / StoryCard / ProjectCard | .astro | StoryCard có badge status + CW |
-| Prose | style | typography cho nội dung md |
+| Prose | .astro + `src/styles/prose.css` | typography cho nội dung md; cùng stylesheet dùng cho preview trong admin |
 | ReadingControls | island | cỡ chữ (3 mức, localStorage `reader`), theme giấy/sepia/tối, progress bar 2px |
-| ContentWarning | .astro | banner `--color-horror`, bấm để mở nội dung |
-| Lightbox | island | vuốt được, lazy |
-| SearchModal | island | Pagefind UI, mở bằng `/` hoặc nút |
+| ContentWarning | .astro | banner `--horror`, bấm để mở nội dung |
+| Lightbox | island | vuốt được, lazy; thumbnail là link tới ảnh lớn (chạy được khi tắt JS) |
+| SearchModal | island | Pagefind, mở bằng `/` hoặc nút; ARIA combobox (`aria-activedescendant`), báo lỗi khi không tải được index |
+| MenuSheet | island | dialog modal, bẫy focus, trả focus về nút mở |
 | LegalGateSheet | island | spec ở `05` §6 |
 | Waveline | island | §5 |
 | WidgetLatestVideo / WidgetNowPlaying / WidgetGitHub | .astro | đọc KV lúc request?—không: đọc lúc **build** + island refresh nhẹ (xem 11 §5) |
@@ -110,4 +129,7 @@ Token `--scrollbar-thumb` / `--scrollbar-thumb-hover` / `--scrollbar-track` khai
 - Focus ring rõ (2px accent, offset 2px), điều hướng bàn phím đủ; skip-link.
 - Touch target ≥ 44×44; `safe-area-inset` cho TabBar; không hover-only cho thông tin.
 - Ảnh có alt (bắt buộc trong schema gallery); icon-only button có `aria-label`.
-- Kiểm tra 360px, 390px, 768px, 1280px; dark/light; vi/en (chuỗi EN thường dài hơn ~20%).
+- Kiểm tra 360px, 390px, 768px, 960px, 1280px; dark/light/theo hệ thống; vi/en (chuỗi EN thường dài hơn ~20%).
+- Màu mới phải vào `palette.ts` + `global.css` cùng lúc (test chặn nếu lệch hoặc dưới AA); không hard-code màu trong component — dùng token.
+- `<dialog>` modal giữ `margin: auto` (preflight Tailwind xoá margin — global.css trả lại); danh sách trong `.prose` có marker (preflight xoá `list-style`).
+- Nhãn landmark, aria-label và chuỗi giao diện lấy từ `src/i18n`, không viết cứng.

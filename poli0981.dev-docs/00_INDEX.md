@@ -1,7 +1,8 @@
 # poli0981.dev — Documentation Suite
 
-- Phiên bản suite: **v1.0** · Ngày: 2026-07-17
-- Repo: `poli0981/poli0981.dev` (private) · Domain: `poli0981.dev`
+- Phiên bản suite: **v2.0** · Ngày: 2026-10-24 (v1.0: 2026-07-17)
+- Repo: `poli0981/poli0981-dev` (**public** từ 10/2026) · nội dung: `poli0981/content` (submodule `src/content`) · Domain: `poli0981.dev`
+- Lịch sử thay đổi theo phiên bản: `CHANGELOG.md` ở gốc repo.
 - Ngôn ngữ tài liệu: tiếng Việt (thuật ngữ kỹ thuật giữ tiếng Anh). Riêng `12_LEGAL/` soạn song ngữ EN/VI vì là văn bản sẽ render trên site.
 - Tài liệu gốc: `poli0981.dev_proposal.md` (bản đề xuất v0.1, đã được duyệt).
 
@@ -28,9 +29,9 @@
 | 16 | 16_COST.md | Chi phí chốt + ngưỡng cần theo dõi |
 | 17 | 17_MAINTENANCE.md | Lịch bảo trì, update playbook, backup |
 
-`12_LEGAL/`: `TERMS_OF_USE.md` · `PRIVACY_POLICY.md` · `DISCLAIMER.md` · `THIRD_PARTY_NOTICES.md` · `CONTENT_LICENSE.md`
+`12_LEGAL/`: `TERMS_OF_USE.md` · `PRIVACY_POLICY.md` · `DISCLAIMER.md` · `THIRD_PARTY_NOTICES.md` · `CONTENT_LICENSE.md` — **bản nháp gốc** (07/2026). Văn bản đang hiệu lực là `legal/*.md` trong repo `poli0981/content` (render ở `/legal/*`); sửa ở đó, không sửa ở đây.
 
-## Nhật ký quyết định (chốt 2026-07-17, cập nhật 2026-10-07)
+## Nhật ký quyết định (chốt 2026-07-17, cập nhật 2026-10-24)
 
 | # | Quyết định | Chọn |
 |---|---|---|
@@ -47,12 +48,16 @@
 | D12 | Chống bot | **Cổng Turnstile** trước mọi trang, vé 48 giờ (`06` §3b); bot đã xác thực đi thẳng nhờ Transform Rule `x-verified-bot` |
 | D13 | Rate limit | Workers Rate Limiting bindings theo nhóm `/api` (`06` §2) thay bộ đếm KV |
 | D14 | Analytics | Cloudflare Web Analytics, **snippet thủ công** chỉ ở bản build production (`07` §12) |
-| D15 | Admin | `admin.poli0981.dev` sau Cloudflare Access + Worker tự kiểm JWT; token GitHub chỉ ghi repo content; ảnh → Images binding → R2 (`06` §9) |
-| D10 | Data services | **KV** (cache widget, denylist) + **R2** `poli0981-media` cho ảnh upload qua admin (từ 10/2026; AVIF/WebP sinh một lần lúc upload, phục vụ qua `/media`, cache 1 năm). Không D1. Ảnh build-time cũ vẫn ở `src/assets/` |
+| D15 | Admin | `admin.poli0981.dev` sau Cloudflare Access + Worker tự kiểm JWT (≤ 24 giờ, email phải có trong `ADMIN_EMAILS` — thiếu là từ chối); token GitHub chỉ ghi repo content; ảnh → Images binding → R2; mọi thao tác ghi audit log (`06` §9) |
+| D10 | Data services | **KV** (cache widget + ảnh widget mirror cho `/ext-img`, denylist một khoá, audit log admin) + **R2** `poli0981-media` cho ảnh upload qua admin (từ 10/2026; AVIF/WebP sinh một lần lúc upload, phục vụ qua `/media`, cache 1 năm). Không D1. Ảnh build-time cũ vẫn ở `src/assets/` |
+| D16 | Palette & theme (10/2026) | **Glacier Teal** (xanh đêm + teal) thay palette ấm; theme mặc định **theo hệ điều hành**, nút 3 trạng thái hệ thống/sáng/tối (`03` §2, §6) |
+| D17 | Toolchain (10/2026) | Node 26 · TypeScript 7 (`tsc` kiểm kiểu) chạy song song TypeScript 6 (astro check, typescript-eslint, svelte2tsx cần JS API) · test bằng `node:test` (không thêm deps) · SonarCloud phân tích qua CI (`08` §0) |
+| D18 | Báo lỗi (10/2026) | Issue tạo ở repo **private** `poli0981/site-reports` (repo site đã public) — `10` §4 |
+| D19 | Phát hành | Tag `vX.Y.Z` có ký GPG + GitHub Release + `CHANGELOG.md`; deploy vẫn là "merge `main`" (`08` §8) |
 
 ## Cách dùng suite
 
-1. Đọc `15_ROADMAP.md` trước — bắt đầu bằng 4 P0 spikes.
+1. `15_ROADMAP.md` có trạng thái từng phase (P0–P3 đã xong, P4 launch đang chạy) và hướng đi tiếp.
 2. `07_CLOUDFLARE_SETUP.md` làm một lần khi mua domain, tick checklist cuối file.
 3. Mỗi file có mục **Trạng thái/Checklist** riêng khi áp dụng — suite này là nguồn sự thật, cập nhật khi quyết định thay đổi.
-4. Lưu ý chung: mọi phiên bản package trong suite đã verify tới 2026-07-17; khi scaffold thực tế, lấy bản patch mới nhất trong cùng major.
+4. Lưu ý chung: phiên bản package ghi trong suite là bản đang dùng tại 2026-10-24 (`02` §2); `package.json` + lockfile mới là nguồn sự thật.

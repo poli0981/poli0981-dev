@@ -2,7 +2,7 @@
 
 ## 1. Sản phẩm
 
-Website cá nhân `poli0981.dev` cho Kokone: **portfolio dev + blog kiêm nhật ký + nơi viết truyện ngẫu hứng + hub cho kênh SkullMute**. Repo private, chi phí gần bằng 0, chạy trên hạ tầng Cloudflare đã có.
+Website cá nhân `poli0981.dev` cho Kokone: **portfolio dev + blog kiêm nhật ký + nơi viết truyện ngẫu hứng + hub cho kênh SkullMute**. Repo public (từ 10/2026; nội dung ở repo riêng `poli0981/content`, All Rights Reserved), chi phí gần bằng 0, chạy trên hạ tầng Cloudflare đã có.
 
 ## 2. Mục tiêu
 

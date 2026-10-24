@@ -8,13 +8,15 @@
 | `/about` | `/en/about` | md đơn |
 | `/projects`, `/projects/[slug]` | `/en/...` | collection projects |
 | `/blog`, `/blog/[slug]`, `/blog/tag/[tag]` | `/en/...` | blog |
-| `/truyen`, `/truyen/[series]/[slug]` | `/en/stories/...` | stories |
+| `/truyen`, `/truyen/[series]/[slug]`, `/truyen/[slug]` (truyện lẻ) | `/en/stories/...` | stories |
 | `/gallery`, `/gallery/[album]` | `/en/...` | gallery |
 | `/gaming` · `/dev` (kèm `/dev/uses`) | `/en/...` | md + widgets |
 | `/qa` · `/links` | `/en/...` | faq + data links |
-| `/legal/{terms,privacy,disclaimer,third-party,licenses}` | `/en/legal/...` | 12_LEGAL |
+| `/legal/{terms,privacy,disclaimer,third-party,licenses,ai-usage}` | `/en/legal/...` | `legal/*.md` (repo content) |
+| `/now` | `/en/now` | now |
 | `/rss.xml`, `/blog/rss.xml`, `/truyen/rss.xml`, `/sitemap-index.xml`, `/robots.txt`, `/.well-known/security.txt` | | |
 | `/404`, `/500`, `/403`, `/429`, `/offline` | song ngữ trong 1 trang | 09 |
+| `admin.poli0981.dev`: `/admin/` (tổng quan), `/admin/content/`, `/admin/edit/`, `/admin/media/`, `/admin/gallery/`, `/admin/activity/`, `/admin/security/` | chỉ vi | on-demand, sau Access (`06` §9) |
 
 ## 2. Wireframe chính (mobile-first)
 

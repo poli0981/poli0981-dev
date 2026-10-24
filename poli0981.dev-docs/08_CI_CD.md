@@ -1,13 +1,14 @@
 # 08 — CI/CD
 
-## 0. Thực tế đang chạy (10/2026) — các mục sau là kế hoạch ban đầu
+## 0. Thực tế đang chạy (10/2026, v2.0) — §1–§5 bên dưới là kế hoạch ban đầu (lịch sử)
 
-- **Deploy**: Cloudflare **Workers Builds** nối repo, build + `wrangler deploy --config ./dist/server/wrangler.json` mỗi lần push `main` (không có job deploy trong GitHub Actions; secrets `CLOUDFLARE_*` trên GitHub không dùng). Nhánh khác có preview build.
-- **`ci.yml`** (PR, push `main`, `workflow_dispatch`): install → `wrangler types --strict-vars=false` → prettier → eslint → `astro check` → typecheck widgets → knip → **unit test** (`npm test`) → `npm audit --omit=dev --audit-level=high` → notices → EXIF → build → **smoke test** (`npm run smoke`: chạy worker đã build bằng `wrangler dev`, kiểm trang/304/HEAD/`/media`/admin 403 và pha ép bật cổng Turnstile). Check `build` là **bắt buộc** (ruleset `main`), nên PR chỉ sửa docs vẫn phải chạy.
-- **`osv-scanner.yml`**: reusable workflow SARIF (tab Security), hằng tuần + khi đổi lockfile.
-- **`lighthouse.yml`**: chỉ cảnh báo.
+- **Deploy**: Cloudflare **Workers Builds** nối repo (không có job deploy trong GitHub Actions): `main` → build + `npx wrangler deploy`; nhánh khác → `npx wrangler versions upload` (version preview, không nhận traffic). Cấu hình chi tiết + bẫy đã gặp: `07` §9.
+- **`ci.yml`** (PR, push `main`, `workflow_dispatch`), job **`build`** (timeout 30 phút, checkout kèm submodule):
+  `npm ci --ignore-scripts` → `check-install-scripts` → `wrangler types` (site + widgets) → prettier → eslint → `astro check` (TS 6) → **`typecheck` bằng TypeScript 7** (in `tsc -v`, kiểm site + widgets) → knip → **`test:coverage`** (`node:test`, ngưỡng 80% dòng, xuất `coverage/lcov.info`) → `npm audit --omit=dev --audit-level=high` → `gen-notices --check` → `check-exif --changed` → build (+ OG, Pagefind, `check-csp-hashes`) → **smoke test** (`npm run smoke`: chạy worker đã build bằng `wrangler dev`, kiểm trang/304/HEAD/`/media`/`/ext-img`/admin 403/`frame-ancestors`, pha ép bật cổng Turnstile kể cả cookie sai định dạng, pha denylist) → upload coverage làm artifact. Check `build` là **bắt buộc** (ruleset `main`).
+- Job **`sonarcloud`** (sau `build`; chạy cho push `main` và PR cùng repo, bỏ qua Dependabot): tải coverage → `SonarSource/sonarqube-scan-action` (pin SHA) với `sonar-project.properties`; trên PR chờ **quality gate** ("Sonar way" cho new code: coverage ≥ 80%, trùng lặp ≤ 3%, rating A, hotspot đã review). Automatic analysis trên SonarCloud **tắt** (CI analysis thay thế); `SONAR_TOKEN` là secret của repo. `.svelte`/`.astro` không được Sonar phân tích — logic quan trọng nằm trong `.ts` để đo được.
+- **CodeQL** (default setup, repo public) · **Snyk** (GitHub app) · **`osv-scanner.yml`** (reusable workflow v2.7.0, SARIF, hằng tuần + khi đổi lockfile) · **`lighthouse.yml`** (`treosh/lighthouse-ci-action` pin SHA, preset mobile, chỉ cảnh báo).
 - **`content-bump.yml`** (nút **Xuất bản** của admin): trỏ submodule `src/content` về `content/main`, commit lên nhánh `content/bump`, mở/cập nhật PR, auto-merge (squash) nếu diff chỉ `.md/.json`, rồi `gh workflow run ci.yml --ref content/bump` để có check `build` (PR mở bằng GITHUB_TOKEN không kích hoạt `pull_request`). Merge ⇒ Workers Builds deploy.
-- **Bẫy đã gặp**: khi `main` dính advisory, *mọi* PR (cả Dependabot) đỏ vì bước audit ⇒ vá gộp trong một PR rồi đóng các PR Dependabot bị thay thế.
+- **Bẫy đã gặp**: khi `main` dính advisory, *mọi* PR (cả Dependabot) đỏ vì bước audit ⇒ vá gộp trong một PR rồi đóng các PR Dependabot bị thay thế. `gen-notices --check` từng đếm số gói transitive ⇒ PR bump nào cũng đỏ; nay chỉ kiểm chính sách license.
 
 ## 1. Nguyên tắc
 
@@ -78,19 +79,25 @@ updates:
   - package-ecosystem: npm
     directory: "/"
     schedule: { interval: weekly, day: monday }
-    groups:
-      astro:    { patterns: ["astro", "@astrojs/*"] }
-      dev-tools:{ dependency-type: development }
+    cooldown: { default-days: 3 }          # không đề xuất bản phát hành < 3 ngày tuổi
     open-pull-requests-limit: 8
-  - package-ecosystem: npm
-    directory: "/workers/widgets"
-    schedule: { interval: weekly }
+    groups:
+      astro:      { patterns: ["astro", "@astrojs/*"] }
+      typescript: { patterns: ["typescript", "typescript-eslint"] }
+      dev-tools:  { dependency-type: development }
+    ignore:
+      - dependency-name: typescript           # giữ TS 6 cho tooling (02 §8)
+        update-types: ["version-update:semver-major"]
+      - dependency-name: prettier-plugin-astro # 1.x đổi khoảng trắng hiển thị — cần PR riêng
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: "/"
     schedule: { interval: weekly }
 ```
 
-Chính sách merge: patch/minor xanh CI → merge trong tuần; major → đọc upgrade guide, làm branch thử. Security alerts: xử lý ≤ 48h (lịch ở `17`).
+- `workers/widgets` không có `package.json` (không deps) nên không có mục riêng.
+- `@typescript/native` (alias `npm:typescript@7`) **không** được Dependabot theo dõi — nâng tay (`17` §1).
+- Chính sách merge: patch/minor xanh CI → merge trong tuần; major → đọc upgrade guide, làm branch thử. Security alerts: xử lý ≤ 48h (lịch ở `17`). PR bị một PR gộp thay thế ⇒ đóng kèm comment.
 
 ## 7. Git hooks (`lefthook.yml`)
 
@@ -98,15 +105,19 @@ Chính sách merge: patch/minor xanh CI → merge trong tuần; major → đọc
 pre-commit:
   parallel: true
   commands:
-    format: { glob: "*.{astro,svelte,ts,md,css,json}", run: npx prettier --write {staged_files}, stage_fixed: true }
-    lint:   { glob: "*.{astro,svelte,ts}",              run: npx eslint {staged_files} }
+    format: { glob: "*.{astro,svelte,ts,js,mjs,md,css,json,jsonc,yml,yaml}", run: npx prettier --write {staged_files}, stage_fixed: true }
+    lint:   { glob: "*.{astro,svelte,ts,js,mjs}", run: npx eslint {staged_files} }
 pre-push:
   commands:
-    typecheck: { run: npm run check }   # astro check && tsc --noEmit
+    typecheck: { run: npm run check }   # astro check
 ```
+
+Commit và tag đều ký GPG; không dùng `--no-verify`.
 
 ## 8. Branch & release
 
-- `main` protected: PR + CI xanh (solo nên cho phép self-merge, vẫn bắt CI).
-- Conventional Commits như các repo khác; site không cần semver release — "release" = deploy `main`. Tag mốc lớn (`v1-launch`) để tra cứu.
-- Preview: `wrangler versions upload` cho preview URL trước khi merge thay đổi lớn về UI (thủ công, không bắt buộc trong CI).
+- `main` protected (ruleset): PR + check `build` xanh; merge kiểu **squash**. Conventional Commits.
+- Mỗi PR: CI `build` + SonarCloud quality gate + CodeQL xanh trước khi merge; Workers Builds trên nhánh PR chỉ `versions upload`.
+- **Release**: tag `vX.Y.Z` có ký GPG trên commit `main` đã deploy + GitHub Release (notes lấy từ `CHANGELOG.md`). Deploy vẫn là "merge `main`" — tag chỉ đánh dấu mốc. `v2.0.0` = đợt nâng cấp 10/2026.
+- Sau merge: kiểm `https://poli0981.dev/api/health` trả đúng commit (`07` §9); nếu Workers Builds không deploy thì promote version của `main` bằng `wrangler versions deploy`.
+

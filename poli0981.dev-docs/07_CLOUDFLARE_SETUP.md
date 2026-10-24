@@ -66,16 +66,25 @@ Rule ghi đè header cho **mọi** request (client không giả được). Worke
 
 ## 9. Deploy Worker & custom domain
 
-- Local: `npm run build && npx wrangler deploy` (lần đầu wrangler mở OAuth login).
-- Gắn domain: Workers & Pages → worker `poli0981-dev` → Settings → **Domains & Routes → Add → Custom domain** → `poli0981.dev` (tự tạo DNS + cert). Thêm route redirect `www` nếu muốn: tạo thêm custom domain `www.poli0981.dev` và redirect 301 trong middleware về apex.
-- Worker widgets: `cd workers/widgets && npx wrangler deploy` → kiểm tra Triggers có cron.
+- **Workers Builds** (dashboard → worker `poli0981-dev` → Settings → Build), nối repo `poli0981/poli0981-dev`:
+
+  | Mục | Giá trị |
+  |---|---|
+  | Production branch | `main` |
+  | Build command | `npm run build` |
+  | **Deploy command** (production) | `npx wrangler deploy` |
+  | **Non-production branch deploy command** | `npx wrangler versions upload` — chỉ upload version + alias preview, **không** nhận traffic |
+  | Build variables | `NODE_VERSION=26`, `PUBLIC_TURNSTILE_SITE_KEY=<site key>` |
+  | Build cache | bật |
+
+  Bẫy đã gặp (19/10/2026): Deploy command của nhánh PR từng là `wrangler deploy` ⇒ mỗi PR (cả Dependabot) được đưa lên production 100%. Ngược lại, nếu Deploy command của `main` là `versions upload` thì merge **không** deploy — khi đó promote tay: `npx wrangler versions list` → `npx wrangler versions deploy <id>@100% --yes --message "main <sha>"`. Xác minh sau mỗi merge: `curl https://poli0981.dev/api/health` phải trả đúng `version.commit`.
+- Local (khẩn cấp): `npm run build && npx wrangler deploy` (lần đầu wrangler mở OAuth login).
+- Gắn domain: Workers & Pages → worker `poli0981-dev` → Settings → **Domains & Routes → Add → Custom domain** → `poli0981.dev` (tự tạo DNS + cert). `www.poli0981.dev` là custom domain thứ hai; worker entry redirect 301 về apex.
+- Worker widgets (không nối Workers Builds): `npx wrangler deploy --config workers/widgets/wrangler.jsonc` → kiểm tra Triggers có cron.
 
 ## 10. API token cho CI (least privilege)
 
-My Profile → API Tokens → Create Token → Custom:
-- Permissions: **Account → Workers Scripts → Edit** (+ Account → Workers KV Storage → Edit nếu CI cần seed KV).
-- Account Resources: đúng account của bạn. TTL: 1 năm.
-→ Lưu vào GitHub repo secret `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` (bootstrap bằng script ở `08` §4).
+Workers Builds tự có quyền deploy nên GitHub Actions **không** cần token Cloudflare. Chỉ tạo khi muốn deploy từ máy khác/CI riêng: My Profile → API Tokens → Create Token → Custom → **Account → Workers Scripts → Edit** (+ Workers KV Storage → Edit nếu cần seed KV), đúng account, TTL ≤ 1 năm.
 
 ## 11. Email (Google Workspace)
 
@@ -109,9 +118,16 @@ Account → Analytics & Logs → **Web Analytics** → site `poli0981.dev` ở c
 3. Hai GitHub **fine-grained** PAT (hạn ≤ 1 năm; Settings → Developer settings → Fine-grained tokens):
    - *Content*: Repository access = **Only select repositories → `poli0981/content`**; Repository permissions → **Contents: Read and write** → `npx wrangler secret put GITHUB_CONTENT_TOKEN`.
    - *Publish*: Repository access = **Only select repositories → `poli0981/poli0981-dev`**; Repository permissions → **Actions: Read and write** → `npx wrangler secret put GITHUB_PUBLISH_TOKEN`.
-   - Sửa quyền của token có sẵn không đổi giá trị token ⇒ không cần đặt lại secret. (Tuỳ chọn) `ADMIN_EMAILS` = danh sách email, phân cách dấu phẩy.
+   - Sửa quyền của token có sẵn không đổi giá trị token ⇒ không cần đặt lại secret.
+   - **`ADMIN_EMAILS` (bắt buộc)** = email được vào admin, phân cách dấu phẩy: `printf '%s' "you@example.com" | npx wrangler secret put ADMIN_EMAILS`. Thiếu secret này admin từ chối mọi người (fail-closed). Đặt khi version mới nhất là bản `main` (`06` §4).
+   - Báo lỗi: thêm repo private `poli0981/site-reports` vào `GITHUB_ISSUES_TOKEN` (Issues: Read and write).
+3b. Siết Access (application `admin.poli0981.dev` → Settings): **Session duration ≤ 24h** (Worker cũng từ chối token > 24 giờ), policy yêu cầu **MFA** (IdP có 2FA hoặc rule Access), bật **Binding cookie**, cookie `SameSite=Lax` hoặc `Strict`, `HttpOnly`.
 4. Repo `poli0981-dev` → Settings → Actions → General → bật **Allow GitHub Actions to create and approve pull requests** (cho `content-bump.yml`); quyền mặc định của GITHUB_TOKEN giữ **read**.
 5. R2 `poli0981-media` (`wrangler r2 bucket create poli0981-media --location apac`), không bật public URL. Images binding không cần bật gì thêm (gói Free: 5.000 biến đổi/tháng).
+
+## 14. Observability
+
+`wrangler.jsonc` → `observability`: logs bật (invocation logs, lấy mẫu 100%, query string bị che), traces lấy mẫu 10%. Xem ở Workers → `poli0981-dev` → **Logs** (giữ 7 ngày): lọc theo field `event` (log JSON của `src/lib/log.ts`, `06` §10) hoặc `ray` (mã trên trang 500). Binding `version_metadata` cho biết version đang chạy; `/api/health` trả cả commit.
 
 ## 13. Checklist nghiệm thu
 
@@ -127,4 +143,6 @@ Account → Analytics & Logs → **Web Analytics** → site `poli0981.dev` ở c
 - [ ] Trình duyệt ẩn danh vào `/` → thấy bước xác minh rồi vào trang; `curl -s https://poli0981.dev/ | grep data-human-check` có kết quả; RSS/sitemap/trang pháp lý không bị chặn
 - [ ] Search Console (URL Inspection → Test live URL) thấy trang thật; Facebook Sharing Debugger đúng title/ảnh
 - [ ] `https://admin.poli0981.dev/` → đăng nhập Access → thấy admin; `curl -H 'cf-access-jwt-assertion: x' …/api/admin/content` (qua host chính) → 404/403
+- [ ] `ADMIN_EMAILS` đã đặt; Access session ≤ 24h + MFA + binding cookie
+- [ ] Workers Builds: Deploy command `main` = `npx wrangler deploy`, nhánh khác = `npx wrangler versions upload`; sau merge `/api/health` trả đúng commit
 - [ ] Auto-renew ON + transfer lock ON + 2FA ON

@@ -94,8 +94,20 @@ build tools, likewise never shipped.
 
 ## Infrastructure services
 
-Not packages — listed for transparency: Cloudflare (hosting, CDN, Turnstile), GitHub (source,
-issues), and the public YouTube / Steam / GitHub data APIs used by the widgets worker.
+Not packages — listed for transparency:
+
+- **Cloudflare** — Workers and static assets (hosting, CDN), Workers KV (widget data, mirrored
+  widget images, the IP denylist, the admin audit log), R2 (images uploaded through the admin),
+  Images (one-time AVIF/WebP transforms), Rate Limiting, Turnstile (bot gate and bug-report
+  form), Access (the admin), Web Analytics (cookieless page views, production builds only) and
+  Workers Logs.
+- **GitHub** — source code, the content repository, Actions CI, and issues in a private
+  repository for site bug reports.
+- **Discord** — a webhook receiving bug-report notifications.
+- **YouTube, Steam and GitHub public APIs** — read by the widgets cron worker; visitors' browsers
+  never call them (images are mirrored and served from the site).
+- **SonarCloud, CodeQL, OSV-Scanner, Snyk** — code and dependency analysis in CI; nothing they do
+  reaches the running site.
 
 ## Fonts
 

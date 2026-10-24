@@ -43,7 +43,7 @@ export default {
     const sources: [Source, string, () => Promise<unknown[]>][] = [
       ["yt", "widgets:yt", () => fetchYouTube(env)],
       ["steam", "widgets:steam", () => fetchSteam(env)],
-      ["gh", "widgets:gh", fetchGitHub],
+      ["gh", "widgets:gh", () => fetchGitHub(env)],
     ];
     const results = await Promise.all(
       sources.map(([src, key, fetcher]) => refresh(env.KV, key, src, status, now, fetcher)),
