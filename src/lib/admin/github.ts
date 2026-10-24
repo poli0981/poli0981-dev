@@ -12,13 +12,14 @@ const SITE_REPO = { owner: "poli0981", name: "poli0981-dev" } as const;
 const BRANCH = "main";
 
 export class GitHubError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-    /** What GitHub says the call needed (X-Accepted-GitHub-Permissions), e.g. "contents=write". */
-    readonly needs: string | null = null,
-  ) {
+  readonly status: number;
+  /** What GitHub says the call needed (X-Accepted-GitHub-Permissions), e.g. "contents=write". */
+  readonly needs: string | null;
+
+  constructor(message: string, status: number, needs: string | null = null) {
     super(message);
+    this.status = status;
+    this.needs = needs;
   }
 }
 

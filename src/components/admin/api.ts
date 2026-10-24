@@ -1,11 +1,13 @@
 // Browser-side helpers for the admin islands: JSON calls to /api/admin/* and uploads.
 
 export class ApiError extends Error {
-  constructor(
-    readonly status: number,
-    readonly data: Record<string, unknown>,
-  ) {
+  readonly status: number;
+  readonly data: Record<string, unknown>;
+
+  constructor(status: number, data: Record<string, unknown>) {
     super(String(data.message ?? data.error ?? `HTTP ${status}`));
+    this.status = status;
+    this.data = data;
   }
 }
 

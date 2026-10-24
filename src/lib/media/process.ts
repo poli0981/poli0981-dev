@@ -17,11 +17,11 @@ const MASTER_QUALITY = 92;
 const YEAR = 60 * 60 * 24 * 365;
 
 export class UploadError extends Error {
-  constructor(
-    message: string,
-    readonly status: 400 | 413 | 415,
-  ) {
+  readonly status: 400 | 413 | 415;
+
+  constructor(message: string, status: 400 | 413 | 415) {
     super(message);
+    this.status = status;
   }
 }
 
