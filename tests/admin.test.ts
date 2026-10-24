@@ -210,7 +210,12 @@ describe("lib/admin/access", () => {
         "https://admin.poli0981.dev/",
         jwt ? { headers: { "cf-access-jwt-assertion": jwt } } : {},
       ),
-      { ACCESS_TEAM_DOMAIN: `${team}//`, ACCESS_AUD: "aud-1", ...env },
+      {
+        ACCESS_TEAM_DOMAIN: `${team}//`,
+        ACCESS_AUD: "aud-1",
+        ADMIN_EMAILS: "owner@example.com, second@example.com",
+        ...env,
+      },
     );
 
   it("accepts a token for this app and normalizes the email", async () => {
@@ -228,12 +233,27 @@ describe("lib/admin/access", () => {
       null,
     );
     assert.equal(await verify(await token({ common_name: "service" })), null);
-    const allowlist = { ADMIN_EMAILS: "owner@example.com, second@example.com" };
-    assert.equal(await verify(await token({ email: "intruder@example.com" }), allowlist), null);
-    assert.deepEqual(await verify(await token({ email: "second@example.com" }), allowlist), {
+    assert.equal(await verify(await token({ email: "intruder@example.com" })), null);
+    assert.deepEqual(await verify(await token({ email: "second@example.com" })), {
       email: "second@example.com",
     });
     assert.equal(await verify("not.a.jwt"), null);
+  });
+
+  it("fails closed without an allowlist and refuses tokens older than a day", async () => {
+    const owner = await token({ email: "owner@example.com" });
+    assert.equal(await verify(owner, { ADMIN_EMAILS: "" }), null);
+    assert.equal(await verify(owner, { ADMIN_EMAILS: " , " }), null);
+    // Still unexpired, but issued 25 hours ago: past the 24-hour cap.
+    const stale = Math.floor(Date.now() / 1000) - 25 * 3600;
+    const old = await new SignJWT({ email: "owner@example.com" })
+      .setProtectedHeader({ alg: "RS256", kid: "k1" })
+      .setIssuer(team)
+      .setAudience("aud-1")
+      .setIssuedAt(stale)
+      .setExpirationTime(stale + 48 * 3600)
+      .sign(keys.privateKey);
+    assert.equal(await verify(old), null);
   });
 });
 

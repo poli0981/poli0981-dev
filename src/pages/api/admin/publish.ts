@@ -1,4 +1,6 @@
 import type { APIRoute } from "astro";
+import { env } from "cloudflare:workers";
+import { recordAudit } from "@/lib/admin/audit";
 import { GITHUB_CONTENT_TOKEN, GITHUB_PUBLISH_TOKEN } from "astro:env/server";
 import { dispatchPublish, publishStatus } from "@/lib/admin/github";
 import { errorResponse, json } from "@/lib/admin/http";
@@ -28,6 +30,11 @@ export const POST: APIRoute = async ({ locals }) => {
   if (!token) return json({ error: "not_configured" }, 503);
   try {
     await dispatchPublish(token);
+    await recordAudit(env.KV, {
+      admin: locals.admin?.email ?? "unknown",
+      action: "publish",
+      target: "content → site",
+    });
     log.info("admin.publish_dispatched", {
       admin: locals.admin?.email,
       singleToken: !GITHUB_PUBLISH_TOKEN,

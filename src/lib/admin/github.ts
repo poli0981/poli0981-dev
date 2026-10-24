@@ -257,6 +257,36 @@ export async function publishStatus(token: string): Promise<PublishStatus> {
   };
 }
 
+export interface ContentCommit {
+  sha: string;
+  /** First line of the message. */
+  message: string;
+  author: string;
+  date: string;
+  url: string;
+}
+
+/** The latest commits on the content repo's main: admin saves and hand edits alike. */
+export async function recentContentCommits(token: string, count = 20): Promise<ContentCommit[]> {
+  const commits = await request<
+    {
+      sha: string;
+      html_url: string;
+      commit: { message: string; author: { name: string; date: string } | null };
+    }[]
+  >(
+    token,
+    `/repos/${CONTENT_REPO.owner}/${CONTENT_REPO.name}/commits?sha=${BRANCH}&per_page=${count}`,
+  );
+  return commits.map((c) => ({
+    sha: c.sha,
+    message: c.commit.message.split("\n")[0],
+    author: c.commit.author?.name ?? "",
+    date: c.commit.author?.date ?? "",
+    url: c.html_url,
+  }));
+}
+
 /** Start the publish workflow (bump the submodule PR on the site repo). */
 export async function dispatchPublish(token: string): Promise<void> {
   await request(

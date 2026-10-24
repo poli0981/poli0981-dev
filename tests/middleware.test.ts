@@ -89,7 +89,11 @@ describe("middleware: admin", () => {
     const team = "https://middleware-team.cloudflareaccess.com";
     const fetched = mockFetch(() => new Response(JSON.stringify({ keys: [jwk] })));
     try {
-      setWorkerEnv({ ACCESS_TEAM_DOMAIN: team, ACCESS_AUD: "aud-1" });
+      setWorkerEnv({
+        ACCESS_TEAM_DOMAIN: team,
+        ACCESS_AUD: "aud-1",
+        ADMIN_EMAILS: "owner@example.com",
+      });
       const token = await new SignJWT({ email: "Owner@Example.com" })
         .setProtectedHeader({ alg: "RS256", kid: "k1" })
         .setIssuer(team)

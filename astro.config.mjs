@@ -88,7 +88,7 @@ export default defineConfig({
       DISCORD_WEBHOOK_BUG: envField.string({ context: "server", access: "secret", optional: true }),
       // Admin (admin.poli0981.dev), two fine-grained tokens (src/lib/admin/github.ts):
       // content repo Contents RW, and site repo Actions RW for the publish workflow;
-      // plus an optional extra email allowlist on top of Access.
+      // plus the email allowlist on top of Access (unset = the admin refuses everyone).
       GITHUB_CONTENT_TOKEN: envField.string({
         context: "server",
         access: "secret",
