@@ -27,6 +27,6 @@
 ## 3. Kiểm tra
 
 - Local: `npm run build && npx astro preview` + Lighthouse trong DevTools cho 4 trang đại diện: `/`, 1 bài blog, 1 chương truyện, `/gallery/<album>`.
-- CI: `lighthouse.yml` (`treosh/lighthouse-ci-action`, preset **mobile** như bảng §1) chạy trên bản build, assert budget — chỉ warn, không block, để tránh flaky chặn deploy; đỏ 2 lần liên tiếp thì xử lý. Đo qua `scripts/compress-proxy.mjs`: `astro preview` không nén gì, còn edge Cloudflare nén brotli mọi response dạng chữ ở production — đo thẳng preview thì điện thoại giả lập phải tải gấp 3–4 lần số byte thật (HTML trang chủ 108 KB thay vì 25 KB).
+- CI: `lighthouse.yml` (`treosh/lighthouse-ci-action`, preset **mobile** như bảng §1) chạy trên bản build, assert budget — chỉ warn, không block, để tránh flaky chặn deploy; đỏ 2 lần liên tiếp thì xử lý. Đo qua nginx có sẵn trên runner (gzip, cấu hình ngay trong bước "Start compressing proxy"): `astro preview` không nén gì, còn edge Cloudflare nén brotli mọi response dạng chữ ở production — đo thẳng preview thì điện thoại giả lập phải tải gấp 3–4 lần số byte thật (HTML trang chủ 108 KB thay vì ~25 KB). gzip to hơn brotli chút ít nên số đo vẫn hơi bi quan so với production.
 - Islands thêm từ 10/2026 đều nhỏ và `client:idle`: ThemeToggle, Waveline ở hero trang chủ, SearchModal/MenuSheet; Waveline dưới màn hình đầu là `client:visible`. Admin là trang on-demand riêng, không tính vào budget site.
 - Thực địa: Cloudflare Web Analytics có Core Web Vitals thật của khách — xem hằng tháng (lịch `17`).
