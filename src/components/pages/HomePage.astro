@@ -30,7 +30,8 @@ const shortcuts = [
     <p class="eyebrow">poli0981.dev</p>
     <h1 class="hero-title">Kokone <span class="accent">/ SkullMute</span></h1>
     <p class="hero-tag">~ {t.site.tagline} ~</p>
-    <div class="hero-wave"><Waveline client:visible height={48} /></div>
+    {/* idle: in view at load anyway, and its flatline renders without JS until then. */}
+    <div class="hero-wave"><Waveline client:idle height={48} /></div>
   </section>
 
   <WidgetsRefresh client:idle labels={t.widgets} initial={widgets} />

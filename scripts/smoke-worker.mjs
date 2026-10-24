@@ -196,12 +196,9 @@ await withWorker(8788, {}, async (get, port) => {
   expect("/api/health → 200 json", healthBody.ok === true);
   expect("/api/health reports the version", "version" in healthBody);
   expect("/sw.js → 200", (await get("/sw.js")).status === 200);
-  const asset = /\/_astro\/[^"']+\.css/.exec(html)?.[0];
-  expect(
-    "hashed CSS asset → 200",
-    asset ? (await get(asset)).status === 200 : false,
-    `asset=${asset}`,
-  );
+  // CSS is inline (astro.config.mjs `inlineStylesheets`); scripts and fonts stay hashed files.
+  const asset = /\/_astro\/[^"']+\.(?:js|woff2)/.exec(html)?.[0];
+  expect("hashed asset → 200", asset ? (await get(asset)).status === 200 : false, `asset=${asset}`);
   expect("/rss.xml → 200", (await get("/rss.xml")).status === 200);
   expect(
     "/.well-known/security.txt → 200",
