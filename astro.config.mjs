@@ -39,6 +39,11 @@ const themeBootstrap = {
 const CF_BEACON_DEFAULT =
   process.env.WORKERS_CI === "1" && process.env.WORKERS_CI_BRANCH === "main";
 
+// The commit a build was made from (Workers Builds sets WORKERS_CI_COMMIT_SHA, GitHub Actions
+// GITHUB_SHA). /api/health reports it next to the Worker version id (src/lib/version.ts), so
+// "what is live?" maps straight to a commit.
+const BUILD_COMMIT = process.env.WORKERS_CI_COMMIT_SHA ?? process.env.GITHUB_SHA ?? null;
+
 // https://astro.build/config
 export default defineConfig({
   site: "https://poli0981.dev",
@@ -126,7 +131,10 @@ export default defineConfig({
   },
 
   // Tailwind v4 is wired through the Vite plugin (NOT the legacy @astrojs/tailwind).
-  vite: { plugins: [tailwindcss()] },
+  vite: {
+    plugins: [tailwindcss()],
+    define: { __BUILD_COMMIT__: JSON.stringify(BUILD_COMMIT) },
+  },
 
   // Self-hosted fonts via the built-in Fonts API. Subsets include `vietnamese`.
   // Preload is chosen per-<Font> in BaseLayout — exactly the 2 first-paint files.
@@ -175,7 +183,10 @@ export default defineConfig({
       algorithm: "SHA-256",
       directives: [
         "default-src 'self'",
-        "img-src 'self' data: https://i.ytimg.com https://media.steampowered.com https://*.steamstatic.com",
+        // Widget thumbnails/icons are mirrored into KV and served from /ext-img (lib/ext-img),
+        // so no third-party image host is allowed — a page never contacts YouTube or Steam
+        // before the visitor presses play.
+        "img-src 'self' data:",
         // youtube-nocookie: video facade; challenges.cloudflare.com: Turnstile widget iframe.
         "frame-src https://www.youtube-nocookie.com https://challenges.cloudflare.com",
         // challenges.cloudflare.com: Turnstile client XHRs (siteverify is server-side).

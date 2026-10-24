@@ -27,13 +27,25 @@ function hmacKey(secret: string): Promise<CryptoKey> {
 function toBase64Url(bytes: Uint8Array): string {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  // "=" only ever appears as trailing padding, so dropping every one is the same as
+  // trimming the end — without a backtracking `=+$`.
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 }
 
+/**
+ * Decode base64url, or null for anything that isn't. Must never throw: the value comes
+ * straight from a cookie, and an exception here used to escape verifyPass(), reach the
+ * worker's fail-open catch and serve the real page — a gate bypass with one bad cookie
+ * (e.g. a 1-character signature, which `atob` rejects).
+ */
 function fromBase64Url(text: string): Uint8Array<ArrayBuffer> | null {
-  if (!/^[A-Za-z0-9_-]+$/.test(text)) return null;
-  const binary = atob(text.replace(/-/g, "+").replace(/_/g, "/"));
-  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  if (!/^[A-Za-z0-9_-]+$/.test(text) || text.length % 4 === 1) return null;
+  try {
+    const binary = atob(text.replace(/-/g, "+").replace(/_/g, "/"));
+    return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  } catch {
+    return null;
+  }
 }
 
 /** A fresh pass value, valid for PASS_TTL_SECONDS from `now` (ms). */
@@ -69,7 +81,8 @@ export async function verifyPass(
   if (!Number.isInteger(expiry) || expiry <= nowSeconds || expiry > nowSeconds + PASS_TTL_SECONDS) {
     return false;
   }
-  const signature = fromBase64Url(parts[3]);
+  // An HMAC-SHA256 is 32 bytes: exactly 43 base64url characters, nothing else.
+  const signature = parts[3].length === 43 ? fromBase64Url(parts[3]) : null;
   if (!signature) return false;
   return crypto.subtle.verify(
     "HMAC",

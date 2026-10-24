@@ -15,14 +15,22 @@
   };
   retry.addEventListener("click", () => location.reload());
 
+  // The theme actually on screen: an explicit choice on <html>, else the OS preference.
+  const theme = () => {
+    const chosen = document.documentElement.dataset.theme;
+    if (chosen === "light" || chosen === "dark") return chosen;
+    return matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  };
+
   const loadTurnstile = () =>
     new Promise((resolve, reject) => {
       if (window.turnstile) return resolve(window.turnstile);
       const script = document.createElement("script");
       script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
       script.async = true;
-      script.onload = () => (window.turnstile ? resolve(window.turnstile) : reject());
-      script.onerror = reject;
+      script.onload = () =>
+        window.turnstile ? resolve(window.turnstile) : reject(new Error("turnstile-missing"));
+      script.onerror = () => reject(new Error("turnstile-load-failed"));
       document.head.appendChild(script);
     });
 
@@ -53,7 +61,7 @@
         sitekey: root.dataset.sitekey,
         action: "gate",
         language: root.dataset.lang,
-        theme: document.documentElement.dataset.theme === "light" ? "light" : "dark",
+        theme: theme(),
         callback: verify,
         "error-callback": () => {
           say("msgError");

@@ -1,10 +1,14 @@
 import { handle } from "@astrojs/cloudflare/handler";
+import { loadDenylist, matchEntry } from "./lib/denylist";
+import { serveExternalImage } from "./lib/ext-img";
 import { readPassCookie, verifyPass } from "./lib/gate/cookie";
 import { gateDecision, gateSettings, VERIFIED_BOT_HEADER } from "./lib/gate/policy";
 import { renderGate } from "./lib/gate/render";
 import { routeHosts } from "./lib/hosts";
+import { log, requestFields } from "./lib/log";
 import { serveMedia } from "./lib/media/serve";
 import { withSecurityHeaders } from "./lib/security-headers";
+import { versionInfo } from "./lib/version";
 
 // Custom Worker entry (wrangler.jsonc `main`). With `assets.run_worker_first` every page
 // request reaches this code first — prerendered pages otherwise bypass the Worker and the
@@ -15,12 +19,36 @@ import { withSecurityHeaders } from "./lib/security-headers";
 // runs during `astro build`.
 
 /** On-demand Astro routes: always rendered by the app, never looked up in ASSETS. */
-const APP_PREFIXES = ["/api/", "/admin", "/media/"];
+const APP_PREFIXES = ["/api/", "/admin", "/media/", "/ext-img/"];
 
 /** Secrets aren't in the generated Env type (wrangler only sees `vars`). */
 type GateEnv = { GATE_MODE?: string; GATE_SECRET?: string; TURNSTILE_SECRET?: string };
 
 let warnedUnconfigured = false;
+
+/**
+ * The IP denylist (lib/denylist, managed from the admin) for every route the Worker sees —
+ * pages included, which the Astro middleware never reaches. Fails OPEN: a KV hiccup must
+ * not lock everyone out, and the zone WAF stays the hard outer layer (docs 07 §6).
+ */
+async function denied(request: Request, env: Env): Promise<Response | null> {
+  const ip = request.headers.get("cf-connecting-ip");
+  if (!ip || !env.KV) return null;
+  let entry;
+  try {
+    entry = matchEntry(ip, await loadDenylist(env.KV));
+  } catch (error) {
+    log.error("denylist.unavailable", { ...requestFields(request), error });
+    return null;
+  }
+  if (!entry) return null;
+  log.warn("denylist.blocked", { ...requestFields(request), range: entry.cidr });
+  // The prerendered 403 page; `/403/` with the slash, or ASSETS answers a 307 (see middleware).
+  const page = await env.ASSETS.fetch(new URL("/403/", request.url));
+  const response = new Response(page.body, { status: 403, headers: page.headers });
+  response.headers.set("Cache-Control", "no-store");
+  return withSecurityHeaders(response);
+}
 
 /**
  * The Turnstile gate (docs 06 §3b): unless the request carries a valid 48-hour pass, a
@@ -35,9 +63,9 @@ async function gate(request: Request, url: URL, env: Env): Promise<Response | nu
   if (decision === "unconfigured") {
     if (!warnedUnconfigured) {
       warnedUnconfigured = true;
-      console.error(
-        `[gate] no ${VERIFIED_BOT_HEADER} header — the zone Transform Rule is missing, so the gate is OFF (fail-open)`,
-      );
+      log.error("gate.unconfigured", {
+        detail: `no ${VERIFIED_BOT_HEADER} header — the zone Transform Rule is missing, so the gate is OFF (fail-open)`,
+      });
     }
     return null;
   }
@@ -71,13 +99,38 @@ export default {
         return Response.redirect(url.toString(), 301);
       }
 
+      const blocked = await denied(request, env);
+      if (blocked) return blocked;
+
       const hostRoute = routeHosts(url);
       if (hostRoute) return withSecurityHeaders(hostRoute);
 
-      // R2 image variants (year-long immutable cache; see lib/media/serve).
+      // R2 image variants (year-long immutable cache; see lib/media/serve) and the widgets'
+      // third-party pictures, mirrored into KV by the cron worker (lib/ext-img).
       if (url.pathname.startsWith("/media/")) return await serveMedia(request, env, ctx);
+      if (url.pathname.startsWith("/ext-img/")) {
+        return withSecurityHeaders(await serveExternalImage(request, env.KV));
+      }
 
-      const gated = await gate(request, url, env);
+      // The gate fails CLOSED: if deciding or rendering it throws, the visitor gets a 503 —
+      // never the page the gate stands in front of (a throw here used to fall through to
+      // the fail-open handler below and serve the real page).
+      let gated: Response | null;
+      try {
+        gated = await gate(request, url, env);
+      } catch (error) {
+        log.error("gate.failed", { ...requestFields(request), error });
+        return withSecurityHeaders(
+          new Response("Service temporarily unavailable", {
+            status: 503,
+            headers: {
+              "content-type": "text/plain; charset=utf-8",
+              "cache-control": "no-store",
+              "retry-after": "30",
+            },
+          }),
+        );
+      }
       if (gated) return gated;
 
       // Serve pages straight from ASSETS with the *original* request. The adapter's own
@@ -95,7 +148,11 @@ export default {
       }
     } catch (error) {
       // Fail open: a bug in edge logic must never take the static site down with it.
-      console.error("[worker] edge logic failed; falling back to the Astro handler", error);
+      log.error("worker.edge_failed", {
+        ...requestFields(request),
+        version: versionInfo(env).id,
+        error,
+      });
     }
 
     return withSecurityHeaders(await handle(request, env, ctx));
