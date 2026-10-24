@@ -67,7 +67,7 @@ const storySchema = {
   jsonLd={storySchema}
   image={ogUrl("story", entry.id)}
 >
-  {/* Sticky reader bar. The "Aa" reading controls trigger is added in M5. */}
+  {/* Sticky reader bar: back to the series, chapter title, reading controls. */}
   <div class="reader-bar">
     <a class="back" href={seriesHref ?? seriesTocHref ?? "#"}>
       ← <span>{series ?? t.nav.stories}</span>
@@ -103,7 +103,7 @@ const storySchema = {
         {next}
         prevText={t.post.prev}
         nextText={t.post.next}
-        ariaLabel="Chapter navigation"
+        ariaLabel={t.landmarks.chapterNav}
       />
       {
         seriesTocHref && (
@@ -119,7 +119,7 @@ const storySchema = {
 <style>
   .reader-bar {
     position: sticky;
-    inset-block-start: 0;
+    inset-block-start: var(--header-h); /* under the sticky site header, not behind it */
     z-index: 30;
     display: flex;
     align-items: center;

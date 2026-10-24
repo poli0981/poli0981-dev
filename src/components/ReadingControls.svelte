@@ -93,38 +93,44 @@
 <div class="progress" bind:this={barEl} aria-hidden="true"></div>
 
 <div class="rc" bind:this={panelEl}>
+  <!-- The name starts with the visible "Aa" so voice control can target it (WCAG 2.5.3). -->
   <button
     type="button"
     class="aa"
     onclick={() => (open = !open)}
     aria-expanded={open}
-    aria-label={labels.aria}
+    aria-controls="reading-controls"
+    aria-label={`Aa — ${labels.aria}`}
   >
     Aa
   </button>
 
   {#if open}
-    <div class="panel" role="group" aria-label={labels.aria}>
+    <div class="panel" id="reading-controls" role="group" aria-label={labels.aria}>
       <div class="row">
-        <span class="row-title">{labels.sizeTitle}</span>
-        <div class="opts">
-          <button class:active={size === "s"} onclick={() => setSize("s")}>{labels.sizeS}</button>
-          <button class:active={size === "m"} onclick={() => setSize("m")}>{labels.sizeM}</button>
-          <button class:active={size === "l"} onclick={() => setSize("l")}>{labels.sizeL}</button>
+        <span class="row-title" id="rc-size">{labels.sizeTitle}</span>
+        <div class="opts" role="group" aria-labelledby="rc-size">
+          {#each [["s", labels.sizeS], ["m", labels.sizeM], ["l", labels.sizeL]] as [key, text] (key)}
+            <button
+              type="button"
+              class:active={size === key}
+              aria-pressed={size === key}
+              onclick={() => setSize(key)}>{text}</button
+            >
+          {/each}
         </div>
       </div>
       <div class="row">
-        <span class="row-title">{labels.themeTitle}</span>
-        <div class="opts">
-          <button class:active={theme === "paper"} onclick={() => setTheme("paper")}>
-            {labels.paper}
-          </button>
-          <button class:active={theme === "sepia"} onclick={() => setTheme("sepia")}>
-            {labels.sepia}
-          </button>
-          <button class:active={theme === "dark"} onclick={() => setTheme("dark")}>
-            {labels.dark}
-          </button>
+        <span class="row-title" id="rc-theme">{labels.themeTitle}</span>
+        <div class="opts" role="group" aria-labelledby="rc-theme">
+          {#each [["paper", labels.paper], ["sepia", labels.sepia], ["dark", labels.dark]] as [key, text] (key)}
+            <button
+              type="button"
+              class:active={theme === key}
+              aria-pressed={theme === key}
+              onclick={() => setTheme(key)}>{text}</button
+            >
+          {/each}
         </div>
       </div>
     </div>

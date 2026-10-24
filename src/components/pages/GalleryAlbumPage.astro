@@ -58,12 +58,16 @@ const slides = await Promise.all(
     {entry.data.description && <p class="lead">{entry.data.description}</p>}
     <p class="date">{formatDate(entry.data.date, locale)}</p>
 
+    {
+      /* Each thumbnail links to its full-size image, so the album works without JS; the
+        lightbox island takes over plain clicks once it hydrates. */
+    }
     <div class="photo-grid">
       {
         photos.map((p, i) => (
-          <button
-            type="button"
+          <a
             class="thumb"
+            href={slides[i].src}
             data-lightbox-index={i}
             aria-label={`${t.gallery.open} — ${p.alt[locale]}`}
           >
@@ -86,7 +90,7 @@ const slides = await Promise.all(
                 {...(i === 0 ? { fetchpriority: "high" as const } : {})}
               />
             )}
-          </button>
+          </a>
         ))
       }
     </div>
@@ -132,6 +136,7 @@ const slides = await Promise.all(
     }
   }
   .thumb {
+    display: block;
     padding: 0;
     border: 1px solid var(--line);
     border-radius: var(--radius-card);

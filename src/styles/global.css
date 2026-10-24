@@ -127,6 +127,10 @@
  * Base element styles
  * ------------------------------------------------------------------ */
 html {
+  /* Height of the sticky site header: the story reader bar docks under it and in-page
+     anchors stop below it. */
+  --header-h: 3.75rem;
+  scroll-padding-block-start: calc(var(--header-h) + 1rem);
   -webkit-text-size-adjust: 100%;
   scrollbar-gutter: stable;
   /* Native checkboxes, radios and range inputs take the palette accent. */

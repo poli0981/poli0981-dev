@@ -5,6 +5,11 @@ import { primaryNav, isActivePath } from "../lib/nav";
 import ThemeToggle from "./ThemeToggle.svelte";
 import LangSwitch from "./LangSwitch.astro";
 
+interface Props {
+  /** Target of the language switch (BaseLayout resolves translations and fallbacks). */
+  langHref?: string;
+}
+const { langHref } = Astro.props;
 const locale: Locale = toLocale(Astro.currentLocale);
 const t = useTranslations(locale);
 const nav = primaryNav(locale);
@@ -31,7 +36,7 @@ const pathname = Astro.url.pathname;
       <span class="brand-text">SkullMute</span>
     </a>
 
-    <nav class="primary-nav" aria-label="Primary">
+    <nav class="primary-nav" aria-label={t.landmarks.primary}>
       {
         nav.map((item) => (
           <a href={item.href} aria-current={isActivePath(pathname, item.href) ? "page" : undefined}>
@@ -58,7 +63,7 @@ const pathname = Astro.url.pathname;
         </svg>
       </button>
       <ThemeToggle client:load labels={t.theme} />
-      <LangSwitch />
+      <LangSwitch href={langHref} />
       <button
         type="button"
         class="menu-trigger"
@@ -92,7 +97,7 @@ const pathname = Astro.url.pathname;
     display: flex;
     align-items: center;
     gap: 1rem;
-    block-size: 3.75rem;
+    block-size: var(--header-h);
   }
   .brand {
     display: inline-flex;
@@ -155,7 +160,9 @@ const pathname = Astro.url.pathname;
     border-color: var(--line);
   }
 
-  @media (min-width: 768px) {
+  /* The full nav needs ~900px in English (seven links plus the actions): below 960px
+     tablets keep the menu button rather than overflowing the header. */
+  @media (min-width: 60rem) {
     .primary-nav {
       display: flex;
     }

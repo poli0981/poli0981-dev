@@ -7,6 +7,7 @@ import { useTranslations } from "@/i18n";
 import { faqPageSchema } from "@/lib/seo";
 import { plainText } from "@/lib/format";
 import { sectionPath, type Locale } from "@/i18n/routing";
+import { COMMUNITY_DISCORD, emailForScope } from "@/lib/links";
 
 interface Props {
   locale: Locale;
@@ -28,6 +29,7 @@ const faqSchema = faqPageSchema(
     .map((f) => ({ q: f.data.q, answer: plainText(f.body ?? "") }))
     .filter((x) => x.answer.length > 0),
 );
+const collab = emailForScope("collab");
 const groups = [
   { key: "channel", label: t.qaGroups.channel },
   { key: "dev", label: t.qaGroups.dev },
@@ -73,9 +75,23 @@ const groups = [
       <h2 class="group-title">{t.contact.title}</h2>
       <p class="lead">{t.contact.lead}</p>
       <ul class="contact-list">
-        <li>{t.contact.fast}</li>
-        <li>{t.contact.business}</li>
-        <li>{t.contact.all}</li>
+        {
+          COMMUNITY_DISCORD && (
+            <li>
+              {t.contact.fast} —{" "}
+              <a href={COMMUNITY_DISCORD.href} rel="noopener noreferrer" target="_blank">
+                Discord
+              </a>
+            </li>
+          )
+        }
+        <li>
+          {t.contact.business} — <a href={collab.href}>{collab.address}</a>
+        </li>
+        <li>
+          {t.contact.all} — <a href={sectionPath("links", locale)}>{sectionPath("links", locale)}</a
+          >
+        </li>
       </ul>
     </div>
   </section>
@@ -141,6 +157,13 @@ const groups = [
   .lead {
     color: var(--muted);
     margin-block: 0.5rem 1rem;
+  }
+  .contact-list a {
+    color: var(--accent);
+  }
+  .contact-list a:hover {
+    color: var(--accent-strong);
+    text-decoration: underline;
   }
   .contact-list {
     list-style: none;

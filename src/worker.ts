@@ -1,5 +1,6 @@
 import { handle } from "@astrojs/cloudflare/handler";
 import { loadDenylist, matchEntry } from "./lib/denylist";
+import { stampErrorRef } from "./lib/error-ref";
 import { serveExternalImage } from "./lib/ext-img";
 import { readPassCookie, verifyPass } from "./lib/gate/cookie";
 import { gateDecision, gateSettings, VERIFIED_BOT_HEADER } from "./lib/gate/policy";
@@ -155,6 +156,7 @@ export default {
       });
     }
 
-    return withSecurityHeaders(await handle(request, env, ctx));
+    const response = await handle(request, env, ctx);
+    return withSecurityHeaders(stampErrorRef(response, request.headers.get("cf-ray")));
   },
 } satisfies ExportedHandler<Env>;

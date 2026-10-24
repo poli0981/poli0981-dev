@@ -22,14 +22,24 @@ const strings = {
   error: t.report.error,
   disabled: t.report.disabled,
   tooShort: t.report.tooShort,
+  copied: t.report.copied,
+  copyFailed: t.report.copyFailed,
 };
 ---
 
-<dialog id="report-dialog" class="report" data-strings={JSON.stringify(strings)} data-ref={ref}>
+<dialog
+  id="report-dialog"
+  class="report"
+  aria-labelledby="report-title"
+  aria-describedby="report-lead"
+  data-strings={JSON.stringify(strings)}
+  data-ref={ref}
+>
   <form class="report-form" method="dialog">
-    <h2 class="report-title">{t.report.title}</h2>
-    <p class="report-lead">{t.report.lead}</p>
+    <h2 id="report-title" class="report-title">{t.report.title}</h2>
+    <p id="report-lead" class="report-lead">{t.report.lead}</p>
 
+    <label for="report-desc" class="sr-only">{t.report.descLabel}</label>
     <textarea
       id="report-desc"
       class="report-desc"
@@ -78,9 +88,12 @@ const strings = {
   const dialog = document.getElementById("report-dialog");
   if (dialog instanceof HTMLDialogElement) {
     const strings = JSON.parse(dialog.dataset.strings || "{}") as Record<string, string>;
-    // The 500 page generates its reference code client-side into #ref — read it live.
-    const getRef = () =>
-      document.getElementById("ref")?.textContent?.trim() || dialog.dataset.ref || undefined;
+    // On the 500 page the Worker stamps the Cloudflare Ray ID into #ref; "—" means it
+    // was served without one (local preview).
+    const getRef = () => {
+      const stamped = document.getElementById("ref")?.textContent?.trim();
+      return (stamped !== "—" && stamped) || dialog.dataset.ref || undefined;
+    };
 
     const desc = document.getElementById("report-desc") as HTMLTextAreaElement;
     const attachWrap = document.getElementById("report-attach-wrap") as HTMLElement;
@@ -203,10 +216,13 @@ const strings = {
         JSON.stringify(collectMeta(getRef())),
         ...(log.length ? ["", ...log.map((l) => `${l.type}: ${l.message}`)] : []),
       ].join("\n");
-      navigator.clipboard
-        ?.writeText(text)
-        .then(() => (statusEl.textContent = strings.success))
-        .catch(() => {});
+      // Not a send: say "copied", or that copying was blocked (no clipboard API, permission).
+      const copied =
+        navigator.clipboard?.writeText(text) ?? Promise.reject(new Error("no clipboard"));
+      copied.then(
+        () => (statusEl.textContent = strings.copied),
+        () => (statusEl.textContent = strings.copyFailed),
+      );
     });
   }
 </script>

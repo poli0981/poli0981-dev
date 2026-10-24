@@ -5,7 +5,7 @@
    * @type {{
    *   labels: {
    *     trigger: string, placeholder: string, aria: string, hint: string,
-   *     noResults: string, loading: string, close: string,
+   *     noResults: string, loading: string, error: string, close: string,
    *     groupBlog: string, groupStory: string, groupPage: string, countLabel: string
    *   },
    *   locale: "vi" | "en"
@@ -17,6 +17,7 @@
   let query = $state("");
   let loading = $state(false);
   let searched = $state(false);
+  let failed = $state(false); // index missing (astro dev) or a search request failed
   let selectedIndex = $state(-1);
   // Single source of truth: each item is Pagefind data + a `group` field. `sections`
   // derives from this, so section items are the SAME state proxies flat holds — that's
@@ -75,6 +76,7 @@
   async function runSearch() {
     const q = query.trim();
     const my = ++token;
+    failed = false;
     if (!q) {
       flat = [];
       selectedIndex = -1;
@@ -87,13 +89,24 @@
     if (pf === "unavailable") {
       flat = [];
       selectedIndex = -1;
-      searched = true;
+      failed = true;
       loading = false;
       return;
     }
     loading = true;
-    const res = await pf.search(q);
-    const items = await Promise.all(res.results.slice(0, 15).map((r) => r.data()));
+    let items;
+    try {
+      const res = await pf.search(q);
+      items = await Promise.all(res.results.slice(0, 15).map((r) => r.data()));
+    } catch {
+      // A fragment or index chunk failed to load (offline, a deploy swapped the index).
+      if (my !== token) return;
+      flat = [];
+      selectedIndex = -1;
+      failed = true;
+      loading = false;
+      return;
+    }
     if (my !== token) return;
     const ORDER = { blog: 0, story: 1, page: 2 };
     // One ordered list (blog → story → page); the stable sort keeps Pagefind's
@@ -163,7 +176,7 @@
         location.href = flat[selectedIndex].url;
       }
     } else if (e.key === "Tab") {
-      const f = dialogEl?.querySelectorAll("input, a[href], button");
+      const f = dialogEl?.querySelectorAll("input, a[href], button:not(:disabled)");
       if (!f || !f.length) return;
       const first = f[0];
       const last = f[f.length - 1];
@@ -211,6 +224,8 @@
         <path d="M20 20l-3.2-3.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
         ></path>
       </svg>
+      <!-- ARIA combobox: focus stays in the field; arrow keys move the active option, which
+           aria-activedescendant points at. -->
       <input
         bind:this={inputEl}
         type="search"
@@ -218,8 +233,12 @@
         value={query}
         oninput={onInput}
         placeholder={labels.placeholder}
+        role="combobox"
         aria-label={labels.aria}
         aria-controls="search-results"
+        aria-expanded={flat.length > 0}
+        aria-autocomplete="list"
+        aria-activedescendant={selectedIndex >= 0 ? `search-opt-${selectedIndex}` : undefined}
         autocomplete="off"
         autocapitalize="off"
         spellcheck="false"
@@ -227,42 +246,54 @@
       <button type="button" class="close" onclick={close} aria-label={labels.close}>Esc</button>
     </div>
 
-    <div class="results" id="search-results" role="listbox" aria-label={labels.aria}>
-      {#if loading}
-        <p class="state">{labels.loading}</p>
-      {:else if searched && flat.length === 0}
-        <p class="state">{labels.noResults}</p>
-      {:else if flat.length}
-        <p class="count" aria-live="polite">{countText}</p>
-        {#each sections as sec (sec.key)}
-          <p class="group-title">{sec.label}</p>
-          <ul class="group">
-            {#each sec.items as r (r.url)}
-              {@const idx = flat.indexOf(r)}
-              <li>
-                <a
-                  href={r.url}
-                  class="result"
-                  class:active={idx === selectedIndex}
-                  data-idx={idx}
-                  role="option"
-                  aria-selected={idx === selectedIndex}
-                  onmouseenter={() => (selectedIndex = idx)}
-                >
-                  <span class="r-title">{r.meta?.title ?? r.url}</span>
-                  <!-- Pagefind builds this excerpt from our own indexed page text: entities are
-                       escaped and only <mark> is injected, so it is safe; CSP blocks any inline
-                       script/style regardless. Never apply {@html} to the title. -->
-                  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-                  <span class="r-excerpt">{@html r.excerpt}</span>
-                </a>
-              </li>
-            {/each}
-          </ul>
-        {/each}
-      {:else}
-        <p class="state hint">{labels.hint}</p>
+    <div class="results">
+      <!-- Status lines stay outside the listbox, which may only hold groups of options. -->
+      <p class="state" class:hint={!query.trim()} role="status" hidden={flat.length > 0}>
+        {#if loading}
+          {labels.loading}
+        {:else if failed}
+          {labels.error}
+        {:else if searched}
+          {labels.noResults}
+        {:else}
+          {labels.hint}
+        {/if}
+      </p>
+      {#if flat.length}
+        <p class="count" role="status">{countText}</p>
       {/if}
+      <div id="search-results" role="listbox" aria-label={labels.aria}>
+        {#each sections as sec (sec.key)}
+          <div role="group" aria-label={sec.label}>
+            <p class="group-title" aria-hidden="true">{sec.label}</p>
+            <ul class="group" role="none">
+              {#each sec.items as r (r.url)}
+                {@const idx = flat.indexOf(r)}
+                <li role="none">
+                  <a
+                    id={`search-opt-${idx}`}
+                    href={r.url}
+                    class="result"
+                    class:active={idx === selectedIndex}
+                    data-idx={idx}
+                    role="option"
+                    aria-selected={idx === selectedIndex}
+                    tabindex="-1"
+                    onmouseenter={() => (selectedIndex = idx)}
+                  >
+                    <span class="r-title">{r.meta?.title ?? r.url}</span>
+                    <!-- Pagefind builds this excerpt from our own indexed page text: entities are
+                         escaped and only <mark> is injected, so it is safe; CSP blocks any inline
+                         script/style regardless. Never apply {@html} to the title. -->
+                    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+                    <span class="r-excerpt">{@html r.excerpt}</span>
+                  </a>
+                </li>
+              {/each}
+            </ul>
+          </div>
+        {/each}
+      </div>
     </div>
 
     <div class="foot">{labels.hint}</div>
@@ -313,6 +344,10 @@
   .ico {
     color: var(--muted);
     flex: none;
+  }
+  /* The field never shows its own outline: the whole row carries the focus indicator. */
+  .search-row:focus-within {
+    box-shadow: inset 0 -2px 0 var(--accent);
   }
   .field {
     flex: 1;

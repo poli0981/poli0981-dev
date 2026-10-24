@@ -159,6 +159,14 @@ describe("static paths", () => {
     assert.equal(paths[0].props.seriesTocHref, "/truyen/");
   });
 
+  it("gives one-shot stories their own reader route", async () => {
+    const paths = await pages.oneShotStoryPaths("vi");
+    assert.deepEqual(
+      paths.map((p) => [p.params.slug, p.props.prev, p.props.next, p.props.seriesTocHref]),
+      [["one-shot", null, null, "/truyen/"]],
+    );
+  });
+
   it("builds album pages with their photos", async () => {
     const paths = await pages.galleryAlbumPaths("vi");
     assert.deepEqual(

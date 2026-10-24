@@ -1,12 +1,14 @@
 ---
 import { type ProjectEntry } from "../lib/collections";
 import { sectionPath, type Locale } from "../i18n/routing";
+import { useTranslations } from "../i18n";
 
 interface Props {
   entry: ProjectEntry;
   locale: Locale;
 }
 const { entry, locale } = Astro.props;
+const t = useTranslations(locale);
 const href = sectionPath("projects", locale, entry.id);
 const { name, tagline, stack, repo, url, featured, year } = entry.data;
 ---
@@ -32,13 +34,23 @@ const { name, tagline, stack, repo, url, featured, year } = entry.data;
     (repo || url) && (
       <div class="links">
         {repo && (
-          <a href={repo} target="_blank" rel="noopener noreferrer">
-            repo ↗
+          <a
+            href={repo}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${t.project.repo} — ${name} (${t.project.newTab})`}
+          >
+            {t.project.repo} <span aria-hidden="true">↗</span>
           </a>
         )}
         {url && (
-          <a href={url} target="_blank" rel="noopener noreferrer">
-            site ↗
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${t.project.site} — ${name} (${t.project.newTab})`}
+          >
+            {t.project.site} <span aria-hidden="true">↗</span>
           </a>
         )}
       </div>

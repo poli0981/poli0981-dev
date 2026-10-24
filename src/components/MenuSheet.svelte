@@ -12,6 +12,8 @@
 
   let open = $state(false);
   let sheetEl = $state(null);
+  /** @type {HTMLElement | null} where focus returns when the sheet closes */
+  let opener = null;
 
   function reflectTriggers(v) {
     for (const b of document.querySelectorAll("[data-menu-trigger]")) {
@@ -19,7 +21,18 @@
     }
   }
 
+  // The trigger that opened the sheet. Safari does not focus a clicked button, so fall back
+  // to whichever menu trigger is on screen.
+  function findOpener() {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && active !== document.body) return active;
+    return [...document.querySelectorAll("[data-menu-trigger]")].find(
+      (b) => b instanceof HTMLElement && b.offsetParent !== null,
+    );
+  }
+
   async function openMenu() {
+    opener = findOpener() ?? null;
     open = true;
     reflectTriggers(true);
     await tick();
@@ -28,6 +41,23 @@
   function closeMenu() {
     open = false;
     reflectTriggers(false);
+    opener?.focus();
+    opener = null;
+  }
+
+  // Keep Tab inside the open sheet (it is modal: the page behind is scroll-locked).
+  function trapFocus(e) {
+    const focusable = sheetEl?.querySelectorAll("a[href], button:not(:disabled)");
+    if (!focusable?.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
   }
   function toggle() {
     if (open) closeMenu();
@@ -37,7 +67,9 @@
   onMount(() => {
     const onToggle = () => toggle();
     const onKey = (e) => {
-      if (e.key === "Escape" && open) closeMenu();
+      if (!open) return;
+      if (e.key === "Escape") closeMenu();
+      else if (e.key === "Tab") trapFocus(e);
     };
     document.addEventListener("toggle-menu", onToggle);
     document.addEventListener("keydown", onKey);
@@ -56,27 +88,40 @@
 
 <div class="backdrop" class:open onclick={closeMenu} aria-hidden="true" role="presentation"></div>
 
-<nav bind:this={sheetEl} id="menu-sheet" class="sheet" class:open aria-label={title} inert={!open}>
+<div
+  bind:this={sheetEl}
+  id="menu-sheet"
+  class="sheet"
+  class:open
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="menu-sheet-title"
+  inert={!open}
+>
   <div class="sheet-head">
-    <span class="sheet-title">{title}</span>
+    <h2 id="menu-sheet-title" class="sheet-title">{title}</h2>
     <button type="button" class="close" onclick={closeMenu}>{closeLabel}</button>
   </div>
 
-  <ul class="links">
-    {#each items as item (item.href)}
-      <li><a href={item.href} onclick={closeMenu}>{item.label}</a></li>
-    {/each}
-  </ul>
-
-  {#if legal.length}
-    <p class="group-title">{legalTitle}</p>
-    <ul class="links legal">
-      {#each legal as item (item.href)}
+  <nav aria-labelledby="menu-sheet-title">
+    <ul class="links">
+      {#each items as item (item.href)}
         <li><a href={item.href} onclick={closeMenu}>{item.label}</a></li>
       {/each}
     </ul>
+  </nav>
+
+  {#if legal.length}
+    <nav aria-labelledby="menu-sheet-legal">
+      <p id="menu-sheet-legal" class="group-title">{legalTitle}</p>
+      <ul class="links legal">
+        {#each legal as item (item.href)}
+          <li><a href={item.href} onclick={closeMenu}>{item.label}</a></li>
+        {/each}
+      </ul>
+    </nav>
   {/if}
-</nav>
+</div>
 
 <style>
   .backdrop {
@@ -122,6 +167,7 @@
     margin-block-end: 1rem;
   }
   .sheet-title {
+    margin: 0;
     font-family: var(--ff-display);
     font-weight: 700;
     font-size: var(--text-lead);

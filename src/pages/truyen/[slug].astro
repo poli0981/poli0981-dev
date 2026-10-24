@@ -1,0 +1,10 @@
+---
+import StoryChapterPage from "@/components/pages/StoryChapterPage.astro";
+import { oneShotStoryPaths } from "@/lib/pages";
+
+export const getStaticPaths = () => oneShotStoryPaths("vi");
+
+const { entry, prev, next, seriesTocHref } = Astro.props;
+---
+
+<StoryChapterPage locale="vi" {entry} {prev} {next} {seriesTocHref} />
