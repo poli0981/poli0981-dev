@@ -9,7 +9,8 @@ and are not listed here.
 
 A platform upgrade, a security pass, a new palette and a rebuilt admin
 ([#98](https://github.com/poli0981/poli0981-dev/pull/98),
-[#99](https://github.com/poli0981/poli0981-dev/pull/99), and the documentation PR).
+[#99](https://github.com/poli0981/poli0981-dev/pull/99),
+[#100](https://github.com/poli0981/poli0981-dev/pull/100)).
 
 ### Security
 
