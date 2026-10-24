@@ -426,12 +426,14 @@ function applySelector(
     }
     case "head script[src]": {
       const head: [number, number] = [html.indexOf("<head"), html.indexOf("</head>")];
-      return replaceTags(/<script\b[^>]*\ssrc="[^"]*"[^>]*><\/script>/g, head);
+      return replaceTags(/<script\b[^>]*\ssrc="[^"]*"[^>]*><\/script[^>]*>/gi, head);
     }
     case 'link[rel="modulepreload"]':
       return replaceTags(/<link\b[^>]*rel="modulepreload"[^>]*>/g);
     case 'script[type="application/ld+json"]':
-      return replaceTags(/<script\b[^>]*type="application\/ld\+json"[^>]*>[\s\S]*?<\/script>/g);
+      return replaceTags(
+        /<script\b[^>]*type="application\/ld\+json"[^>]*>[\s\S]*?<\/script[^>]*>/gi,
+      );
     case "body":
       return html.replace(
         /(<body[^>]*>)[\s\S]*(<\/body>)/,
