@@ -33,7 +33,7 @@ Khách **không bao giờ** gọi thẳng bên thứ ba — kể cả ảnh: nha
 | `widgets:steam` | `{updated, items:[{appid,name,playtime2w,icon}]}` | — |
 | `widgets:gh` | `{updated, items:[{type,repo,ts,detail}]}` | — |
 | `widgets:status` | `{yt:"ok"|"stale"|"na", steam:…, gh:…, lastRun}` | — (dashboard admin hiển thị) |
-| `widgets:img:yt:<id>` · `widgets:img:steam:<appid>:<hash>` | bytes ảnh, metadata `{type}` (jpeg/png/webp) | 14 ngày; ảnh > 2 MB hoặc sai kiểu bị bỏ qua. Icon Steam lấy từ `cdn.cloudflare.steamstatic.com` — `media.steampowered.com` trả 403 cho Workers |
+| `widgets:img:yt:<id>` · `widgets:img:steam:<appid>:<hash>` | bytes ảnh, metadata `{type}` (jpeg/png/webp) | 14 ngày; ảnh > 2 MB hoặc sai kiểu bị bỏ qua; lượt tải mới lỗi thì giữ bản cũ. Icon Steam: cả ba CDN của Steam (`cdn.cloudflare.steamstatic.com`, `cdn.akamai.steamstatic.com`, `media.steampowered.com`) trả 403 cho Workers khi ảnh chưa nằm trong cache của chúng — worker hỏi lần lượt từng host; game chưa có icon thì widget chỉ hiện tên |
 
 ## 5. Quy tắc bền vững (kế thừa convention tracker của bạn)
 

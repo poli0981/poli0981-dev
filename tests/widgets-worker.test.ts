@@ -74,7 +74,9 @@ function upstream(
       );
     if (
       url.startsWith("https://i.ytimg.com/") ||
-      url.startsWith("https://cdn.cloudflare.steamstatic.com/")
+      url.startsWith("https://cdn.cloudflare.steamstatic.com/") ||
+      url.startsWith("https://cdn.akamai.steamstatic.com/") ||
+      url.startsWith("https://media.steampowered.com/")
     )
       return overrides.img?.(call) ?? image();
     if (url.startsWith("https://discord.example/"))
@@ -157,6 +159,27 @@ describe("widget sources", () => {
         name,
       );
     }
+    // A failed refresh keeps the copy an earlier run stored.
+    assert.equal(await mirrorImage(kv.asBinding(), "yt:ok", "https://i.ytimg.com/html.jpg"), true);
+    kv.failWith = new Error("KV down");
+    assert.equal(await mirrorImage(kv.asBinding(), "yt:ok", "https://i.ytimg.com/html.jpg"), false);
+  });
+
+  it("asks each Steam CDN in turn for an icon", async () => {
+    const kv = new FakeKV();
+    // Every Steam host refuses Workers on a cache miss; here only the Akamai one has it.
+    const { calls } = upstream({
+      img: (call) =>
+        call.url.startsWith("https://cdn.akamai.steamstatic.com/")
+          ? image()
+          : new Response("<html>", { status: 403, headers: { "content-type": "text/html" } }),
+    });
+    const games = await fetchSteam(env(kv));
+    assert.equal(games[0].icon, `/ext-img/steam/570/${HASH}`);
+    assert.deepEqual(
+      calls.filter((c) => c.url.includes(`/${HASH}.jpg`)).map((c) => new URL(c.url).host),
+      ["cdn.cloudflare.steamstatic.com", "cdn.akamai.steamstatic.com"],
+    );
   });
 
   it("fetches each source with the pictures pointing at /ext-img", async () => {
