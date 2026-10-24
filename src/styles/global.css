@@ -226,6 +226,12 @@ a {
   color: var(--accent-contrast);
 }
 
+/* Tailwind's preflight zeroes every margin, which also undoes the browser's centring of
+   modal dialogs (margin: auto): the report dialog sat in the top-left corner. */
+dialog {
+  margin: auto;
+}
+
 /* Visible, consistent focus ring for keyboard users (docs 03 §8). */
 :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--accent);
