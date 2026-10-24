@@ -50,10 +50,16 @@ jobs:
       - name: Start preview server
         run: npm run preview &
 
+      # Cloudflare's edge compresses every text response in production; the preview does not.
+      # Lighthouse measures through this proxy so its simulated phone downloads the bytes a
+      # real one would (HTML 108 KB raw vs 25 KB brotli), not three to four times as many.
+      - name: Start compressing proxy
+        run: node scripts/compress-proxy.mjs 4322 4321 &
+
       - name: Wait for the server
         run: |
           for i in $(seq 1 60); do
-            if curl -sf -o /dev/null http://localhost:4321/; then
+            if curl -sf -o /dev/null http://localhost:4322/; then
               echo "preview up after ${i}s"; exit 0
             fi
             sleep 1
@@ -69,9 +75,9 @@ jobs:
         with:
           configPath: ./lighthouserc.json
           urls: |
-            http://localhost:4321/
-            http://localhost:4321/blog/lan-dau-viet-truyen/
-            http://localhost:4321/truyen/dem-khong-tieng/chuong-01/
-            http://localhost:4321/gallery/game/
+            http://localhost:4322/
+            http://localhost:4322/blog/lan-dau-viet-truyen/
+            http://localhost:4322/truyen/dem-khong-tieng/chuong-01/
+            http://localhost:4322/gallery/game/
           uploadArtifacts: true
           artifactName: lighthouse-reports
