@@ -17,16 +17,17 @@ updates:
       astro:
         patterns: ["astro", "@astrojs/*"]
       # The type-checking toolchain moves together: typescript-eslint pins the TypeScript
-      # versions it accepts, and the TS 7 compiler should not drift from the TS 6 API.
+      # versions it accepts.
       typescript:
-        patterns: ["typescript", "@typescript/native", "typescript-eslint"]
+        patterns: ["typescript", "typescript-eslint"]
       dev-tools:
         dependency-type: development
     ignore:
       # `typescript` stays on 6.x on purpose. TypeScript 7.0 ships no JS API, and astro
-      # check (Volar), typescript-eslint and svelte2tsx all need one; TS 7 itself is the
-      # `@typescript/native` alias (npm:typescript@7) and updates normally. Lift this once
-      # those tools support TypeScript 7.1's new API.
+      # check (Volar), typescript-eslint and svelte2tsx all need one. TS 7 itself is the
+      # `@typescript/native` alias (npm:typescript@7) — and Dependabot skips every `npm:`
+      # alias, so that one is bumped by hand (docs 17). Lift this ignore once those tools
+      # support TypeScript 7.1's new API.
       - dependency-name: typescript
         update-types: ["version-update:semver-major"]
       # prettier-plugin-astro 1.x reflows `<span>{expr}</span>` onto separate lines in 50
