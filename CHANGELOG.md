@@ -69,10 +69,13 @@ A platform upgrade, a security pass, a new palette and a rebuilt admin
   trap, lightbox focus handling, labelled report dialog, a correct "copied" message, Esc no longer
   dismisses the legal notice from elsewhere, landmark and link labels translated.
 - Gallery albums work without JavaScript; contact lines on /qa and the 403 page are real links.
-- Widgets: Steam's CDNs answer Workers with 403 for any icon they have not cached, so the worker
-  now asks each of Steam's three hosts in turn and keeps the copy an earlier run stored (games
-  without an icon show their name only). An optional read-only `GITHUB_TOKEN` keeps the GitHub feed
-  from going stale under the per-IP rate limit Workers share.
+- Widgets: Steam game icons never appeared. The CDN hosts the worker used answer Workers with 403
+  for any icon their edge has not cached; the worker now fetches icons from Steam's
+  community-assets hosts, which serve Workers, falls back to another CDN, and keeps the copy an
+  earlier run stored (games without an icon show their name only)
+  ([#101](https://github.com/poli0981/poli0981-dev/pull/101),
+  [#102](https://github.com/poli0981/poli0981-dev/pull/102)). An optional read-only `GITHUB_TOKEN`
+  keeps the GitHub feed from going stale under the per-IP rate limit Workers share.
 - Dozens of smaller issues found by SonarCloud and the new tests (error pages served with the
   wrong status under `astro dev`, regex backtracking, scripts that passed without checking).
 
