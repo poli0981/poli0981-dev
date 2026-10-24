@@ -22,6 +22,10 @@
   const scoreEl = document.getElementById("skullhop-score");
   const bestEl = document.getElementById("skullhop-best");
 
+  // A [0, 1) number from the platform CSPRNG. Overkill for spacing obstacles, but it costs
+  // nothing and keeps the one predictable generator out of the codebase.
+  const random = () => crypto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32;
+
   const W = 320;
   const H = 120;
   const GROUND = H - 18;
@@ -136,8 +140,8 @@
 
     // spawn waveform bars with a gap that stays clearable
     const last = bars[bars.length - 1];
-    if (!last || last.x < W - (90 + Math.random() * 70)) {
-      bars.push({ x: W + 8, h: 10 + Math.random() * 16 });
+    if (!last || last.x < W - (90 + random() * 70)) {
+      bars.push({ x: W + 8, h: 10 + random() * 16 });
     }
     for (const b of bars) b.x -= speed;
     if (bars.length && bars[0].x < -12) {

@@ -17,10 +17,19 @@ export interface BugEntry {
 const MAX = 20;
 const BUFFER: BugEntry[] = [];
 
-function scrub(text: string): string {
+/** A whitespace-free token with "@" and a dot after it: an email address, or close enough. */
+const looksLikeEmail = (token: string) => {
+  const at = token.indexOf("@");
+  return at > 0 && token.indexOf(".", at + 2) !== -1;
+};
+
+export function scrub(text: string): string {
   return text
+    .slice(0, 2000) // bound the work before any pattern runs
     .replace(/[?#]\S*/g, "") // strip query strings / hashes (may carry tokens)
-    .replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, "[email]") // mask emails
+    .split(/(\s+)/) // mask emails token by token — no backtracking email regex
+    .map((token) => (looksLikeEmail(token) ? "[email]" : token))
+    .join("")
     .replace(/\b[A-Za-z0-9_-]{24,}\b/g, "[token]") // mask long token-like strings
     .slice(0, 500);
 }

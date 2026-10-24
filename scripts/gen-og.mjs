@@ -1,8 +1,8 @@
 // Build-time Open Graph image generation. Runs in Node (see src/lib/og.ts for why a
 // prerendered endpoint can't do this). Reads content frontmatter, renders a 1200x630 card
-// per entry with Satori + resvg, and writes to dist/client/og/<key>.png.
-//
-// The `ogKey` logic here MUST stay in sync with src/lib/og.ts.
+// per entry with Satori + resvg, and writes to dist/client/og/<key>.png. File names come
+// from ogKey() in src/lib/og.ts — the same function the pages use to link to them (Node
+// runs the .ts file directly).
 import satori from "satori";
 import { html } from "satori-html";
 import { Resvg } from "@resvg/resvg-js";
@@ -10,6 +10,7 @@ import { parse as parseYaml } from "yaml";
 import { readFileSync, writeFileSync, mkdirSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { ogKey } from "../src/lib/og.ts";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const fontsDir = path.join(root, "src/assets/fonts");
@@ -39,10 +40,6 @@ const WAVE = `<svg width="240" height="26" viewBox="0 0 120 20" fill="none"><pat
 
 function esc(s) {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-function ogKey(section, id) {
-  return `${section}-${id.replace(/\//g, "__")}`;
 }
 
 const SHELL = (inner) =>

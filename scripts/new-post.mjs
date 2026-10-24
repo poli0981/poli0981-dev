@@ -51,15 +51,22 @@ function slugify(input) {
     .replace(/[đĐ]/g, (c) => (c === "đ" ? "d" : "D")) // đ/Đ: own codepoints, not marks
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .split("-")
+    .filter(Boolean)
+    .join("-"); // no leading/trailing "-" (and no backtracking /^-+|-+$/)
 }
 
+// `--name value` pairs anywhere on the line; everything else is positional. (Filtering out
+// only the "--x" tokens left their values behind as positionals, so a flag placed before
+// the title became the title.)
+const flags = new Map();
+const positional = [];
 const argv = process.argv.slice(2);
-const positional = argv.filter((a) => !a.startsWith("--"));
-const flag = (name) => {
-  const i = argv.indexOf(`--${name}`);
-  return i === -1 ? undefined : argv[i + 1];
-};
+for (let i = 0; i < argv.length; i++) {
+  if (argv[i].startsWith("--")) flags.set(argv[i].slice(2), argv[++i]);
+  else positional.push(argv[i]);
+}
+const flag = (name) => flags.get(name);
 
 const [type, title] = positional;
 if (!type) usage("missing type");
@@ -90,7 +97,8 @@ if (existsSync(target)) {
 
 const tpl = readFileSync(join("docs/templates", template), "utf8");
 const body = tpl
-  .replaceAll("{{TITLE}}", title.replaceAll('"', '\\"'))
+  // The template has `title: "{{TITLE}}"`, a YAML double-quoted scalar: escape \ and ".
+  .replaceAll("{{TITLE}}", title.replaceAll("\\", "\\\\").replaceAll('"', '\\"'))
   .replaceAll("{{LANG}}", lang)
   .replaceAll("{{DATE}}", date)
   .replaceAll("{{YEAR}}", String(now.getUTCFullYear()))

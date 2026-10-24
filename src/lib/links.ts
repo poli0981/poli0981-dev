@@ -1,7 +1,7 @@
 import type { Locale } from "../i18n/routing";
 
 /** RepoLens — an external listing of all the owner's public repositories. */
-export const ALL_REPOS_URL = "https://repolens.k30021424.workers.dev/repos";
+export const ALL_REPOS_URL = "https://repolens.poli0981.dev/repos";
 
 /** The two public "faces" of the site (see /about): the SkullMute channel vs the dev. */
 export type Persona = "game" | "dev";

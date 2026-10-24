@@ -1,12 +1,15 @@
 /**
  * Open Graph image URLs. Pure helpers only — the actual PNGs are rendered at build by
  * `scripts/gen-og.mjs` (Satori + resvg run in Node; a prerendered endpoint would run in
- * workerd, which has no `sharp`/`fs`). The `ogKey` logic here MUST match that script.
+ * workerd, which has no `sharp`/`fs`), which imports ogKey() from here.
  */
 export type OgSection = "blog" | "story" | "project";
 
-/** Filesystem/URL-safe key for a content entry's OG image (id slashes → "__"). */
-function ogKey(section: OgSection, id: string): string {
+/**
+ * Filesystem/URL-safe key for a content entry's OG image (id slashes → "__"). Also imported
+ * by scripts/gen-og.mjs, which writes the PNGs — one definition, so names can't drift.
+ */
+export function ogKey(section: OgSection, id: string): string {
   return `${section}-${id.replace(/\//g, "__")}`;
 }
 
