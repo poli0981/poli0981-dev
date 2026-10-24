@@ -41,11 +41,11 @@
     }
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^14.3.4",
-    "@astrojs/mdx": "^8.0.3",
+    "@astrojs/cloudflare": "^14.4.1",
+    "@astrojs/mdx": "^8.1.0",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.4",
-    "@astrojs/svelte": "^9.0.1",
+    "@astrojs/svelte": "^9.1.0",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.3.8",
     "jose": "^6.2.12",
