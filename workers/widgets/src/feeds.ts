@@ -153,14 +153,16 @@ export async function mirrorImage(
 }
 
 /**
- * Steam serves each game icon from several CDNs, and every one of them refuses requests from
- * Workers (403) for files it has not cached yet — only an edge cache hit gets through
- * (probed 2026-10-24). Asking each in turn mirrors whatever one of them holds.
+ * Steam serves each game icon from several CDNs. The community-assets path on the `shared.*`
+ * hosts answers Workers every time; the classic `/steamcommunity/public/` hosts refuse them
+ * (403) for any file their edge has not cached — `cdn.cloudflare`, `cdn.akamai` and
+ * `media.steampowered.com` refused every icon, `cdn.fastly` served cached ones (probed from
+ * Cloudflare's network 2026-10-24). Asking each in turn mirrors whatever one of them holds.
  */
-const STEAM_ICON_HOSTS = [
-  "https://cdn.cloudflare.steamstatic.com",
-  "https://cdn.akamai.steamstatic.com",
-  "https://media.steampowered.com",
+const STEAM_ICON_SOURCES = [
+  "https://shared.fastly.steamstatic.com/community_assets/images/apps",
+  "https://shared.akamai.steamstatic.com/community_assets/images/apps",
+  "https://cdn.fastly.steamstatic.com/steamcommunity/public/images/apps",
 ];
 
 export async function fetchYouTube(env: WidgetsEnv): Promise<VideoItem[]> {
@@ -187,9 +189,7 @@ export async function fetchSteam(env: WidgetsEnv): Promise<GameItem[]> {
   return Promise.all(
     games.map(async ({ iconHash, ...game }) => {
       if (!iconHash) return game;
-      const sources = STEAM_ICON_HOSTS.map(
-        (host) => `${host}/steamcommunity/public/images/apps/${game.appid}/${iconHash}.jpg`,
-      );
+      const sources = STEAM_ICON_SOURCES.map((base) => `${base}/${game.appid}/${iconHash}.jpg`);
       const ok = await mirrorImage(env.KV, `steam:${game.appid}:${iconHash}`, sources);
       return { ...game, icon: ok ? `/ext-img/steam/${game.appid}/${iconHash}` : "" };
     }),

@@ -74,9 +74,9 @@ function upstream(
       );
     if (
       url.startsWith("https://i.ytimg.com/") ||
-      url.startsWith("https://cdn.cloudflare.steamstatic.com/") ||
-      url.startsWith("https://cdn.akamai.steamstatic.com/") ||
-      url.startsWith("https://media.steampowered.com/")
+      url.startsWith("https://shared.fastly.steamstatic.com/") ||
+      url.startsWith("https://shared.akamai.steamstatic.com/") ||
+      url.startsWith("https://cdn.fastly.steamstatic.com/")
     )
       return overrides.img?.(call) ?? image();
     if (url.startsWith("https://discord.example/"))
@@ -167,18 +167,22 @@ describe("widget sources", () => {
 
   it("asks each Steam CDN in turn for an icon", async () => {
     const kv = new FakeKV();
-    // Every Steam host refuses Workers on a cache miss; here only the Akamai one has it.
+    // Here only the last source has the icon; the others refuse, as a cold edge does.
     const { calls } = upstream({
       img: (call) =>
-        call.url.startsWith("https://cdn.akamai.steamstatic.com/")
+        call.url.startsWith("https://cdn.fastly.steamstatic.com/")
           ? image()
           : new Response("<html>", { status: 403, headers: { "content-type": "text/html" } }),
     });
     const games = await fetchSteam(env(kv));
     assert.equal(games[0].icon, `/ext-img/steam/570/${HASH}`);
     assert.deepEqual(
-      calls.filter((c) => c.url.includes(`/${HASH}.jpg`)).map((c) => new URL(c.url).host),
-      ["cdn.cloudflare.steamstatic.com", "cdn.akamai.steamstatic.com"],
+      calls.filter((c) => c.url.includes(`/${HASH}.jpg`)).map((c) => c.url),
+      [
+        `https://shared.fastly.steamstatic.com/community_assets/images/apps/570/${HASH}.jpg`,
+        `https://shared.akamai.steamstatic.com/community_assets/images/apps/570/${HASH}.jpg`,
+        `https://cdn.fastly.steamstatic.com/steamcommunity/public/images/apps/570/${HASH}.jpg`,
+      ],
     );
   });
 
