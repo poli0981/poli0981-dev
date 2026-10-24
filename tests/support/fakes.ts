@@ -404,19 +404,38 @@ function applySelector(
 ): string {
   const attribute = (tag: string, name: string) =>
     new RegExp(`\\s${name}="([^"]*)"`).exec(tag)?.[1] ?? null;
-  const replaceTags = (pattern: RegExp, within?: [number, number]) =>
-    html.replace(pattern, (tag, offset: number) => {
-      if (within && (offset < within[0] || offset > within[1])) return tag;
-      let removed = false;
-      handler({
-        getAttribute: (name) => attribute(tag, name),
-        remove: () => {
-          removed = true;
-        },
-        setInnerContent: () => {},
-      });
-      return removed ? "" : tag;
+  // Hands one element to the handler; true when the handler removed it.
+  const visit = (openTag: string) => {
+    let removed = false;
+    handler({
+      getAttribute: (name) => attribute(openTag, name),
+      remove: () => {
+        removed = true;
+      },
+      setInnerContent: () => {},
     });
+    return removed;
+  };
+  const replaceTags = (pattern: RegExp) =>
+    html.replace(pattern, (tag: string) => (visit(tag) ? "" : tag));
+  // Script elements are cut out by offset rather than matched with a regex: whole
+  // <script>…</script> elements are what CodeQL's js/bad-tag-filter rightly distrusts.
+  const replaceScripts = (wanted: (openTag: string) => boolean, within = [0, html.length]) => {
+    let out = "";
+    let copied = 0;
+    for (let start = html.indexOf("<script"); start !== -1;) {
+      const openEnd = html.indexOf(">", start) + 1;
+      const end = html.indexOf(">", html.indexOf("</script", openEnd)) + 1;
+      if (openEnd === 0 || end === 0) break;
+      const openTag = html.slice(start, openEnd);
+      if (start >= within[0] && start <= within[1] && wanted(openTag) && visit(openTag)) {
+        out += html.slice(copied, start);
+        copied = end;
+      }
+      start = html.indexOf("<script", end);
+    }
+    return out + html.slice(copied);
+  };
 
   switch (selector) {
     case "html": {
@@ -424,16 +443,15 @@ function applySelector(
       handler({ getAttribute: (name) => attribute(tag, name), remove() {}, setInnerContent() {} });
       return html;
     }
-    case "head script[src]": {
-      const head: [number, number] = [html.indexOf("<head"), html.indexOf("</head>")];
-      return replaceTags(/<script\b[^>]*\ssrc="[^"]*"[^>]*><\/script[^>]*>/gi, head);
-    }
+    case "head script[src]":
+      return replaceScripts(
+        (tag) => attribute(tag, "src") !== null,
+        [html.indexOf("<head"), html.indexOf("</head>")],
+      );
     case 'link[rel="modulepreload"]':
       return replaceTags(/<link\b[^>]*rel="modulepreload"[^>]*>/g);
     case 'script[type="application/ld+json"]':
-      return replaceTags(
-        /<script\b[^>]*type="application\/ld\+json"[^>]*>[\s\S]*?<\/script[^>]*>/gi,
-      );
+      return replaceScripts((tag) => attribute(tag, "type") === "application/ld+json");
     case "body":
       return html.replace(
         /(<body[^>]*>)[\s\S]*(<\/body>)/,
