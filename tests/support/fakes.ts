@@ -272,14 +272,27 @@ export interface AssetPage {
 /** The static-asset binding: pathname → page; anything else is a 404. */
 export function fakeAssets(pages: Record<string, AssetPage>) {
   const requests: Request[] = [];
+  // `not_found_handling: "404-page"`: a miss gets the nearest 404.html up the path.
+  const notFoundPage = (pathname: string): AssetPage | undefined => {
+    for (let dir = pathname; dir;) {
+      dir = dir.slice(0, dir.lastIndexOf("/"));
+      const page = pages[`${dir}/404.html`];
+      if (page) return page;
+    }
+    return undefined;
+  };
   return {
     requests,
     async fetch(input: Request | URL | string): Promise<Response> {
       const request = input instanceof Request ? input : new Request(String(input));
       requests.push(request);
-      const page = pages[new URL(request.url).pathname];
-      if (!page)
-        return new Response("not found", { status: 404, headers: { "content-type": "text/html" } });
+      const { pathname } = new URL(request.url);
+      const page = pages[pathname];
+      if (!page) {
+        const body =
+          request.method === "HEAD" ? null : (notFoundPage(pathname)?.body ?? "not found");
+        return new Response(body, { status: 404, headers: { "content-type": "text/html" } });
+      }
       return new Response(request.method === "HEAD" ? null : (page.body ?? ""), {
         status: page.status ?? 200,
         headers: page.headers ?? { "content-type": "text/html; charset=utf-8" },

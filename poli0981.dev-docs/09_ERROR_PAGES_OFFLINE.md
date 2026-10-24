@@ -14,7 +14,7 @@ Nhắc lại quyết định D8: Custom Errors của Cloudflare cần zone plan 
 
 | Trang | Trigger | Headline (VI / EN) | Ghi chú riêng |
 |---|---|---|---|
-| **404** `404.astro` | route không tồn tại | "Trang này không phát ra tín hiệu." / "This page makes no sound." | + ô search (mở Pagefind), gợi ý 3 bài mới. Assets config `not_found_handling: "404-page"` để request tĩnh lạc cũng nhận trang này (P0 Spike 3 verify) |
+| **404** `404.astro` · `en/404.astro` | route không tồn tại | "Trang này không phát ra tín hiệu." / "This page makes no sound." | + ô search (mở Pagefind — đúng index của ngôn ngữ trang), gợi ý 3 bài mới cùng ngôn ngữ. Assets config `not_found_handling: "404-page"` trả `404.html` gần nhất theo đường dẫn: `/en/…` nhận bản tiếng Anh (`en/404.html`, xem 02 §4), mọi đường dẫn khác nhận bản tiếng Việt |
 | **500** `500.astro` | exception khi render on-demand / api | "Có gì đó vỡ trong im lặng." / "Something broke, quietly." | Astro tự dùng 500.astro khi SSR lỗi; api route bọc try/catch trả JSON lỗi gọn. Mã tham chiếu = **Cloudflare Ray ID** của request, worker đóng dấu vào `#ref` (`src/lib/error-ref.ts`) — trùng field `ray` trong Workers Logs, ReportDialog tự đính vào báo lỗi |
 | **403** worker entry | IP/dải nằm trong denylist (KV `denylist`, `06` §2) | "Cửa này đang khoá." / "This door is locked." | Kèm link `mailto:contact@` nếu nghĩ là nhầm. Không nêu lý do cụ thể |
 | **429** middleware render | vượt rate-limit app (5 req/phút/IP trên /api) | "Chậm lại một nhịp." / "Take a breath." | Header `Retry-After: 60`; hiện đồng hồ đếm ngược 60s (vanilla JS inline) |
@@ -41,6 +41,7 @@ Canvas ≤ 6KB JS vanilla nằm ngay trong trang offline: đầu lâu pixel nh�
 | Case | Cách test | Kỳ vọng |
 |---|---|---|
 | 404 route | mở `/khong-ton-tai` | trang 404, status 404 |
+| 404 route en | mở `/en/does-not-exist` | trang 404 tiếng Anh (`lang="en"`), status 404 |
 | 404 asset | mở `/anh-khong-co.png` | trang 404 (not_found_handling) |
 | 500 | tạm ném throw trong 1 api route ở preview | trang/JSON 500 + mã tham chiếu |
 | 403 | thêm IP nhà vào denylist KV preview → mở site | trang 403 custom |

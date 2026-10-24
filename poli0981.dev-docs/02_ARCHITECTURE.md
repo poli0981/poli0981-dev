@@ -15,8 +15,8 @@ Khách ──HTTPS──> Cloudflare edge (WAF free, Bot Fight, DDoS auto, Trans
         ├── /media/*    → R2 poli0981-media (ảnh upload qua admin, cache 1 năm)
         ├── /ext-img/*  → KV widgets:img:* (ảnh widget đã mirror; không gọi Google/Steam)
         ├── cổng Turnstile (vé 48 giờ) → trang xác minh thay <body>
-        ├── trang tĩnh → ASSETS (dist/)
-        └── còn lại → app Astro (@astrojs/cloudflare/handler)
+        ├── trang tĩnh → ASSETS (dist/) — trang không có ⇒ 404.html gần nhất (en/404.html dưới /en/)
+        └── /api/*, /admin* → app Astro (@astrojs/cloudflare/handler)
                ├── middleware: admin (Access JWT + CSRF), rate limit /api, trang lỗi
                ├── /api/report · /api/gate · /api/widgets · /api/health
                └── /admin/* + /api/admin/*  (GitHub API → repo content, R2, Images, KV)
@@ -80,7 +80,7 @@ poli0981-dev/
 - **Một thân trang cho hai ngôn ngữ**: route vi và en chỉ là wrapper gọi component trong `src/components/pages/` với `locale` (và props từ builder `getStaticPaths` trong `src/lib/pages.ts`).
 - Nút đổi ngôn ngữ: trang có bản dịch (`translationKey`) → đúng bản dịch; không có → mục tương ứng của ngôn ngữ kia (`sectionFallbackPath`), không bao giờ 404.
 - Truyện: chương thuộc series → `/truyen/<series>/<slug>/`; truyện lẻ (không có thư mục series) → `/truyen/<slug>/`.
-- 404: `src/pages/404.astro`; cấu hình assets `not_found_handling: "404-page"`.
+- 404: `src/pages/404.astro` (vi) và `src/pages/en/404.astro`, cùng thân `components/pages/NotFoundPage.astro`. Assets `not_found_handling: "404-page"` trả `404.html` gần nhất theo đường dẫn, nên integration `localized-404` (astro.config.mjs) dời bản en từ `en/404/index.html` sang `en/404.html`; worker trả nguyên response 404 đó (app Astro chỉ nhận `/api/*`, `/admin*` — test canh mọi route `prerender = false` nằm trong `APP_PREFIXES`).
 
 ## 5. Worker "site" — wrangler.jsonc (rút gọn)
 

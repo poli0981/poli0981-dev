@@ -5,6 +5,9 @@ import svelte from "@astrojs/svelte";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
+import { existsSync } from "node:fs";
+import { rename, rmdir } from "node:fs/promises";
+import { DEFAULT_LOCALE, LOCALES } from "./src/i18n/routing.ts";
 import { THEME_BOOTSTRAP } from "./src/lib/theme.ts";
 
 // Error/system pages that must never appear in the sitemap.
@@ -31,6 +34,27 @@ const themeBootstrap = {
   name: "theme-bootstrap",
   hooks: {
     "astro:config:setup": ({ injectScript }) => injectScript("head-inline", THEME_BOOTSTRAP),
+  },
+};
+
+// A miss is answered by the asset layer with the nearest 404.html up the path (wrangler.jsonc
+// `not_found_handling: "404-page"`), so a locale's own 404 page has to be a file named
+// 404.html in that locale's folder. Astro writes only the root error pages that way —
+// src/pages/en/404.astro lands at en/404/index.html — so move the localized ones into place.
+// A locale without a 404 page of its own keeps getting the root one.
+
+/** @type {import('astro').AstroIntegration} */
+const localizedNotFound = {
+  name: "localized-404",
+  hooks: {
+    "astro:build:done": async ({ dir }) => {
+      for (const locale of LOCALES.filter((l) => l !== DEFAULT_LOCALE)) {
+        const built = new URL(`${locale}/404/index.html`, dir);
+        if (!existsSync(built)) continue;
+        await rename(built, new URL(`${locale}/404.html`, dir));
+        await rmdir(new URL(`${locale}/404/`, dir));
+      }
+    },
   },
 };
 
@@ -113,6 +137,7 @@ export default defineConfig({
 
   integrations: [
     themeBootstrap,
+    localizedNotFound,
     svelte(),
     mdx(),
     sitemap({

@@ -3,9 +3,13 @@ import "../styles/global.css";
 import { Font } from "astro:assets";
 import ReportDialog from "../components/ReportDialog.astro";
 import CfBeacon from "../components/CfBeacon.astro";
+import { useTranslations } from "../i18n";
+import { DEFAULT_LOCALE, homePath, sectionPath, type Locale } from "../i18n/routing";
 
 interface Props {
   title: string;
+  /** Page language — `lang`, the links and the report dialog (only 404 has an English twin). */
+  locale?: Locale;
   /** Show the Home / Blog / Truyện links (hidden for 429 + offline). */
   showLinks?: boolean;
   /** Show the "Báo lỗi" affordance (404 / 500 only). */
@@ -13,11 +17,12 @@ interface Props {
   /** Reference code (500) forwarded to the report dialog. */
   ref?: string;
 }
-const { title, showLinks = true, showReport = false, ref } = Astro.props;
+const { title, locale = DEFAULT_LOCALE, showLinks = true, showReport = false, ref } = Astro.props;
+const t = useTranslations(locale);
 ---
 
 <!doctype html>
-<html lang="vi" data-theme="dark">
+<html lang={locale} data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -56,10 +61,10 @@ const { title, showLinks = true, showReport = false, ref } = Astro.props;
 
       {
         showLinks && (
-          <nav class="err-nav" aria-label="Điều hướng lỗi">
-            <a href="/">Trang chủ</a>
-            <a href="/blog/">Blog</a>
-            <a href="/truyen/">Truyện</a>
+          <nav class="err-nav" aria-label={t.landmarks.errorNav}>
+            <a href={homePath(locale)}>{t.nav.home}</a>
+            <a href={sectionPath("blog", locale)}>{t.nav.blog}</a>
+            <a href={sectionPath("stories", locale)}>{t.nav.stories}</a>
           </nav>
         )
       }
@@ -67,13 +72,13 @@ const { title, showLinks = true, showReport = false, ref } = Astro.props;
       {
         showReport && (
           <button type="button" class="err-report" data-report-trigger>
-            Báo lỗi
+            {t.actions.reportBug}
           </button>
         )
       }
     </main>
 
-    {showReport && <ReportDialog locale="vi" ref={ref} />}
+    {showReport && <ReportDialog {locale} ref={ref} />}
   </body>
 </html>
 
@@ -135,7 +140,8 @@ const { title, showLinks = true, showReport = false, ref } = Astro.props;
     font-size: var(--text-h2);
     line-height: 1.15;
   }
-  :global(.err .en) {
+  /* The heading again in the other language, under the main one. */
+  :global(.err .echo) {
     color: var(--muted);
     font-size: var(--text-lead);
   }

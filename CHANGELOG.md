@@ -5,6 +5,14 @@ milestones. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.
 Content changes (posts, stories, albums) live in [`poli0981/content`](https://github.com/poli0981/content)
 and are not listed here.
 
+## [Unreleased]
+
+### Fixed
+
+- A missing page under `/en/` gets an English 404 page — English links, recent posts and a
+  search over the English index — instead of the Vietnamese one. The Worker now returns the
+  asset layer's 404 for every missing page rather than rendering it again through the app.
+
 ## [2.0.0] — 2026-10-24
 
 A platform upgrade, a security pass, a new palette and a rebuilt admin
@@ -93,5 +101,6 @@ The public launch is tagged `v1-launch`; the 1.x changes after it were not tagge
 - **2026-10** — Custom Worker entry in front of every page; Workers Rate Limiting; Web Analytics;
   topic email aliases; R2 media; the Turnstile gate; the admin at `admin.poli0981.dev`.
 
+[Unreleased]: https://github.com/poli0981/poli0981-dev/compare/v2.0.0...HEAD
 [2.0.0]: https://github.com/poli0981/poli0981-dev/releases/tag/v2.0.0
 [1.x]: https://github.com/poli0981/poli0981-dev/releases/tag/v1-launch

@@ -15,7 +15,7 @@
 | `/legal/{terms,privacy,disclaimer,third-party,licenses,ai-usage}` | `/en/legal/...` | `legal/*.md` (repo content) |
 | `/now` | `/en/now` | now |
 | `/rss.xml`, `/blog/rss.xml`, `/truyen/rss.xml`, `/sitemap-index.xml`, `/robots.txt`, `/.well-known/security.txt` | | |
-| `/404`, `/500`, `/403`, `/429`, `/offline` | song ngữ trong 1 trang | 09 |
+| `/404` (+ bản en cho mọi đường dẫn `/en/…`), `/500`, `/403`, `/429`, `/offline` | tiêu đề chính + dòng ngôn ngữ kia; 404 có bản riêng mỗi ngôn ngữ | 09 |
 | `admin.poli0981.dev`: `/admin/` (tổng quan), `/admin/content/`, `/admin/edit/`, `/admin/media/`, `/admin/gallery/`, `/admin/activity/`, `/admin/security/` | chỉ vi | on-demand, sau Access (`06` §9) |
 
 ## 2. Wireframe chính (mobile-first)
