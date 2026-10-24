@@ -1,36 +1,35 @@
 version: 2
 updates:
-  # Root npm project. `/workers/widgets` is still omitted, but the reason has changed:
-  # the worker exists now, it is just deliberately dependency-free (no package.json, the
-  # YouTube RSS is hand-parsed), so there is no manifest for Dependabot to read. Add an
-  # entry here the day that worker gains a package.json.
+  # Root npm project. `/workers/widgets` is omitted on purpose: that worker is
+  # dependency-free (no package.json, the YouTube RSS is hand-parsed), so there is no
+  # manifest for Dependabot to read. Add an entry the day that worker gains a package.json.
   - package-ecosystem: npm
     directory: "/"
     schedule:
       interval: weekly
       day: monday
+    # Supply-chain hardening (docs 06 §6): never propose a release younger than three days.
+    # Malicious publishes — the Shai-Hulud shape — are usually caught and pulled within hours.
+    cooldown:
+      default-days: 3
     open-pull-requests-limit: 8
     groups:
       astro:
         patterns: ["astro", "@astrojs/*"]
+      # The type-checking toolchain moves together: typescript-eslint pins the TypeScript
+      # versions it accepts.
+      typescript:
+        patterns: ["typescript", "typescript-eslint"]
       dev-tools:
         dependency-type: development
     ignore:
-      # TypeScript is pinned to 6.0.x on purpose and a major bump can never resolve:
-      #   typescript-eslint peers `>=4.8.4 <6.1.0`  <- the binding constraint
-      #   @astrojs/check    peers `^5.0.0 || ^6.0.0`
-      #   @astrojs/svelte   peers `^5.3.3 || ^6.0.0`
-      # Without this, every dev-tools group PR silently includes typescript@7 and dies
-      # at `npm ci` with ERESOLVE, taking 9 unrelated updates down with it.
-      # Remove this entry once typescript-eslint widens its peer range past 7.
+      # `typescript` stays on 6.x on purpose. TypeScript 7.0 ships no JS API, and astro
+      # check (Volar), typescript-eslint and svelte2tsx all need one. TS 7 itself is the
+      # `@typescript/native` alias (npm:typescript@7) — and Dependabot skips every `npm:`
+      # alias, so that one is bumped by hand (docs 17). Lift this ignore once those tools
+      # support TypeScript 7.1's new API.
       - dependency-name: typescript
         update-types: ["version-update:semver-major"]
-      # typescript-eslint 8.71 breaks Svelte linting: with svelte-eslint-parser 1.8.x every
-      # prop/rune that is only read in the template is reported as "assigned a value but
-      # only used as a type" (131 false positives across src/components/*.svelte). 8.70.1
-      # is clean. Lift this once a bump passes `npx eslint .` again.
-      - dependency-name: typescript-eslint
-        versions: [">= 8.71.0"]
       # prettier-plugin-astro 1.x reflows `<span>{expr}</span>` onto separate lines in 50
       # .astro files, which inserts whitespace text nodes inside inline elements. That is a
       # visual change, not a formatting one — it needs its own PR with a rendered diff.
@@ -42,3 +41,5 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    cooldown:
+      default-days: 3

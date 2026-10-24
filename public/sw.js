@@ -5,12 +5,15 @@
  *
  * Bump SHELL when the offline page or this file changes so clients update.
  */
-const SHELL = "shell-v2";
+const SHELL = "shell-v3";
 const OFFLINE = "/offline/";
 // skullhop.js is precached by name rather than warmed like /_astro/*: it only loads on
 // the offline page, which nobody visits while online, so warm-on-fetch would never fire
 // and the game would 404 in the one situation it exists for.
 const PRECACHE = [OFFLINE, "/favicon.svg", "/skullhop.js"];
+// Hashed assets from older deploys are never requested again; cap the warm cache so it
+// can't grow by a deploy's worth of files forever. Oldest entries go first.
+const MAX_WARM_ASSETS = 80;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -30,6 +33,16 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+/** Drop the oldest warmed /_astro/* entries beyond MAX_WARM_ASSETS (keys keep insert order). */
+async function trimWarmAssets(cache) {
+  const assets = (await cache.keys()).filter((request) =>
+    new URL(request.url).pathname.startsWith("/_astro/"),
+  );
+  const excess = assets.length - MAX_WARM_ASSETS;
+  if (excess > 0)
+    await Promise.all(assets.slice(0, excess).map((request) => cache.delete(request)));
+}
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
@@ -47,16 +60,16 @@ self.addEventListener("fetch", (event) => {
   // never need to know the hashed filenames at build time).
   if (url.pathname.startsWith("/_astro/")) {
     event.respondWith(
-      caches.open(SHELL).then((cache) =>
-        cache.match(request).then(
-          (hit) =>
-            hit ||
-            fetch(request).then((res) => {
-              if (res.ok) cache.put(request, res.clone());
-              return res;
-            }),
-        ),
-      ),
+      caches.open(SHELL).then(async (cache) => {
+        const hit = await cache.match(request);
+        if (hit) return hit;
+        const res = await fetch(request);
+        if (res.ok) {
+          // Keep the worker alive until the copy is stored (and the cache trimmed).
+          event.waitUntil(cache.put(request, res.clone()).then(() => trimWarmAssets(cache)));
+        }
+        return res;
+      }),
     );
   }
 });

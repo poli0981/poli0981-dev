@@ -1,5 +1,5 @@
-// Which requests the Turnstile gate applies to. Pure functions, unit-tested with
-// `node --test` (see scripts/test-gate.mjs) — no Workers APIs here.
+// Which requests the Turnstile gate applies to. Pure functions, unit-tested in
+// tests/gate.test.ts — no Workers APIs here.
 
 export type GateMode = "off" | "on" | "force";
 

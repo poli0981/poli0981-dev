@@ -1,45 +1,22 @@
 import { env } from "cloudflare:workers";
+import type {
+  Feed,
+  GameItem,
+  GhItem,
+  VideoItem,
+  WidgetsPayload,
+  WidgetsStatus,
+} from "./widgets-types";
 
-// Shared widget types. The cron worker (workers/widgets/src/index.ts) writes KV values in
-// exactly these shapes; it keeps its own copy of these interfaces because it is a separate
-// TS project — the KV JSON shape is the real cross-boundary contract, keep the two in sync.
-
-type SourceStatus = "ok" | "stale" | "na";
-
-export interface VideoItem {
-  id: string;
-  title: string;
-  thumb: string;
-  published: string;
-}
-export interface GameItem {
-  appid: number;
-  name: string;
-  playtime2w: number; // minutes
-  icon: string;
-}
-export interface GhItem {
-  type: string;
-  repo: string;
-  ts: string;
-  detail: string;
-}
-export interface Feed<T> {
-  updated: string;
-  items: T[];
-}
-export interface WidgetsStatus {
-  yt: SourceStatus;
-  steam: SourceStatus;
-  gh: SourceStatus;
-  lastRun: string;
-}
-export interface WidgetsPayload {
-  yt: Feed<VideoItem> | null;
-  steam: Feed<GameItem> | null;
-  gh: Feed<GhItem> | null;
-  status: WidgetsStatus | null;
-}
+// The KV shapes are shared with the cron worker through ./widgets-types.
+export type {
+  Feed,
+  GameItem,
+  GhItem,
+  VideoItem,
+  WidgetsPayload,
+  WidgetsStatus,
+} from "./widgets-types";
 
 /**
  * Build-time snapshot read. During `astro build` the KV binding is Miniflare-local and

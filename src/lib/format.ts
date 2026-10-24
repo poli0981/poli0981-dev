@@ -37,13 +37,16 @@ export function isoDate(date: Date): string {
  * the dependency. It handles the constructs those answers actually use.
  */
 export function plainText(markdown: string): string {
+  // Every pattern is linear: bracket classes exclude the opening bracket too, so a failed
+  // match can't rescan the same text from the next "[", and line-anchored patterns use
+  // [ \t] rather than \s, which (under /m) could run across newlines and backtrack.
   return markdown
     .replace(/```[\s\S]*?```/g, "") // fenced code
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, "") // images
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1") // links → their text
-    .replace(/^\s{0,3}#{1,6}\s+/gm, "") // headings
-    .replace(/^\s{0,3}>\s?/gm, "") // blockquotes
-    .replace(/^\s*[-*+]\s+/gm, "") // list bullets
+    .replace(/!\[[^[\]]*\]\([^()]*\)/g, "") // images
+    .replace(/\[([^[\]]+)\]\([^()]*\)/g, "$1") // links → their text
+    .replace(/^[ \t]{0,3}#{1,6}[ \t]+/gm, "") // headings
+    .replace(/^[ \t]{0,3}>[ \t]?/gm, "") // blockquotes
+    .replace(/^[ \t]*[-*+][ \t]+/gm, "") // list bullets
     .replace(/(\*\*|__|\*|_|`)/g, "") // emphasis + inline code
     .replace(/\s+/g, " ")
     .trim();

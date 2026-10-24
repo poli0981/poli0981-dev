@@ -1,13 +1,22 @@
 {
   "extends": "astro/tsconfigs/strict",
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist", "node_modules", ".wrangler", "workers"],
+  "exclude": ["dist", "node_modules", ".wrangler", "workers", "coverage"],
   "compilerOptions": {
+    // ES2025 everywhere: the Workers runtime and Node 26 both implement it, and Vite's
+    // build target (not this) decides what syntax reaches browsers.
+    "target": "ES2025",
+    "lib": ["ES2025", "DOM", "DOM.Iterable"],
+    // TypeScript 6+/7 default `types` to [] — list the ambient packages explicitly.
+    "types": ["node"],
     "strictNullChecks": true,
     "verbatimModuleSyntax": true,
-    "baseUrl": ".",
+    // Node runs the unit tests by stripping types, which only works for erasable syntax
+    // (no enums, namespaces or constructor parameter properties).
+    "erasableSyntaxOnly": true,
+    // No `baseUrl` (removed in TypeScript 7): paths resolve from this file's directory.
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   }
 }

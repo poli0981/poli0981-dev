@@ -1,5 +1,6 @@
 <script>
   import { onMount } from "svelte";
+  import { externalImagePath } from "../lib/ext-img";
 
   /**
    * @type {{
@@ -23,6 +24,11 @@
   );
   const game = $derived(data.status?.steam !== "na" ? (data.steam?.items?.[0] ?? null) : null);
   const hasAny = $derived(videos.length > 0 || Boolean(game));
+
+  // Pictures come from this origin (/ext-img, mirrored by the cron) — never hot-linked
+  // from YouTube or Steam. Older feeds still hold upstream URLs; those map across too.
+  /** @param {string} url */
+  const picture = (url) => (url ? externalImagePath(url) : null);
 
   /** @param {number} min */
   function hours(min) {
@@ -55,7 +61,9 @@
                 allowfullscreen
               ></iframe>
             {:else}
-              <img src={video.thumb} alt="" loading="lazy" width="480" height="270" />
+              {#if picture(video.thumb)}
+                <img src={picture(video.thumb)} alt="" loading="lazy" width="480" height="270" />
+              {/if}
               <button
                 type="button"
                 class="w-play"
@@ -78,8 +86,15 @@
           <div class="w-body">
             <span class="w-kicker">{labels.nowPlaying}</span>
             <div class="w-game">
-              {#if game.icon}
-                <img class="w-icon" src={game.icon} alt="" width="32" height="32" loading="lazy" />
+              {#if picture(game.icon)}
+                <img
+                  class="w-icon"
+                  src={picture(game.icon)}
+                  alt=""
+                  width="32"
+                  height="32"
+                  loading="lazy"
+                />
               {/if}
               <div>
                 <h3 class="w-title">{game.name}</h3>

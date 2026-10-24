@@ -4,9 +4,12 @@ import assert from "node:assert/strict";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
 import { buildFile, splitFile } from "../src/lib/admin/frontmatter.ts";
 
-const CONTENT = new URL("../src/content/", import.meta.url).pathname;
+// fileURLToPath, not .pathname: on Windows the latter is "/E:/…", every read failed and the
+// round-trip test silently skipped itself as "not checked out".
+const CONTENT = fileURLToPath(new URL("../src/content/", import.meta.url));
 const ENTRY_DIRS = ["blog", "stories", "projects", "faq", "gallery", "legal", "now"];
 
 function files(dir: string): string[] {
@@ -42,6 +45,17 @@ describe("admin frontmatter round-trip", () => {
       edited,
       `---\ntitle: "New: title"\ndate: 2026-08-08\ntags: [diary, share]\ndraft: true\n---\n\nBody text.\n`,
     );
+  });
+
+  it("deletes keys the new frontmatter no longer has, keeping the rest verbatim", () => {
+    const original = `---\ntitle: "Keep" # inline\nlang: vi\ncover: ./a.jpg\n---\nBody\n`;
+    const { data, body } = splitFile(original);
+    const { cover: _cover, ...rest } = data;
+    assert.equal(
+      buildFile(original, rest, body),
+      `---\ntitle: "Keep" # inline\nlang: vi\n---\n\nBody\n`,
+    );
+    assert.deepEqual(splitFile("no frontmatter"), { data: {}, body: "no frontmatter" });
   });
 
   it("drops emptied keys and writes new files with a body separator", () => {

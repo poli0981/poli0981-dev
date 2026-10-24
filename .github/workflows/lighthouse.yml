@@ -20,6 +20,7 @@ concurrency:
 jobs:
   lighthouse:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     # The whole point: informative, never a blocker.
     continue-on-error: true
     permissions:
@@ -34,11 +35,12 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
+      # Same as ci.yml: no dependency lifecycle scripts in CI.
       - name: Install
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Generate Cloudflare binding types
-        run: npx wrangler types
+        run: npm run types
 
       - name: Build
         run: npm run build
@@ -58,26 +60,18 @@ jobs:
           done
           echo "preview server never came up"; exit 1
 
-      # Four representative pages (docs 14 §3): home, a blog post, a story chapter,
-      # a gallery album — the heaviest template of each kind.
-      # collect and assert are separate steps on purpose. With `autorun`, a failed
-      # assertion aborts the run before anything is written, so the reports artifact
-      # came back empty in exactly the case you want to read it.
-      - name: Lighthouse — collect
-        run: |
-          npx --yes @lhci/cli@0.15.x collect \
-            --url=http://localhost:4321/ \
-            --url=http://localhost:4321/blog/lan-dau-viet-truyen/ \
-            --url=http://localhost:4321/truyen/dem-khong-tieng/chuong-01/ \
-            --url=http://localhost:4321/gallery/game/
-
-      - name: Lighthouse — assert budget
-        run: npx --yes @lhci/cli@0.15.x assert
-
-      - name: Upload reports
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      # Four representative pages (docs 14 §3): home, a blog post, a story chapter, a
+      # gallery album — the heaviest template of each kind. The action bundles @lhci/cli,
+      # so nothing is downloaded with npx at run time; it collects, asserts against
+      # lighthouserc.json (warn-only) and uploads the reports even when an assertion warns.
+      - name: Lighthouse
+        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # 12.6.2
         with:
-          name: lighthouse-reports
-          path: .lighthouseci/
-          retention-days: 14
+          configPath: ./lighthouserc.json
+          urls: |
+            http://localhost:4321/
+            http://localhost:4321/blog/lan-dau-viet-truyen/
+            http://localhost:4321/truyen/dem-khong-tieng/chuong-01/
+            http://localhost:4321/gallery/game/
+          uploadArtifacts: true
+          artifactName: lighthouse-reports

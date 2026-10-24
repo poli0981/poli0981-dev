@@ -60,7 +60,11 @@ interface TurnstileApi {
 const TURNSTILE_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 let turnstileReady: Promise<TurnstileApi> | null = null;
 
-/** Lazily inject the Turnstile script (once) and resolve its explicit-render API. */
+/**
+ * Lazily inject the Turnstile script (once) and resolve its explicit-render API. A failed
+ * load is forgotten, so the next attempt (the dialog's retry) loads the script again
+ * instead of replaying the same rejection until the page is reloaded.
+ */
 export function loadTurnstile(): Promise<TurnstileApi> {
   const win = window as unknown as { turnstile?: TurnstileApi };
   turnstileReady ??= new Promise<TurnstileApi>((resolve, reject) => {
@@ -75,25 +79,22 @@ export function loadTurnstile(): Promise<TurnstileApi> {
       win.turnstile ? resolve(win.turnstile) : reject(new Error("turnstile-missing"));
     script.onerror = () => reject(new Error("turnstile-load-failed"));
     document.head.appendChild(script);
+  }).catch((error: unknown) => {
+    turnstileReady = null;
+    throw error;
   });
   return turnstileReady;
 }
 
-/** POST the report. Returns the HTTP status (201 ok, 202 degraded, 4xx/5xx failure). */
-export async function submitReport(
-  payload: ReportPayload,
-): Promise<{ status: number; url?: string }> {
+/**
+ * POST the report. Returns the HTTP status (201 ok, 202 degraded, 4xx/5xx failure). The
+ * issue itself lands in a private repo, so there is no link to hand back.
+ */
+export async function submitReport(payload: ReportPayload): Promise<{ status: number }> {
   const res = await fetch("/api/report", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(payload),
   });
-  let url: string | undefined;
-  try {
-    const data = (await res.json()) as { url?: string };
-    url = data.url;
-  } catch {
-    /* non-JSON body */
-  }
-  return { status: res.status, url };
+  return { status: res.status };
 }

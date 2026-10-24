@@ -103,11 +103,9 @@
         );
     } catch (error) {
       status =
-        error instanceof ApiError && error.status === 409
+        error instanceof ApiError && error.data.error === "conflict"
           ? "File đã bị sửa ở nơi khác (vd. GitHub). Sao chép phần đang viết rồi tải lại trang."
-          : error instanceof ApiError && error.data.error === "missing_field"
-            ? `Thiếu trường bắt buộc: ${error.data.field}`
-            : describeError(error);
+          : describeError(error);
     } finally {
       saving = false;
     }

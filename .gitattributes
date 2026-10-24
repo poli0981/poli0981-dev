@@ -1,0 +1,16 @@
+# LF everywhere — in the repository and in every working tree, whatever the OS. Without this,
+# core.autocrlf=true (the Windows default) checks text out as CRLF, and `prettier --check` and
+# `npm run gen-notices -- --check` then fail locally while CI on Linux passes.
+* text=auto eol=lf
+
+# Binary assets: never touched.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.avif binary
+*.gif binary
+*.ico binary
+*.ttf binary
+*.woff binary
+*.woff2 binary

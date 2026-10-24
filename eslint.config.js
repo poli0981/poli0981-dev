@@ -1,23 +1,26 @@
+import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 import astro from "eslint-plugin-astro";
 import svelte from "eslint-plugin-svelte";
 
-export default tseslint.config(
+export default defineConfig(
   {
     ignores: [
       "dist/",
       ".astro/",
       "**/.wrangler/",
       "node_modules/",
+      "coverage/",
+      ".claude/",
       "public/pagefind/",
       "poli0981.dev-docs/",
       "**/worker-configuration.d.ts",
     ],
   },
-  ...tseslint.configs.recommended,
-  ...tseslint.configs.strict,
-  ...astro.configs.recommended,
-  ...svelte.configs.recommended,
+  tseslint.configs.recommended,
+  tseslint.configs.strict,
+  astro.configs.recommended,
+  svelte.configs.recommended,
   {
     rules: {
       "@typescript-eslint/no-unused-vars": [

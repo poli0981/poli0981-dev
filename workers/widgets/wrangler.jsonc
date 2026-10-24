@@ -2,7 +2,7 @@
   "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "poli0981-widgets",
   "main": "src/index.ts",
-  "compatibility_date": "2026-07-01",
+  "compatibility_date": "2026-10-15",
   "compatibility_flags": ["nodejs_compat"],
   // Cron-only worker: no public route, no workers.dev URL.
   "workers_dev": false,
@@ -19,10 +19,12 @@
     },
   ],
   "vars": {
-    // Public (non-secret) YouTube channel id. Replace with the real UC… value before deploy.
+    // Public (non-secret) YouTube channel id — the SkullMute channel.
     "YT_CHANNEL_ID": "UCCpZWle6fSgQXn3gLKoCGOg",
   },
   "observability": {
     "enabled": true,
+    // One structured JSON line per run and per failed source (src/index.ts).
+    "logs": { "enabled": true, "invocation_logs": true },
   },
 }

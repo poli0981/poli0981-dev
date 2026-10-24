@@ -12,21 +12,26 @@ const SITE_REPO = { owner: "poli0981", name: "poli0981-dev" } as const;
 const BRANCH = "main";
 
 export class GitHubError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-    /** What GitHub says the call needed (X-Accepted-GitHub-Permissions), e.g. "contents=write". */
-    readonly needs: string | null = null,
-  ) {
+  readonly status: number;
+  /** What GitHub says the call needed (X-Accepted-GitHub-Permissions), e.g. "contents=write". */
+  readonly needs: string | null;
+
+  constructor(message: string, status: number, needs: string | null = null) {
     super(message);
+    this.status = status;
+    this.needs = needs;
   }
 }
 
 /** The content changed under us since the editor loaded it. */
 export class ConflictError extends Error {}
 
+/** A GitHub call that hangs must not hold the admin request (or the isolate) open. */
+const TIMEOUT_MS = 15_000;
+
 async function request<T>(token: string, path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API}${path}`, {
+    signal: AbortSignal.timeout(TIMEOUT_MS),
     ...init,
     headers: {
       accept: "application/vnd.github+json",

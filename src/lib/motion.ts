@@ -1,7 +1,6 @@
 /**
- * Motion tokens (docs 03 §6) shared by GSAP islands and CSS.
- * GSAP itself is always dynamically imported inside the island that needs it —
- * never import it from here, so it stays out of shared bundles.
+ * Motion tokens (docs 03 §6) shared by the animated islands (Waveline, Lightbox) and CSS.
+ * The islands animate with plain CSS/Web Animations — no animation library is bundled.
  */
 
 /** Durations in seconds; CSS mirrors these as ms tokens (--duration-*). */

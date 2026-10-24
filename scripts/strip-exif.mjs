@@ -10,51 +10,83 @@
 //      which is a pointless amount of bytes for a 400-800px gallery thumbnail and blows
 //      out both the repo and the Astro build.
 import { readdir, readFile, writeFile, stat } from "node:fs/promises";
-import { join, extname } from "node:path";
+import { join, extname, relative, resolve, sep } from "node:path";
 import sharp from "sharp";
 
-const dir = process.argv[2];
-if (!dir) {
-  console.error("usage: node scripts/strip-exif.mjs <folder>");
+const ASSETS = resolve("src/assets");
+const arg = process.argv[2];
+if (!arg) {
+  console.error("usage: node scripts/strip-exif.mjs <folder under src/assets/>");
+  process.exit(1);
+}
+// The tool rewrites every image it finds in place, so it only ever walks src/assets.
+const dir = resolve(arg);
+if (dir !== ASSETS && !dir.startsWith(ASSETS + sep)) {
+  console.error(`refusing to touch ${arg}: only folders under src/assets/ are processed`);
   process.exit(1);
 }
 
 const EXT = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif"]);
 const MAX_EDGE = 2560;
+const MAX_BYTES = 1.5 * 1024 * 1024;
 // mozjpeg at 85 rather than plain 82: stripping metadata always costs one re-encode
 // generation, and mozjpeg buys back enough bytes that already-compressed phone photos
-// don't come out *larger* than they went in.
-const QUALITY = 85;
+// don't come out *larger* than they went in. Over budget, step down to at most 70.
+const QUALITIES = [85, 80, 75, 70];
 
-const files = (await readdir(dir)).filter((f) => EXT.has(extname(f).toLowerCase()));
+/** Every image under `root`, subfolders included. */
+async function imagesUnder(root) {
+  const out = [];
+  for (const entry of await readdir(root, { withFileTypes: true })) {
+    const full = join(root, entry.name);
+    if (entry.isDirectory()) out.push(...(await imagesUnder(full)));
+    else if (EXT.has(extname(entry.name).toLowerCase())) out.push(full);
+  }
+  return out;
+}
 
+async function encode(input, ext, resized, quality) {
+  let pipeline = sharp(input).rotate();
+  if (resized) {
+    pipeline = pipeline.resize({
+      width: MAX_EDGE,
+      height: MAX_EDGE,
+      fit: "inside",
+      withoutEnlargement: true,
+    });
+  }
+  if (ext === ".jpg" || ext === ".jpeg") pipeline = pipeline.jpeg({ quality, mozjpeg: true });
+  return pipeline.toBuffer();
+}
+
+const files = await imagesUnder(dir);
 let saved = 0;
-for (const f of files) {
-  const p = join(dir, f);
+const overBudget = [];
+
+for (const p of files) {
   const before = (await stat(p)).size;
   const input = await readFile(p); // read fully first, then overwrite the same path
-
-  let pipeline = sharp(input).rotate();
   const { width, height } = await sharp(input).metadata();
   const resized = Math.max(width ?? 0, height ?? 0) > MAX_EDGE;
-  if (resized) {
-    // `withoutEnlargement` is belt-and-braces; the guard above already covers it.
-    pipeline = pipeline.resize({ width: MAX_EDGE, height: MAX_EDGE, fit: "inside" });
-  }
+  const ext = extname(p).toLowerCase();
 
-  const ext = extname(f).toLowerCase();
-  if (ext === ".jpg" || ext === ".jpeg") {
-    pipeline = pipeline.jpeg({ quality: QUALITY, mozjpeg: true });
+  let out = await encode(input, ext, resized, QUALITIES[0]);
+  for (const quality of QUALITIES.slice(1)) {
+    if (out.length <= MAX_BYTES || (ext !== ".jpg" && ext !== ".jpeg")) break;
+    out = await encode(input, ext, resized, quality);
   }
-
-  const out = await pipeline.toBuffer();
   await writeFile(p, out);
+  if (out.length > MAX_BYTES) overBudget.push(relative(".", p));
 
   saved += before - out.length;
   const note = resized ? `${width}x${height} -> max ${MAX_EDGE}px` : "metadata only";
   console.log(
-    `  ${f.padEnd(20)} ${(before / 1024).toFixed(0)}KB -> ${(out.length / 1024).toFixed(0)}KB  (${note})`,
+    `  ${relative(dir, p).padEnd(28)} ${(before / 1024).toFixed(0)}KB -> ${(out.length / 1024).toFixed(0)}KB  (${note})`,
   );
 }
 
 console.log(`done: ${files.length} image(s), ${(saved / 1024 / 1024).toFixed(2)}MB saved`);
+if (overBudget.length) {
+  console.warn(`still over ${MAX_BYTES / 1024 / 1024}MB (resize or recompress by hand):`);
+  for (const file of overBudget) console.warn(`  ${file}`);
+}

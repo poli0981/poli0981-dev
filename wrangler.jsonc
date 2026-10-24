@@ -1,11 +1,11 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "poli0981-dev",
-  "compatibility_date": "2026-07-01",
+  "compatibility_date": "2026-10-15",
   "compatibility_flags": ["nodejs_compat"],
-  // Custom entry wrapping the adapter's handler: www→apex, security headers and (later)
-  // the Turnstile gate and /media for *every* page, which the Astro middleware never
-  // sees for prerendered routes. See src/worker.ts.
+  // Custom entry wrapping the adapter's handler: www→apex, the IP denylist, security headers,
+  // the Turnstile gate, /media and /ext-img for *every* page — the Astro middleware never
+  // sees prerendered routes. See src/worker.ts.
   "main": "./src/worker.ts",
   // Serve only via the custom domains — no poli0981-dev.*.workers.dev URL, and no
   // per-version preview URLs either: those live on workers.dev, outside the zone's
@@ -83,6 +83,10 @@
     // Not secrets: the AUD tag only says which app a token must be minted for.
     "ACCESS_TEAM_DOMAIN": "https://polished-hall-48fd.cloudflareaccess.com",
     "ACCESS_AUD": "197ec8eae1275e465623bdb77f88238b9b01dd66eec0be2e8c13ccd7b13e48b7",
+    // Where /api/report files bug reports. A PRIVATE repo: reports carry the reporter's
+    // description, route and browser details, and the privacy policy promises they are not
+    // public. GITHUB_ISSUES_TOKEN must have Issues: read & write on it.
+    "REPORT_REPO": "poli0981/site-reports",
   },
   // Uploaded images (src/lib/media): public AVIF/WebP variants under v1/, private
   // metadata-free masters and per-image metadata elsewhere. The bucket has no public
@@ -94,8 +98,19 @@
   // (width/height/format only) — never `remote: true`, the build-time prerender worker
   // inherits every binding and CI has no Cloudflare credentials.
   "images": { "binding": "IMAGES" },
+  // The running version's id/tag/timestamp (src/lib/version.ts): /api/health and the admin
+  // report it, so a deploy can be verified by asking the live site what it runs.
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
   "observability": {
     "enabled": true,
+    // Query strings never reach Workers Logs or traces (admin URLs carry content paths).
+    "redact_query_string": true,
+    // Every invocation is logged: the structured JSON lines from src/lib/log.ts become
+    // queryable fields in the dashboard.
+    "logs": { "enabled": true, "invocation_logs": true, "head_sampling_rate": 1 },
+    // Traces are sampled — enough to see where time goes without paying per request.
+    "traces": { "enabled": true, "head_sampling_rate": 0.1 },
   },
-  // routes / custom_domain -> deferred to the deploy plan
+  // Custom domains (poli0981.dev, www., admin.) are attached in the dashboard, not here:
+  // with no `routes` key, `wrangler deploy` leaves them untouched.
 }

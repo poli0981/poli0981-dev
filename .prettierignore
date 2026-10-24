@@ -1,4 +1,5 @@
 # Generated / build output
+coverage/
 dist/
 .astro/
 .wrangler/
@@ -24,3 +25,6 @@ THIRD-PARTY-NOTICES.md
 # YAML — prettier reads `{{LANG}}` as a nested flow mapping and rewrites it to
 # `{ { LANG } }`, which new-post.mjs then never substitutes.
 docs/templates/
+
+# Local Claude Code worktrees (excluded from git via .git/info/exclude).
+.claude/
