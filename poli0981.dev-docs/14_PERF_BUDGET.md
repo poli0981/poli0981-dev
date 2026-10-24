@@ -27,5 +27,6 @@
 ## 3. Kiểm tra
 
 - Local: `npm run build && npx astro preview` + Lighthouse trong DevTools cho 4 trang đại diện: `/`, 1 bài blog, 1 chương truyện, `/gallery/<album>`.
-- CI (P2): job Lighthouse CI chạy trên preview build, assert budget bảng §1 — chỉ warn, không block, để tránh flaky chặn deploy; đỏ 2 lần liên tiếp thì xử lý.
+- CI: `lighthouse.yml` (`treosh/lighthouse-ci-action`, preset **mobile** như bảng §1) chạy trên bản build, assert budget — chỉ warn, không block, để tránh flaky chặn deploy; đỏ 2 lần liên tiếp thì xử lý.
+- Islands thêm từ 10/2026 đều nhỏ và `client:idle`/`client:load` có lý do: ThemeToggle (`client:load` — icon đúng ngay nhờ CSS theo `data-theme-pref`), SearchModal/MenuSheet (`client:idle`). Admin là trang on-demand riêng, không tính vào budget site.
 - Thực địa: Cloudflare Web Analytics có Core Web Vitals thật của khách — xem hằng tháng (lịch `17`).

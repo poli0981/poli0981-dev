@@ -103,7 +103,7 @@ Tiện ích khuyến nghị: snippet VS Code cho từng frontmatter; `npm run ne
 
 - Ảnh nội dung đặt trong `src/assets/` để Astro Image tự sinh AVIF/WebP + srcset; **không** bỏ ảnh content vào `public/`.
 - **Chính sách EXIF**: mọi ảnh chụp (đặc biệt gallery kỷ niệm) phải qua `node scripts/strip-exif.mjs <folder>` (sharp: re-encode, bỏ toàn bộ metadata) **trước khi commit**.
-- Chốt chặn CI: `scripts/check-exif.mjs` quét ảnh thay đổi trong PR, thấy GPS/serial → **fail build**. (Repo đang private nhưng ảnh build ra là public — strip từ gốc.)
+- Chốt chặn CI: `scripts/check-exif.mjs` quét ảnh thay đổi trong PR, thấy GPS/serial → **fail build**. (Repo public và ảnh build ra cũng public — strip từ gốc; `check-exif` đọc bytes thật, file không đọc được cũng tính là lỗi.)
 - Kích thước: ảnh gốc ≤ 2560px cạnh dài, ≤ 1.5MB sau strip. Khi tổng `src/assets/gallery/` > ~1GB → kích hoạt phương án R2 (`17` §5).
 
 ### 6b. Ảnh R2 (upload qua admin)

@@ -1,6 +1,6 @@
 # 10 — Bug report pipeline (console error → GitHub Issue + Discord)
 
-Repo private ⇒ khách không mở issue trực tiếp được. Pipeline này là kênh báo lỗi duy nhất cho visitor, và cũng tiện cho chính mình.
+Pipeline này là kênh báo lỗi chính cho visitor (không cần tài khoản GitHub), và cũng tiện cho chính mình. Từ 10/2026 repo site là public, nhưng báo cáo có thể chứa log/mô tả riêng tư nên issue được tạo ở repo **private** `poli0981/site-reports` (đúng lời hứa "private GitHub issue" của Privacy Policy).
 
 ## 1. Client — thu console error
 
@@ -12,7 +12,7 @@ Repo private ⇒ khách không mở issue trực tiếp được. Pipeline này 
 
 ## 2. UX — nút "Báo lỗi" (footer mọi trang, và trang 404/500)
 
-Dialog gồm: textarea mô tả (bắt buộc, ≥ 10 ký tự) → checkbox **"Đính kèm log lỗi console (n mục)"** mặc định bật, kèm nút *Xem trước* mở đúng nội dung sẽ gửi → dòng tự đính: route, UA, viewport, theme, locale, mã tham chiếu (nếu đến từ trang 500) → Turnstile → Gửi. Thành công: "Đã gửi — cảm ơn bạn!". Thất bại: hiện thông báo + nút copy nội dung để gửi qua Discord.
+Dialog (`<dialog>` modal có nhãn, textarea có `<label>`) gồm: textarea mô tả (bắt buộc, ≥ 10 ký tự) → checkbox **"Đính kèm log lỗi console (n mục)"** mặc định bật, kèm nút *Xem trước* mở đúng nội dung sẽ gửi → dòng tự đính: route, UA, viewport, theme, locale, mã tham chiếu (từ trang 500: **Cloudflare Ray ID** do worker đóng dấu, trùng field `ray` trong Workers Logs) → Turnstile → Gửi. Thành công: "Đã gửi — cảm ơn bạn!". Thất bại: hiện thông báo + nút copy nội dung để gửi qua Discord (báo "đã sao chép" hoặc lý do clipboard bị chặn).
 
 ## 3. API contract — `POST /api/report`
 
@@ -25,14 +25,14 @@ Dialog gồm: textarea mô tả (bắt buộc, ≥ 10 ký tự) → checkbox **"
 }
 ```
 
-Worker xử lý theo thứ tự: rate-limit (middleware, binding `RL_REPORT` 5/phút/client, fail 429) → thiếu secret (503) → body > 32 KB (413) → Zod validate (fail 400) → Turnstile siteverify (`src/lib/turnstile-server.ts`: kiểm `success` **+ `action: "report"` + `hostname: poli0981.dev`**, fail 400 `turnstile_failed`) → **tạo GitHub Issue** → **Discord webhook** → 201. Nếu GitHub API lỗi: vẫn bắn Discord (kèm full payload) và trả 202 — không mất báo cáo. Token Turnstile dùng một lần: dialog gọi `turnstile.reset()` sau mỗi lần gửi.
+Worker xử lý theo thứ tự: rate-limit (middleware, binding `RL_REPORT` 5/phút/client, fail 429) → thiếu secret (503) → body > 32 KB (413 — đọc stream có trần, không đọc hết) → Zod validate (fail 400) → Turnstile siteverify (`src/lib/turnstile-server.ts`: kiểm `success` **+ `action: "report"` + `hostname: poli0981.dev`**, fail 400 `turnstile_failed`) → **tạo GitHub Issue** → **Discord webhook** → 201 `{ok: true}`. Nếu GitHub API lỗi: vẫn bắn Discord (kèm full payload) và trả 202 — không mất báo cáo. Mỗi lời gọi ra ngoài có timeout 10 s; response `no-store`. Token Turnstile dùng một lần: dialog gọi `turnstile.reset()` sau mỗi lần gửi.
 
 ## 4. GitHub Issue
 
-`POST /repos/poli0981/poli0981.dev/issues` với `GITHUB_ISSUES_TOKEN` (fine-grained, chỉ Issues R/W):
+`POST /repos/<REPORT_REPO>/issues` — `REPORT_REPO` là var trong `wrangler.jsonc` (mặc định `poli0981/site-reports`, private) — với `GITHUB_ISSUES_TOKEN` (fine-grained, **chỉ repo đó**, Issues R/W):
 - title: `[web-report] <60 ký tự đầu của description>`
 - labels: `bug`, `from-site`
-- body: render đúng cấu trúc template §5 (description → meta table → console trong code block).
+- body: render đúng cấu trúc template §5 (description → meta table → console trong code block). `@mention` trong title/body bị vô hiệu (chèn zero-width) để báo cáo không ping ai; nội dung khách đưa vào code span/fence an toàn.
 
 ## 5. Issue template dùng chung — `.github/ISSUE_TEMPLATE/bug_report.yml`
 
@@ -65,7 +65,7 @@ body:
 
 ## 6. Discord webhook
 
-Kênh riêng `#site-reports` trong server repo. Embed: màu `--color-horror`, title = issue title, field route/UA, link issue. (Tái dùng format của `notify.py` cho đồng bộ.)
+Kênh riêng `#site-reports` trong server repo. Embed: màu `--horror`, title = issue title, field route/UA, link issue; `allowed_mentions: { parse: [] }` để nội dung khách không ping được ai. (Tái dùng format của `notify.py` cho đồng bộ.)
 
 ## 7. Privacy & giới hạn
 
