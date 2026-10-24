@@ -62,7 +62,11 @@ const pathname = Astro.url.pathname;
           ></path>
         </svg>
       </button>
-      <ThemeToggle client:load labels={t.theme} />
+      {
+        /* idle, not load: CSS already shows the right icon from <html data-theme-pref>, so
+          the Svelte runtime need not compete with first paint for bandwidth. */
+      }
+      <ThemeToggle client:idle labels={t.theme} />
       <LangSwitch href={langHref} />
       <button
         type="button"

@@ -7,6 +7,14 @@ and are not listed here.
 
 ## [Unreleased]
 
+### Changed
+
+- Faster first paint on phones: every page carries its CSS inline (about 9 KB brotli) instead of
+  two render-blocking stylesheets, and the theme toggle and the home page's hero wave hydrate
+  when the browser is idle rather than during first paint.
+- Lighthouse CI measures through nginx, which gzips responses as Cloudflare's edge compresses them
+  in production; the local preview server sends everything uncompressed.
+
 ### Fixed
 
 - A missing page under `/en/` gets an English 404 page — English links, recent posts and a

@@ -76,6 +76,11 @@ export default defineConfig({
   // `export const prerender = false` (only api routes + middleware run on-demand).
   output: "static",
 
+  // Every page's CSS goes inline (about 9 KB brotli): the two shared stylesheets were the
+  // only render-blocking requests, costing a round trip before first paint on a phone.
+  // Astro hashes the inlined <style> blocks into the CSP like any other.
+  build: { inlineStylesheets: "always" },
+
   // Astro's prefetch is off by default, but <ClientRouter /> force-enables it with
   // `prefetchAll: true` + a hover strategy. Cloudflare's zone-level Speculation Rules
   // then answers every `Sec-Purpose: prefetch` request to a Worker origin with a 503
