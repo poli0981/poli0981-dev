@@ -79,7 +79,9 @@ A platform upgrade, a security pass, a new palette and a rebuilt admin
 - Dozens of smaller issues found by SonarCloud and the new tests (error pages served with the
   wrong status under `astro dev`, regex backtracking, scripts that passed without checking).
 
-## [1.x] — 2026-07 → 2026-10 (untagged)
+## [1.x] — 2026-07 → 2026-10
+
+The public launch is tagged `v1-launch`; the 1.x changes after it were not tagged.
 
 - **2026-07** — Bilingual Astro + Cloudflare Workers site: blog, stories with reading controls and
   content warnings, projects, dev/uses, gaming, Q&A, links, legal pages; Pagefind search; RSS,
@@ -92,3 +94,4 @@ A platform upgrade, a security pass, a new palette and a rebuilt admin
   topic email aliases; R2 media; the Turnstile gate; the admin at `admin.poli0981.dev`.
 
 [2.0.0]: https://github.com/poli0981/poli0981-dev/releases/tag/v2.0.0
+[1.x]: https://github.com/poli0981/poli0981-dev/releases/tag/v1-launch
