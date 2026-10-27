@@ -26,7 +26,15 @@ const PAGES: Record<string, AssetPage> = {
   "/": { body: HOME },
   "/en/": { body: HOME.replace('lang="vi"', 'lang="en"') },
   "/403/": { status: 200, body: "<html><body>403 page</body></html>" },
-  "/429/": { body: `<html><body><p>429 page, retry in <span id="cd">60</span>s</p></body></html>` },
+  "/429/": {
+    body: `<html><body><p>429 page, retry in <span id="cd">60</span>s</p></body></html>`,
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      etag: '"asset-etag"',
+      "last-modified": "Mon, 26 Oct 2026 00:00:00 GMT",
+      "content-length": "72",
+    },
+  },
   "/404.html": { body: `<html lang="vi"><body>404 page</body></html>` },
   "/en/404.html": { body: `<html lang="en"><body>404 page</body></html>` },
   "/data.json": { body: "{}", headers: { "content-type": "application/json" } },
@@ -281,7 +289,9 @@ describe("worker: site-wide rate limit", () => {
     assert.equal(result.status, 429);
     assert.equal(result.headers.get("retry-after"), "10");
     assert.equal(result.headers.get("cache-control"), "no-store");
-    assert.equal(result.headers.get("etag"), null);
+    for (const header of ["etag", "last-modified", "content-length"]) {
+      assert.equal(result.headers.get(header), null, header);
+    }
     assert.equal(result.headers.get("x-content-type-options"), "nosniff");
     assert.match(await result.text(), /429 page, retry in <span id="cd">10<\/span>s/);
     assert.equal(logs[0]?.event, "ratelimit.exceeded");
@@ -337,6 +347,28 @@ describe("worker: site-wide rate limit", () => {
     assert.equal(result.status, 200);
     assert.match(await result.text(), /data-human-check/);
     assert.equal(logs[0]?.event, "ratelimit.unavailable");
+  });
+
+  it("stays a 429 when the page can't be fetched — never the ungated page", async () => {
+    const { env } = makeEnv({ ...gateOn, RL_SITE: new FakeRateLimiter(0) });
+    (env as unknown as { ASSETS: { fetch: () => never } }).ASSETS.fetch = () => {
+      throw new Error("assets down");
+    };
+    const { result, logs } = await captureLogs(() =>
+      fetchWorker(
+        request("https://poli0981.dev/"),
+        env,
+        fakeContext() as unknown as ExecutionContext,
+      ),
+    );
+    assert.equal(result.status, 429);
+    assert.equal(result.headers.get("retry-after"), "10");
+    assert.equal(result.headers.get("cache-control"), "no-store");
+    assert.equal(await result.text(), "Too many requests");
+    assert.deepEqual(
+      logs.map((line) => line.event),
+      ["ratelimit.exceeded", "ratelimit.page_failed"],
+    );
   });
 });
 

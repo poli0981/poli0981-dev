@@ -15,9 +15,10 @@ and are not listed here.
   the search index and the API — now spends one budget per client: 100 requests per 10 seconds
   (IPv6 counted per /64), a new `RL_SITE` binding in `wrangler.jsonc`. Over it, visitors get the
   site's 429 page with `Retry-After: 10` and a 10-second countdown; the stricter per-endpoint
-  API limits still apply underneath. Only static pages were unlimited before. The admin host is
-  exempt (Cloudflare Access stands in front of it), and a failing limiter lets requests through
-  without skipping the Turnstile gate.
+  API limits still apply underneath. Before, only the API groups were limited — pages, images,
+  the search index and the widgets endpoint were not. The admin host is exempt (Cloudflare Access
+  stands in front of it), and a failing limiter lets requests through without skipping the
+  Turnstile gate.
 - Setup docs describe the zone WAF rate-limiting rule as the outer layer above it, with the Free
   plan's real limits (path and verified-bot fields, 10-second periods and blocks).
 

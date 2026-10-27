@@ -20,7 +20,7 @@ Nhắc lại quyết định D8: Custom Errors của Cloudflare cần zone plan 
 | **429** worker entry · middleware | vượt rate-limit toàn site (RL_SITE 100/10s/IP, worker entry) hoặc của một nhóm /api (middleware, `06` §2) | "Chậm lại một nhịp." / "Take a breath." | Header `Retry-After`: 10 (toàn site) / 60 (nhóm /api); đồng hồ đếm ngược đọc số giây trong `#cd` — mặc định 60, worker ghi đè thành 10. Vượt rule WAF (`07` §6) thì gặp trang 1015 của Cloudflare thay vì trang này |
 | **/offline** | service worker fallback | "Không có mạng — nhưng vẫn có thứ để làm." / "You're offline." | Xem §3–4 |
 
-403 (worker entry) và 429 (middleware) dùng template Astro đã **prerender sẵn thành static asset** (`/403/` `/429/` là trang thật): chỉ `fetch` asset đó qua binding ASSETS rồi trả với status tương ứng + `no-store` — không nhân đôi markup (đường `astro dev` dùng `rewrite` cũng được bọc lại status).
+403 (worker entry) và 429 (worker entry + middleware) dùng template Astro đã **prerender sẵn thành static asset** (`/403/` `/429/` là trang thật): chỉ `fetch` asset đó qua binding ASSETS rồi trả với status tương ứng + `no-store` — không nhân đôi markup (đường `astro dev` dùng `rewrite` cũng được bọc lại status).
 
 Trang xác minh của cổng Turnstile (06 §3b) **không** phải trang lỗi: nó là chính trang được yêu cầu (status 200, `<head>` thật) với `<body>` thay bằng thẻ xác minh. `/offline/` đứng ngoài cổng để service worker luôn precache được.
 
@@ -45,7 +45,8 @@ Canvas ≤ 6KB JS vanilla nằm ngay trong trang offline: đầu lâu pixel nh�
 | 404 asset | mở `/anh-khong-co.png` | trang 404 (not_found_handling) |
 | 500 | tạm ném throw trong 1 api route ở preview | trang/JSON 500 + mã tham chiếu |
 | 403 | thêm IP nhà vào denylist KV preview → mở site | trang 403 custom |
-| 429 | bắn 6 POST /api/report trong 1 phút | request 6 nhận trang 429 + Retry-After |
-| 429 lớp zone | bắn 30 req/10s | Cloudflare block (trang mặc định) — xác nhận rule sống |
+| 429 | bắn 6 POST /api/report trong 1 phút | request 6 nhận trang 429 + Retry-After: 60 |
+| 429 toàn site | `npm run probe:ratelimit` (> 100 req/10s) | trang 429, Retry-After: 10, đếm ngược 10 (dòng `worker 429`) |
+| 429 lớp zone | `npm run probe:ratelimit -- <url> 400 40` (> 150 req/10s) | trang 1015 của Cloudflare (dòng `waf 429`) — xác nhận rule sống |
 | Offline | DevTools → Network Offline → điều hướng | trang /offline + game chạy |
 | Mobile | lặp các case trên ở viewport 390px | không vỡ layout |

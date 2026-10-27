@@ -45,6 +45,7 @@ Security → Security rules → Rate limiting rules (đang có rule mẫu "Leake
   `(not starts_with(http.request.uri.path, "/_astro/") and not cf.client.bot)`
   — bỏ file tĩnh đã hash (lần tải đầu một trang có thể kéo vài chục file) và bot đã xác thực (Googlebot…; bot AI đã bị chặn ở §5).
 - Characteristics: IP · Rate: **150 requests / 10 seconds** · Action: **Block** · Duration: **10 seconds**.
+- Gói Free không lọc được theo hostname, nên rule này đếm cả `admin.*` (RL_SITE thì miễn admin). Thư viện ảnh admin tải thumbnail lười (`loading="lazy"`), mỗi màn hình vài chục request — dưới 150.
 - Khi bị tấn công: hạ xuống 60–80/10s hoặc đổi Action sang **Managed Challenge**; xong thì trả về.
 
 Kiểm tra: `npm run probe:ratelimit -- https://poli0981.dev/legal/privacy/ 400` — dòng `worker 429` là RL_SITE (trang của site), `waf 429` là rule này (trang 1015). Rule chưa bật ⇒ chỉ thấy `worker 429`.
