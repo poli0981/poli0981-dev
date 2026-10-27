@@ -46,7 +46,7 @@
 | D9 | API ngoài | Không weather/map; widget YouTube + Steam + GitHub qua cron worker |
 | D11 | Email | Google Workspace (MX Google), một hộp thư + alias theo chủ đề (`07` §11). Không Cloudflare Email Routing |
 | D12 | Chống bot | **Cổng Turnstile** trước mọi trang, vé 48 giờ (`06` §3b); bot đã xác thực đi thẳng nhờ Transform Rule `x-verified-bot` |
-| D13 | Rate limit | Workers Rate Limiting bindings theo nhóm `/api` (`06` §2) thay bộ đếm KV |
+| D13 | Rate limit | WAF rule (edge) → Workers Rate Limiting: RL_SITE toàn site 100/10s → bindings theo nhóm `/api` (`06` §2, `07` §6) thay bộ đếm KV |
 | D14 | Analytics | Cloudflare Web Analytics, **snippet thủ công** chỉ ở bản build production (`07` §12) |
 | D15 | Admin | `admin.poli0981.dev` sau Cloudflare Access + Worker tự kiểm JWT (≤ 24 giờ, email phải có trong `ADMIN_EMAILS` — thiếu là từ chối); token GitHub chỉ ghi repo content; ảnh → Images binding → R2; mọi thao tác ghi audit log (`06` §9) |
 | D10 | Data services | **KV** (cache widget + ảnh widget mirror cho `/ext-img`, denylist một khoá, audit log admin) + **R2** `poli0981-media` cho ảnh upload qua admin (từ 10/2026; AVIF/WebP sinh một lần lúc upload, phục vụ qua `/media`, cache 1 năm). Không D1. Ảnh build-time cũ vẫn ở `src/assets/` |

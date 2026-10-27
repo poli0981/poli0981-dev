@@ -5,7 +5,11 @@ import { env } from "cloudflare:workers";
 // RL_API. /api/widgets is never limited: its response is identical for every visitor
 // and edge-cached (api/widgets.ts), and the home page fetches it on every view.
 
+/** The /api groups' window (wrangler.jsonc `ratelimits`), sent as Retry-After. */
 export const RATE_LIMIT_WINDOW_SECONDS = 60;
+
+/** RL_SITE's window: the site-wide limit src/worker.ts applies before any route. */
+export const SITE_RATE_LIMIT_SECONDS = 10;
 
 type RateLimiter = { limit(options: { key: string }): Promise<{ success: boolean }> };
 

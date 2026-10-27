@@ -11,6 +11,7 @@ import {
   fakeContext,
   FakeKV,
   FakeR2,
+  FakeRateLimiter,
   installCaches,
   installHTMLRewriter,
   type AssetPage,
@@ -25,6 +26,7 @@ const PAGES: Record<string, AssetPage> = {
   "/": { body: HOME },
   "/en/": { body: HOME.replace('lang="vi"', 'lang="en"') },
   "/403/": { status: 200, body: "<html><body>403 page</body></html>" },
+  "/429/": { body: `<html><body><p>429 page, retry in <span id="cd">60</span>s</p></body></html>` },
   "/404.html": { body: `<html lang="vi"><body>404 page</body></html>` },
   "/en/404.html": { body: `<html lang="en"><body>404 page</body></html>` },
   "/data.json": { body: "{}", headers: { "content-type": "application/json" } },
@@ -256,6 +258,85 @@ describe("worker: IP denylist", () => {
       fakeContext() as unknown as ExecutionContext,
     );
     assert.equal(response.status, 200);
+  });
+});
+
+describe("worker: site-wide rate limit", () => {
+  it("answers spam with the 429 page, Retry-After and its countdown set to the window", async () => {
+    const limiter = new FakeRateLimiter(3);
+    const statuses: number[] = [];
+    for (let i = 0; i < 5; i++) {
+      statuses.push((await run("https://poli0981.dev/", {}, { RL_SITE: limiter })).response.status);
+    }
+    assert.deepEqual(statuses, [200, 200, 200, 429, 429]);
+
+    const { env } = makeEnv({ RL_SITE: limiter });
+    const { result, logs } = await captureLogs(() =>
+      fetchWorker(
+        request("https://poli0981.dev/"),
+        env,
+        fakeContext() as unknown as ExecutionContext,
+      ),
+    );
+    assert.equal(result.status, 429);
+    assert.equal(result.headers.get("retry-after"), "10");
+    assert.equal(result.headers.get("cache-control"), "no-store");
+    assert.equal(result.headers.get("etag"), null);
+    assert.equal(result.headers.get("x-content-type-options"), "nosniff");
+    assert.match(await result.text(), /429 page, retry in <span id="cd">10<\/span>s/);
+    assert.equal(logs[0]?.event, "ratelimit.exceeded");
+    assert.equal(logs[0]?.group, "site");
+  });
+
+  it("spends one budget per client on every route, IPv6 by its /64", async () => {
+    const limiter = new FakeRateLimiter(100);
+    const from = (ip: string) => ({ headers: { "cf-connecting-ip": ip } });
+    await run("https://poli0981.dev/", from("2001:db8:0:1::1"), { RL_SITE: limiter });
+    await run("https://poli0981.dev/blog/", from("2001:db8:0:1::2"), { RL_SITE: limiter });
+    await run("https://poli0981.dev/api/health", {}, { RL_SITE: limiter });
+    await run("https://poli0981.dev/media/v1/x/webp-800", {}, { RL_SITE: limiter });
+    await run("https://poli0981.dev/pagefind/pagefind.js", {}, { RL_SITE: limiter });
+    assert.deepEqual(Object.fromEntries(limiter.counts), {
+      "site:2001:db8:0:1::/64": 2,
+      "site:198.51.100.7": 3,
+    });
+  });
+
+  it("is checked before the gate, and a limited client never sees the page", async () => {
+    const limiter = new FakeRateLimiter(0);
+    const { response } = await run("https://poli0981.dev/", {}, { ...gateOn, RL_SITE: limiter });
+    assert.equal(response.status, 429);
+    assert.doesNotMatch(await response.text(), /real page|data-human-check/);
+  });
+
+  it("leaves the admin host and requests without a client address alone", async () => {
+    const limiter = new FakeRateLimiter(0);
+    const admin = await run("https://admin.poli0981.dev/admin/", {}, { RL_SITE: limiter });
+    assert.match(await admin.response.text(), /from the Astro handler/);
+    const { env } = makeEnv({ RL_SITE: limiter });
+    const anonymous = await fetchWorker(
+      new Request("https://poli0981.dev/"),
+      env,
+      fakeContext() as unknown as ExecutionContext,
+    );
+    assert.equal(anonymous.status, 200);
+    assert.equal(limiter.counts.size, 0);
+  });
+
+  it("fails open when the limiter breaks — without skipping the gate", async () => {
+    const limiter = new FakeRateLimiter(100);
+    limiter.failWith = new Error("rate limiter down");
+    const { env } = makeEnv({ ...gateOn, RL_SITE: limiter });
+    const { result, logs } = await captureLogs(() =>
+      fetchWorker(
+        request("https://poli0981.dev/"),
+        env,
+        fakeContext() as unknown as ExecutionContext,
+      ),
+    );
+    assert.equal(result.status, 200);
+    assert.match(await result.text(), /data-human-check/);
+    assert.equal(logs[0]?.event, "ratelimit.unavailable");
   });
 });
 

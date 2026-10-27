@@ -306,12 +306,15 @@ export function fakeAssets(pages: Record<string, AssetPage>) {
 export class FakeRateLimiter {
   readonly counts = new Map<string, number>();
   readonly limitPerKey: number;
+  /** When set, every call throws it (the binding failing). */
+  failWith: Error | null = null;
 
   constructor(limitPerKey: number) {
     this.limitPerKey = limitPerKey;
   }
 
   async limit({ key }: { key: string }): Promise<{ success: boolean }> {
+    if (this.failWith) throw this.failWith;
     const count = (this.counts.get(key) ?? 0) + 1;
     this.counts.set(key, count);
     return { success: count <= this.limitPerKey };
@@ -387,10 +390,10 @@ interface FakeElement {
 }
 
 /**
- * Just enough of workerd's HTMLRewriter for src/lib/gate/render.ts and src/lib/error-ref.ts:
- * the selectors they use (`html`, `head script[src]`, `link[rel="modulepreload"]`,
- * `script[type="application/ld+json"]`, `body`, `#ref`) applied to the whole document with
- * string surgery.
+ * Just enough of workerd's HTMLRewriter for src/lib/gate/render.ts, src/lib/error-ref.ts and
+ * the 429 countdown in src/worker.ts: the selectors they use (`html`, `head script[src]`,
+ * `link[rel="modulepreload"]`, `script[type="application/ld+json"]`, `body`, `#<id>`)
+ * applied to the whole document with string surgery.
  */
 export class FakeHTMLRewriter {
   private readonly handlers: [string, ElementHandlers][] = [];
@@ -459,6 +462,22 @@ function applySelector(
     return out + html.slice(copied);
   };
 
+  if (selector.startsWith("#")) {
+    const id = html.indexOf(` id="${selector.slice(1)}"`);
+    if (id === -1) return html;
+    const open = html.indexOf(">", id) + 1;
+    const close = html.indexOf("</", open);
+    let inner = html.slice(open, close);
+    handler({
+      getAttribute: () => null,
+      remove() {},
+      setInnerContent: (content) => {
+        inner = content.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+      },
+    });
+    return html.slice(0, open) + inner + html.slice(close);
+  }
+
   switch (selector) {
     case "html": {
       const tag = /<html[^>]*>/.exec(html)?.[0] ?? "";
@@ -474,21 +493,6 @@ function applySelector(
       return replaceTags(/<link\b[^>]*rel="modulepreload"[^>]*>/g);
     case 'script[type="application/ld+json"]':
       return replaceScripts((tag) => attribute(tag, "type") === "application/ld+json");
-    case "#ref": {
-      const id = html.indexOf(' id="ref"');
-      if (id === -1) return html;
-      const open = html.indexOf(">", id) + 1;
-      const close = html.indexOf("</", open);
-      let inner = html.slice(open, close);
-      handler({
-        getAttribute: () => null,
-        remove() {},
-        setInnerContent: (content) => {
-          inner = content.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-        },
-      });
-      return html.slice(0, open) + inner + html.slice(close);
-    }
     case "body":
       return html.replace(
         /(<body[^>]*>)[\s\S]*(<\/body>)/,
