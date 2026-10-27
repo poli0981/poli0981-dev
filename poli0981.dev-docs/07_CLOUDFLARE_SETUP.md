@@ -33,13 +33,22 @@ Zone → Security:
 - **WAF → Managed rules**: bật Cloudflare Managed Ruleset (free ruleset).
 - Settings → Security Level: Medium · Browser Integrity Check: ON.
 
-## 6. Rate limiting rule (free có 1 rule) — lớp ngoài cho /api/*
+## 6. Rate limiting rule (free có 1 rule) — lớp ngoài cho toàn site
 
-Security → WAF → Rate limiting rules → Create:
-- Name: `api-outer-limit`
-- If: `URI Path starts with /api/`
-- Rate: **20 requests / 10 seconds** per IP → Action: **Block**, duration 1 phút (mitigation timeout theo option gói free).
-(Lớp trong Worker vẫn đếm 5/phút để trả trang 429 đẹp — rule này chỉ hứng flood thô.)
+Gói Free: **1 rule**, biểu thức chỉ dùng được trường **URI Path** và **Verified Bot**, đếm theo **IP**, chu kỳ **10 s**, thời gian chặn **10 s**, không đổi được trang chặn (Cloudflare trả **429**, trang "Error 1015"). Rule chặn ở edge, trước Worker ⇒ flood không tốn request Worker.
+
+Lớp trong Worker (06 §2) đếm thấp hơn — RL_SITE 100/10s cho mọi request tới Worker — để khách thật gặp trang 429 của site trước; rule này chỉ hứng flood thô, nên ngưỡng phải **cao hơn** 100.
+
+Security → Security rules → Rate limiting rules (đang có rule mẫu "Leaked credential check" chiếm slot duy nhất — site không có form mật khẩu nào trên zone, admin đăng nhập qua Access ở `*.cloudflareaccess.com`, nên rule đó không bao giờ khớp: sửa nó thành rule dưới, hoặc xoá rồi tạo mới):
+- Name: `site-outer-limit`
+- Expression (Edit expression):
+  `(not starts_with(http.request.uri.path, "/_astro/") and not cf.client.bot)`
+  — bỏ file tĩnh đã hash (lần tải đầu một trang có thể kéo vài chục file) và bot đã xác thực (Googlebot…; bot AI đã bị chặn ở §5).
+- Characteristics: IP · Rate: **150 requests / 10 seconds** · Action: **Block** · Duration: **10 seconds**.
+- Gói Free không lọc được theo hostname, nên rule này đếm cả `admin.*` (RL_SITE thì miễn admin). Thư viện ảnh admin tải thumbnail lười (`loading="lazy"`), mỗi màn hình vài chục request — dưới 150.
+- Khi bị tấn công: hạ xuống 60–80/10s hoặc đổi Action sang **Managed Challenge**; xong thì trả về.
+
+Kiểm tra: `npm run probe:ratelimit -- https://poli0981.dev/legal/privacy/ 400` — dòng `worker 429` là RL_SITE (trang của site), `waf 429` là rule này (trang 1015). Rule chưa bật ⇒ chỉ thấy `worker 429`.
 
 ## 7. Custom rules (free có ~5 rule) — chặn IP/dải/quốc gia khi cần
 
@@ -134,7 +143,7 @@ Account → Analytics & Logs → **Web Analytics** → site `poli0981.dev` ở c
 - [ ] `dig poli0981.dev` ra IP Cloudflare; DNSSEC = Success
 - [ ] https:// bắt buộc, chứng chỉ hợp lệ, HSTS header có mặt
 - [ ] Bot Fight ON · Managed WAF ON · (AI crawlers block ON nếu chọn)
-- [ ] Rate limit rule active — test bằng script bắn 30 req/10s vào /api/ → bị block
+- [ ] Rate limit rule active — `npm run probe:ratelimit` (§6) thấy `worker 429` rồi `waf 429`
 - [ ] Turnstile hoạt động trên form report (site key đúng domain)
 - [ ] Custom domain trỏ Worker, `www` redirect về apex
 - [ ] Cron widgets chạy (Workers → widgets → Logs thấy execution)

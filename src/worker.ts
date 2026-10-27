@@ -8,6 +8,7 @@ import { renderGate } from "./lib/gate/render";
 import { routeHosts } from "./lib/hosts";
 import { log, requestFields } from "./lib/log";
 import { serveMedia } from "./lib/media/serve";
+import { clientSubject, SITE_RATE_LIMIT_SECONDS } from "./lib/ratelimit";
 import { withSecurityHeaders } from "./lib/security-headers";
 import { versionInfo } from "./lib/version";
 
@@ -52,6 +53,61 @@ async function denied(request: Request, env: Env): Promise<Response | null> {
   const response = new Response(page.body, { status: 403, headers: page.headers });
   response.headers.set("Cache-Control", "no-store");
   return withSecurityHeaders(response);
+}
+
+/**
+ * The site-wide rate limit (RL_SITE, docs 06 §2): one budget per client for every request
+ * the Worker sees — pages, /media, /ext-img, /pagefind and the API, whose groups then apply
+ * their own stricter limits in the middleware. Over it → the 429 page with Retry-After and
+ * its countdown set to the window. The admin host is exempt: Cloudflare Access stands in
+ * front of it, its API is limited per account (RL_ADMIN) and the media library loads many
+ * thumbnails at once. Fails OPEN like the denylist, and never throws: the edge fail-open
+ * below would skip the gate too. The zone WAF rule (docs 07 §6) is the hard limit.
+ */
+async function rateLimited(request: Request, url: URL, env: Env): Promise<Response | null> {
+  const ip = request.headers.get("cf-connecting-ip");
+  // Typed as always bound, but unit tests (and any env without the binding) have none.
+  const limiter = env.RL_SITE as RateLimit | undefined;
+  if (!ip || !limiter || url.hostname.startsWith("admin.")) return null;
+  try {
+    if ((await limiter.limit({ key: `site:${clientSubject(ip)}` })).success) return null;
+  } catch (error) {
+    log.error("ratelimit.unavailable", { ...requestFields(request), error });
+    return null;
+  }
+  log.warn("ratelimit.exceeded", { ...requestFields(request), group: "site" });
+  const seconds = String(SITE_RATE_LIMIT_SECONDS);
+  try {
+    const page = await env.ASSETS.fetch(new URL("/429/", request.url));
+    const response = new Response(page.body, { status: 429, headers: page.headers });
+    response.headers.set("Cache-Control", "no-store");
+    response.headers.set("Retry-After", seconds);
+    // The body is rewritten below.
+    for (const header of ["ETag", "Last-Modified", "Content-Length"]) {
+      response.headers.delete(header);
+    }
+    const stamped = new HTMLRewriter()
+      .on("#cd", {
+        element(el) {
+          el.setInnerContent(seconds);
+        },
+      })
+      .transform(response);
+    return withSecurityHeaders(stamped);
+  } catch (error) {
+    // Still a 429 — falling through to the edge fail-open would serve the page ungated.
+    log.error("ratelimit.page_failed", { ...requestFields(request), error });
+    return withSecurityHeaders(
+      new Response("Too many requests", {
+        status: 429,
+        headers: {
+          "content-type": "text/plain; charset=utf-8",
+          "cache-control": "no-store",
+          "retry-after": seconds,
+        },
+      }),
+    );
+  }
 }
 
 /**
@@ -103,7 +159,7 @@ export default {
         return Response.redirect(url.toString(), 301);
       }
 
-      const blocked = await denied(request, env);
+      const blocked = (await denied(request, env)) ?? (await rateLimited(request, url, env));
       if (blocked) return blocked;
 
       const hostRoute = routeHosts(url);

@@ -8,7 +8,8 @@
 // with Cloudflare's always-pass test secret, so the whole flow — gate page, exemptions,
 // /api/gate → pass cookie → real page — is exercised end to end (siteverify is a real
 // network call; the test secret accepts any token). Phase 3 lists the client's address in
-// the KV denylist and expects 403s everywhere, pages included.
+// the KV denylist and expects 403s everywhere, pages included. Phase 4 spams a page until the
+// site-wide rate limit answers with the 429 page.
 //
 // Usage: npm run build && npm run smoke   (works on Linux, macOS and Windows)
 import { execFileSync, spawn } from "node:child_process";
@@ -383,6 +384,25 @@ try {
   kv(["delete", "denylist"]);
   rmSync(tmp, { recursive: true, force: true });
 }
+
+console.log("— phase 4: spam until the site-wide rate limit answers");
+// Last of all: the simulated counters outlive a `wrangler dev` restart, so a spent budget
+// would turn the next phase into 429s. RL_SITE allows 100 per 10 s; keep going until a 429
+// arrives — a burst can straddle two windows.
+await withWorker(8791, {}, async (get) => {
+  let limited = null;
+  for (let i = 0; i < 400 && !limited; i++) {
+    const response = await get("/legal/privacy/");
+    if (response.status === 429) limited = response;
+    else await response.body?.cancel();
+  }
+  const html = limited ? await limited.text() : "";
+  expect("spam → 429 from the site-wide limit", limited !== null);
+  expect("429 sends Retry-After: 10", limited?.headers.get("retry-after") === "10");
+  expect("429 is no-store", limited?.headers.get("cache-control") === "no-store");
+  expect("429 has nosniff", limited?.headers.get("x-content-type-options") === "nosniff");
+  expect("429 countdown starts at 10", html.includes('<span id="cd">10</span>'));
+});
 
 if (failures.length) {
   console.error(`\nsmoke test failed (${failures.length}): ${failures.join(", ")}`);

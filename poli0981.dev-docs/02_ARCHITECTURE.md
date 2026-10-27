@@ -11,6 +11,7 @@ Khách ──HTTPS──> Cloudflare edge (WAF free, Bot Fight, DDoS auto, Trans
         src/worker.ts — entry của Worker (assets.run_worker_first: mọi trang đều qua đây)
         ├── www → apex (301)
         ├── denylist IP (KV, một khoá "denylist", CIDR + hạn) → trang 403
+        ├── rate limit toàn site RL_SITE 100/10s/IP (trừ admin.*) → trang 429
         ├── tách host: admin.poli0981.dev chỉ /admin*, /api/admin*, /media/*
         ├── /media/*    → R2 poli0981-media (ảnh upload qua admin, cache 1 năm)
         ├── /ext-img/*  → KV widgets:img:* (ảnh widget đã mirror; không gọi Google/Steam)
@@ -54,7 +55,7 @@ poli0981-dev/
 ├── scripts/               # gen-og, gen-notices, check-exif/strip-exif, check-csp-hashes,
 │                          #   check-install-scripts, smoke-worker, new-post
 ├── src/
-│   ├── worker.ts          # entry: denylist, host, /media, /ext-img, cổng, assets
+│   ├── worker.ts          # entry: denylist, rate limit site, host, /media, /ext-img, cổng, assets
 │   ├── middleware.ts      # admin JWT + CSRF, rate limit /api, trang lỗi
 │   ├── assets/            # ảnh qua pipeline Astro (gallery/, covers/)
 │   ├── components/        # .astro + islands .svelte
@@ -94,7 +95,7 @@ poli0981-dev/
   "assets": { "binding": "ASSETS", "directory": "./dist", "not_found_handling": "404-page",
               "html_handling": "auto-trailing-slash", "run_worker_first": ["/*", "!/_astro/*", "…"] },
   "kv_namespaces": [{ "binding": "KV", "id": "…" }],
-  "ratelimits": [ RL_REPORT 5/60s · RL_GATE 30/60s · RL_ADMIN 120/60s · RL_API 120/60s ],
+  "ratelimits": [ RL_SITE 100/10s · RL_REPORT 5/60s · RL_GATE 30/60s · RL_ADMIN 120/60s · RL_API 120/60s ],
   "vars": { "GATE_MODE": "on", "ACCESS_TEAM_DOMAIN": "…", "ACCESS_AUD": "…", "REPORT_REPO": "poli0981/site-reports" },
   "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "poli0981-media" }],
   "images": { "binding": "IMAGES" },

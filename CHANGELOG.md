@@ -7,6 +7,26 @@ and are not listed here.
 
 ## [Unreleased]
 
+## [2.1.0] — 2026-10-27
+
+### Security
+
+- **Site-wide rate limit.** Every request that reaches the Worker — pages, `/media`, `/ext-img`,
+  the search index and the API — now spends one budget per client: 100 requests per 10 seconds
+  (IPv6 counted per /64), a new `RL_SITE` binding in `wrangler.jsonc`. Over it, visitors get the
+  site's 429 page with `Retry-After: 10` and a 10-second countdown; the stricter per-endpoint
+  API limits still apply underneath. Before, only the API groups were limited — pages, images,
+  the search index and the widgets endpoint were not. The admin host is exempt (Cloudflare Access
+  stands in front of it), and a failing limiter lets requests through without skipping the
+  Turnstile gate.
+- Setup docs describe the zone WAF rate-limiting rule as the outer layer above it, with the Free
+  plan's real limits (path and verified-bot fields, 10-second periods and blocks).
+
+### Added
+
+- `npm run probe:ratelimit` spams a live URL and tells the Worker's 429s apart from the WAF's.
+  The CI smoke test now spams the built Worker until the site-wide limit answers.
+
 ### Changed
 
 - Faster first paint on phones: every page carries its CSS inline (about 9 KB brotli) instead of
@@ -109,6 +129,7 @@ The public launch is tagged `v1-launch`; the 1.x changes after it were not tagge
 - **2026-10** — Custom Worker entry in front of every page; Workers Rate Limiting; Web Analytics;
   topic email aliases; R2 media; the Turnstile gate; the admin at `admin.poli0981.dev`.
 
-[Unreleased]: https://github.com/poli0981/poli0981-dev/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/poli0981/poli0981-dev/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/poli0981/poli0981-dev/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/poli0981/poli0981-dev/releases/tag/v2.0.0
 [1.x]: https://github.com/poli0981/poli0981-dev/releases/tag/v1-launch

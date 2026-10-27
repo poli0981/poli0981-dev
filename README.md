@@ -65,6 +65,7 @@ identity (`dev@localhost`); saving content needs a `GITHUB_CONTENT_TOKEN` in `.d
 | `npm run lint` · `npm run format:check` · `npm run knip` | ESLint · Prettier · unused files/exports                                                       |
 | `npm test` · `npm run test:coverage`                     | `node:test` suites; coverage writes `coverage/lcov.info` (80% line floor)                      |
 | `npm run smoke`                                          | Runs the built Worker with `wrangler dev` and probes pages, headers, the gate and the denylist |
+| `npm run probe:ratelimit -- [url] [requests] [parallel]` | Spams a live URL and counts 429s from the Worker's site-wide limit vs. the WAF rule            |
 | `npm run new:post`                                       | Scaffold a post or story from `docs/templates/`                                                |
 | `npm run check-exif` · `npm run strip-exif`              | Refuse / remove GPS and camera metadata in images                                              |
 | `npm run gen-notices`                                    | Regenerate `THIRD-PARTY-NOTICES.md` (CI checks it)                                             |

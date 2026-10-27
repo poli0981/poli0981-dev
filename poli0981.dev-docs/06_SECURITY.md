@@ -23,7 +23,11 @@ request → src/worker.ts (mọi route, cả trang tĩnh)
   1. denylist: MỘT khoá KV "denylist" = [{cidr, reason?, until?, added?}]
      đọc tối đa 1 lần/phút/isolate (+ cacheTtl 60 s ở colo); IP hoặc dải CIDR (IPv4/IPv6),
      mục hết hạn bị bỏ qua → khớp ⇒ 403 (trang 09 §2, no-store) · KV lỗi ⇒ bỏ qua (fail-open, có log)
-  2. app Astro — middleware, nếu path bắt đầu /api/<group>:
+  2. rate limit toàn site: RL_SITE 100/10s, khoá "site:<ip>" (IPv6 gộp /64), cho MỌI request
+     tới Worker — trang, /media, /ext-img, /pagefind, /api — trừ host admin.* (đã có Access)
+     vượt ⇒ 429 + Retry-After: 10, đếm ngược 10 s · binding lỗi ⇒ bỏ qua (fail-open, có log,
+     không bỏ qua cổng Turnstile)
+  3. app Astro — middleware, nếu path bắt đầu /api/<group>:
        Workers Rate Limiting binding theo nhóm (src/lib/ratelimit.ts), khoá "<group>:<ip>"
        (IPv6 gộp theo /64):
          report → RL_REPORT 5/60s · gate → RL_GATE 30/60s · admin → RL_ADMIN 120/60s
@@ -32,7 +36,8 @@ request → src/worker.ts (mọi route, cả trang tĩnh)
 ```
 
 - Một khoá thay vì `denylist:<ip>`: tra cứu tốn như nhau dù IP nào hỏi (một lần đọc/phút/isolate) và chặn được cả dải. Quản lý ở **admin → Bảo mật** (`/admin/security/`): thêm kèm lý do + thời hạn (1 giờ … 30 ngày, hoặc đến khi gỡ), gỡ, có audit log. Không cho chặn dải chứa IP của chính admin — danh sách áp cho mọi host, kể cả admin. Thay đổi có hiệu lực trong khoảng một phút.
-- Binding rate limit đếm **theo từng colo** và chỉ cho `period` 10 hoặc 60 s → lớp mềm; lớp cứng là zone rate-limit rule (07 §6). `namespace_id` của mỗi binding chỉ cần duy nhất trong account (981001–981004).
+- Binding rate limit đếm **theo từng colo**, gần đúng (burst có thể lọt quá ngưỡng một chút) và chỉ cho `period` 10 hoặc 60 s → lớp mềm; lớp cứng là zone rate-limit rule (07 §6). `namespace_id` của mỗi binding chỉ cần duy nhất trong account (981001–981005). `Retry-After` phải bằng `period` (hằng số trong `src/lib/ratelimit.ts`, test đối chiếu với `wrangler.jsonc`).
+- Ba lớp, ngoài vào trong: **WAF rule** (edge, chặn trước khi Worker chạy — không tốn request Worker, trang chặn 1015 của Cloudflare) → **RL_SITE** (ngưỡng thấp hơn WAF để khách thật gặp trang 429 "đẹp" trước) → **nhóm /api** (chặt nhất). Một lượt xem trang tốn 1–20 request tới Worker (file tĩnh `/_astro/*` không qua Worker), nên 100/10s chỉ chặn flood và giữ F5.
 - Chặn quốc gia/ASN hay danh sách rất dài: dùng WAF custom rule / IP List (07 §7).
 
 ## 3. Form duy nhất: /api/report (bug)

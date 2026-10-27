@@ -1,10 +1,17 @@
 // The small libraries: rate limiting, Turnstile, headers, bodies, logs, version, denylist,
 // formatting, links, SEO, RSS, OG, i18n and nav.
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { afterEach, describe, it } from "node:test";
 import { setWorkerEnv } from "./support/stubs/cloudflare-workers.ts";
 import { captureLogs, FakeKV, FakeRateLimiter, jsonResponse, mockFetch } from "./support/fakes.ts";
-import { allowRequest, apiGroup, clientSubject } from "../src/lib/ratelimit.ts";
+import {
+  allowRequest,
+  apiGroup,
+  clientSubject,
+  RATE_LIMIT_WINDOW_SECONDS,
+  SITE_RATE_LIMIT_SECONDS,
+} from "../src/lib/ratelimit.ts";
 import { verifyTurnstile } from "../src/lib/turnstile-server.ts";
 import { applySecurityHeaders, withSecurityHeaders } from "../src/lib/security-headers.ts";
 import {
@@ -83,6 +90,16 @@ describe("rate limiting", () => {
     assert.equal(await allowRequest("widgets", "a"), true);
     setWorkerEnv({});
     assert.equal(await allowRequest("gate", "a"), true);
+  });
+
+  it("sends a Retry-After equal to each binding's period in wrangler.jsonc", async () => {
+    const config = await readFile(new URL("../wrangler.jsonc", import.meta.url), "utf8");
+    const period = (name: string) =>
+      Number(new RegExp(`"name": "${name}"[^}]*"period": (\\d+)`).exec(config)?.[1]);
+    assert.equal(period("RL_SITE"), SITE_RATE_LIMIT_SECONDS);
+    for (const name of ["RL_REPORT", "RL_GATE", "RL_ADMIN", "RL_API"]) {
+      assert.equal(period(name), RATE_LIMIT_WINDOW_SECONDS, name);
+    }
   });
 });
 
