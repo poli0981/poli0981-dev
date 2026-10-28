@@ -94,7 +94,10 @@
   aria-hidden="true"
 >
   <defs>
-    <linearGradient id={uid} x1="0" y1="0" x2="1" y2="0">
+    <!-- userSpaceOnUse, not the default objectBoundingBox: the idle flatline's bounding box
+      is 0 tall, and WebKit (every iOS browser) then drops the gradient, and with it the
+      whole stroke — the footer showed an empty band on iPhone. -->
+    <linearGradient id={uid} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2={coordWidth} y2="0">
       <stop class="s-line" offset="0%" />
       <stop class="s-line" offset="36%" />
       <stop class="s-accent" offset="50%" />

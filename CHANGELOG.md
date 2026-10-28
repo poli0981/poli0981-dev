@@ -7,6 +7,19 @@ and are not listed here.
 
 ## [Unreleased]
 
+## [2.1.1] — 2026-10-28
+
+### Fixed
+
+- iPhone: the Waveline is visible again while it rests. Its gradient was sized to the line's
+  bounding box, which is 0 px tall for a flat line, and WebKit then draws nothing — the footer,
+  the section headings and the error pages showed an empty band where the line belongs. Chrome
+  drew it anyway, so only iOS browsers were affected.
+- iPhone (Safari 26): the page no longer scrolls into view above the sticky header, under the
+  status bar. Safari extends a sticky header's colour up to the screen edge only when the header
+  has no `backdrop-filter`; the header, the mobile tab bar and the admin bar dropped the blur
+  and are now opaque.
+
 ## [2.1.0] — 2026-10-27
 
 ### Security
@@ -129,7 +142,8 @@ The public launch is tagged `v1-launch`; the 1.x changes after it were not tagge
 - **2026-10** — Custom Worker entry in front of every page; Workers Rate Limiting; Web Analytics;
   topic email aliases; R2 media; the Turnstile gate; the admin at `admin.poli0981.dev`.
 
-[Unreleased]: https://github.com/poli0981/poli0981-dev/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/poli0981/poli0981-dev/compare/v2.1.1...HEAD
+[2.1.1]: https://github.com/poli0981/poli0981-dev/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/poli0981/poli0981-dev/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/poli0981/poli0981-dev/releases/tag/v2.0.0
 [1.x]: https://github.com/poli0981/poli0981-dev/releases/tag/v1-launch
