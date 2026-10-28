@@ -124,8 +124,8 @@ const nav = [
     inset-block-start: 0;
     z-index: 20;
     border-block-end: 1px solid var(--line);
-    background: color-mix(in srgb, var(--surface) 92%, transparent);
-    backdrop-filter: blur(8px);
+    /* Opaque, no backdrop-filter: see .site-header (Safari 26 status-bar tint). */
+    background: var(--surface);
   }
   .admin-top {
     display: flex;

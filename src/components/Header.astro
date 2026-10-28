@@ -93,8 +93,10 @@ const pathname = Astro.url.pathname;
     position: sticky;
     inset-block-start: 0;
     z-index: 40;
-    background: color-mix(in srgb, var(--bg) 85%, transparent);
-    backdrop-filter: blur(8px);
+    /* Opaque and without backdrop-filter: Safari 26 extends a sticky header's background
+       up under the iPhone status bar, but gives up when the header has a backdrop-filter —
+       the page then scrolled into view above the header. */
+    background: var(--bg);
     border-block-end: 1px solid var(--line);
   }
   .header-inner {

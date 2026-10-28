@@ -89,8 +89,9 @@ const tabs = [
     z-index: 40;
     display: flex;
     align-items: stretch;
-    background: color-mix(in srgb, var(--surface) 92%, transparent);
-    backdrop-filter: blur(10px);
+    /* Opaque, no backdrop-filter — same reason as the site header: Safari 26 only extends
+       a fixed bar's colour under its own toolbar when the bar has no backdrop-filter. */
+    background: var(--surface);
     border-block-start: 1px solid var(--line);
     padding-block-end: env(safe-area-inset-bottom, 0);
   }
