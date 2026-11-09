@@ -1,0 +1,21 @@
+# OSV-Scanner reads this file from the directory of the scanned lockfile
+# (.github/workflows/osv-scanner.yml scans package-lock.json at the repo root).
+#
+# Every entry needs a reason and an ignoreUntil date, so an ignore expires on
+# its own and the weekly scan turns red again for another look.
+
+# deepmerge <= 4.3.1: mergeObject() can return objects with a poisoned prototype.
+# No patched release exists (4.3.1 is the latest, from 2023). The only path to it
+# is @astrojs/svelte → @sveltejs/vite-plugin-svelte, which merges this repo's own
+# Svelte/Vite config at build time. Nothing from a visitor or the network reaches
+# it, and it is not part of the Worker bundle. Recheck when vite-plugin-svelte
+# drops deepmerge or a fixed version ships.
+[[IgnoredVulns]]
+id = "GHSA-gcqx-w48m-w2h4"
+ignoreUntil = 2027-02-09
+reason = "Build-time only (vite-plugin-svelte merges our own config); no patched deepmerge release exists."
+
+[[IgnoredVulns]]
+id = "CVE-2026-93753"
+ignoreUntil = 2027-02-09
+reason = "Alias of GHSA-gcqx-w48m-w2h4 (deepmerge); same reasoning."
