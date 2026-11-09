@@ -7,6 +7,28 @@ and are not listed here.
 
 ## [Unreleased]
 
+## [2.1.2] — 2026-11-09
+
+### Security
+
+- Lint tooling runs on minimatch 11.0.5 instead of 10.2.5, which carried a denial of service
+  through crafted glob patterns (GHSA-g3hv-75wg-m249). ESLint and typescript-eslint still ask for
+  minimatch 10, so an `overrides` entry in `package.json` holds 11 until they move; they only call
+  `new Minimatch(…).match()` and `minimatch()`, which 11 keeps.
+- The OSV scan ignores deepmerge's prototype-poisoning advisory (GHSA-gcqx-w48m-w2h4) until
+  2027-02-09, in the new `osv-scanner.toml`. No fixed release exists, and the only copy merges this
+  repo's own Svelte config at build time; nothing from a visitor reaches it. These two advisories
+  had kept the weekly scan, and every Dependabot PR, red since 2026-11-02.
+
+### Changed
+
+- Dependencies: Astro 7.4.7, @astrojs/cloudflare 14.4.6, @astrojs/mdx 8.1.3, @astrojs/svelte
+  9.1.2, Svelte 5.57.3, Tailwind CSS 4.3.4, jose 6.2.15, marked 18.1.3 and Pagefind 1.6.0; Wrangler
+  4.158, ESLint 10.14, typescript-eslint 8.72.1, knip 6.44 and the SonarCloud scan action 8.4.0.
+  Releases younger than three days were held back, as Dependabot's cooldown does.
+- knip no longer needs `cloudflare` in `ignoreDependencies`; it now reads `cloudflare:workers`
+  imports as a runtime module.
+
 ## [2.1.1] — 2026-10-28
 
 ### Fixed
@@ -142,7 +164,8 @@ The public launch is tagged `v1-launch`; the 1.x changes after it were not tagge
 - **2026-10** — Custom Worker entry in front of every page; Workers Rate Limiting; Web Analytics;
   topic email aliases; R2 media; the Turnstile gate; the admin at `admin.poli0981.dev`.
 
-[Unreleased]: https://github.com/poli0981/poli0981-dev/compare/v2.1.1...HEAD
+[Unreleased]: https://github.com/poli0981/poli0981-dev/compare/v2.1.2...HEAD
+[2.1.2]: https://github.com/poli0981/poli0981-dev/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/poli0981/poli0981-dev/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/poli0981/poli0981-dev/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/poli0981/poli0981-dev/releases/tag/v2.0.0
