@@ -219,6 +219,7 @@ const en: UIStrings = {
     thirdParty: "Third-party",
     licenses: "Licenses",
     aiUsage: "AI disclosure",
+    accessibility: "Accessibility",
   },
   now: {
     title: "Now",
