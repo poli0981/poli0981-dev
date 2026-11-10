@@ -45,7 +45,7 @@ Website cá nhân `poli0981.dev` cho Kokone: **portfolio dev + blog kiêm nhật
 | /dev (/uses) | PC specs, tool stack, setup OBS/Resolve | P2 |
 | /qa | FAQ tĩnh từ collection `faq` + khối "Liên hệ" trỏ /links và `contact@` | P1 |
 | /links | Toàn bộ social (YouTube, Discord ×2, GitHub, Telegram, Bluesky, Mastodon, X, Facebook), icon + mô tả | P1 |
-| /legal/* | 5 trang từ `12_LEGAL/`, song ngữ | P1 |
+| /legal/* | 7 trang song ngữ: 5 trang gốc từ `12_LEGAL/` + `ai-usage` + `accessibility` (tuyên bố trợ năng, 11/2026) | P1 |
 | Search | Pagefind, modal, lọc theo locale | P2 |
 | Error/offline | 404/403/429/500/offline custom | P1 (mini-game P3) |
 | Bug report | Nút footer → GitHub Issue + Discord | P2 |
@@ -54,7 +54,7 @@ Website cá nhân `poli0981.dev` cho Kokone: **portfolio dev + blog kiêm nhật
 ## 6. Yêu cầu phi chức năng
 
 - **Hiệu năng**: xem `14_PERF_BUDGET.md` (LCP < 2.0s mobile 4G, Lighthouse ≥ 95).
-- **A11y**: WCAG 2.1 AA cho contrast/focus/keyboard; `prefers-reduced-motion` được tôn trọng ở mọi animation.
+- **A11y**: mục tiêu WCAG 2.2 AA (`ACCESSIBILITY.md`, `/legal/accessibility`): contrast/focus/keyboard, không dựa riêng vào màu, reflow tới 320px, `forced-colors`; `prefers-reduced-motion` được tôn trọng ở mọi animation. `npm run test:a11y` (axe-core + bàn phím) chặn PR.
 - **i18n**: UI 100% song ngữ; nội dung theo bài; URL ổn định khi thêm locale mới.
 - **SEO**: hreflang, sitemap, JSON-LD, OG image tự sinh (xem `13_SEO_RSS_OG.md`).
 - **Bảo mật**: xem `06_SECURITY.md`; mọi phiên bản dependency không có CVE chưa vá ở thời điểm chốt.

@@ -9,7 +9,7 @@ Mục tiêu: site "để yên vẫn sống". Tổng thời gian bảo trì đị
 | **Hằng tuần** (thứ 2, sau khi Dependabot chạy) | Triage PR Dependabot: patch/minor xanh CI → merge; security alert → xử lý ≤ 48h. Liếc Discord `#site-reports` |
 | **Hằng tháng** | `npm outdated` đọc report weekly; nâng minor còn sót; **nâng tay `@typescript/native`** (Dependabot bỏ qua alias `npm:`) và xem TS 7.1 đã có JS API chưa (`02` §8); xem Web Analytics + Core Web Vitals; liếc Workers Logs (lọc `level: error`) + dashboard admin (trạng thái cron widgets, secret thiếu); SonarCloud không có issue mới trên `main` |
 | **Hằng quý** | Nâng major có kế hoạch (Astro/Tailwind/Wrangler — đọc upgrade guide trước); chạy lại ma trận error test `09` §5; backup ngoài (§4) |
-| **Hằng năm** | **Xoay secrets**: GITHUB_ISSUES_TOKEN (repo `site-reports`), GITHUB_CONTENT_TOKEN + GITHUB_PUBLISH_TOKEN (admin), GATE_SECRET (vô hiệu mọi vé cổng — làm lúc ít khách), STEAM_API_KEY, SONAR_TOKEN · rà `ADMIN_EMAILS` + policy Access · cập nhật `Expires` trong security.txt · đọc lại 5 văn bản legal (đổi thì tăng `v` của legalAck) · kiểm tra thẻ thanh toán còn hạn cho auto-renew domain |
+| **Hằng năm** | **Xoay secrets**: GITHUB_ISSUES_TOKEN (repo `site-reports`), GITHUB_CONTENT_TOKEN + GITHUB_PUBLISH_TOKEN (admin), GATE_SECRET (vô hiệu mọi vé cổng — làm lúc ít khách), STEAM_API_KEY, SONAR_TOKEN · rà `ADMIN_EMAILS` + policy Access · cập nhật `Expires` trong security.txt · đọc lại 7 trang legal (đổi thì tăng `v` của legalAck) · **rà trợ năng**: đọc lại `/legal/accessibility` + `ACCESSIBILITY.md`, đi một lượt bằng bàn phím và trình đọc màn hình, cập nhật ngày rà ở cả hai nơi · kiểm tra thẻ thanh toán còn hạn cho auto-renew domain |
 
 Đặt reminder: dùng chính hệ notify/cron GitHub Actions quen thuộc — workflow cron tháng/quý/năm bắn Discord nhắc việc (input sẵn trong repo `.github`).
 
@@ -51,4 +51,6 @@ Mục tiêu: site "để yên vẫn sống". Tổng thời gian bảo trì đị
 | Spam form vượt rate-limit thường xuyên | Nâng Turnstile lên chế độ khó hơn + thêm custom rule quốc gia cho /api |
 | Version sai lên production (PR được deploy, regression) | Rollback ngay (§2), rồi kiểm Deploy command của Workers Builds (`07` §9) |
 | Bị khoá ngoài admin (Access/`ADMIN_EMAILS`) | `wrangler secret put ADMIN_EMAILS` với email đúng; kiểm policy Access; denylist có chặn nhầm IP mình không (`wrangler kv key get … denylist`) |
+| Có báo cáo rào cản trợ năng (`accessibility@`, nút Báo lỗi, issue nhãn `accessibility`) | Trả lời ≤ 7 ngày; lỗi chặn hẳn việc đọc/dùng trang làm trước; nói rõ định làm gì + cách tạm thời; sửa xong thì thêm test vào `tests/a11y/` và, nếu chưa sửa được, ghi vào "Known limitations" của `ACCESSIBILITY.md` + trang `/legal/accessibility` |
+| Release có đổi giao diện | `npm run test:a11y` xanh + nghe lại các chỗ đã đổi bằng Narrator/VoiceOver; cập nhật "Last reviewed" trong `ACCESSIBILITY.md` |
 | Đổi email/mất hộp thư đích | Cập nhật alias Google Workspace + `src/lib/links.ts` + security.txt + legal contact ngay (`07` §11) |

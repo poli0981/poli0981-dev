@@ -12,7 +12,7 @@
 | `/gallery`, `/gallery/[album]` | `/en/...` | gallery |
 | `/gaming` · `/dev` (kèm `/dev/uses`) | `/en/...` | md + widgets |
 | `/qa` · `/links` | `/en/...` | faq + data links |
-| `/legal/{terms,privacy,disclaimer,third-party,licenses,ai-usage}` | `/en/legal/...` | `legal/*.md` (repo content) |
+| `/legal/{terms,privacy,disclaimer,third-party,licenses,ai-usage,accessibility}` | `/en/legal/...` | `legal/*.md` (repo content) |
 | `/now` | `/en/now` | now |
 | `/rss.xml`, `/blog/rss.xml`, `/truyen/rss.xml`, `/sitemap-index.xml`, `/robots.txt`, `/.well-known/security.txt` | | |
 | `/404` (+ bản en cho mọi đường dẫn `/en/…`), `/500`, `/403`, `/429`, `/offline` | tiêu đề chính + dòng ngôn ngữ kia; 404 có bản riêng mỗi ngôn ngữ | 09 |
@@ -71,8 +71,8 @@ ReadingControls: cỡ chữ S/M/L · nền Giấy/Sepia/Tối (độc lập them
 ## 5. Legal gate — LegalGateSheet
 
 - **Kích hoạt**: lần truy cập đầu (thiếu `localStorage.legalAck`), delay 800ms sau khi trang tương tác được; không hiện trên `/legal/*` và trang lỗi.
-- **Hình thức**: bottom-sheet (mobile) / card góc phải dưới (desktop), chiếm ≤ 40% chiều cao, **không chặn scroll** — nội dung phía sau vẫn đọc được (SEO/crawler không ảnh hưởng vì chỉ là overlay client-side).
-- **Nội dung** (song ngữ theo locale): 3 dòng — nội dung © Kokone; phần mềm/thương hiệu được nhắc tới thuộc chủ sở hữu tương ứng, site không liên kết; site dùng analytics không cookie. Link: Terms · Privacy · Disclaimer · Third-party · Licenses. Nút: **"Đã hiểu / Got it"** → `legalAck = {v:1, ts}`.
+- **Hình thức**: bottom-sheet (mobile — nằm **trên** TabBar chứ không đè lên, để 4 nút của TabBar vẫn thấy và bấm được) / card góc phải dưới (desktop), chiếm ≤ 40% chiều cao, **không chặn scroll** — nội dung phía sau vẫn đọc được (SEO/crawler không ảnh hưởng vì chỉ là overlay client-side).
+- **Nội dung** (song ngữ theo locale): 3 dòng — nội dung © Kokone; phần mềm/thương hiệu được nhắc tới thuộc chủ sở hữu tương ứng, site không liên kết; site dùng analytics không cookie. Link: cả 7 trang của `legalNav` (Terms · Privacy · Disclaimer · Third-party · Licenses · AI · Trợ năng). Nút: **"Đã hiểu / Got it"** → `legalAck = {v:1, ts}`. Sheet là landmark `complementary` có tên, công bố chiều cao của mình qua `--sheet-h` để focus phía sau không bị che (`03` §8).
 - Đổi phiên bản văn bản legal lớn → tăng `v` để sheet hiện lại. Footer luôn có link legal (gate chỉ là lớp nhắc).
 
 ## 6. Copy & tone

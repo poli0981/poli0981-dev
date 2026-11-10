@@ -126,10 +126,15 @@ Token `--scrollbar-thumb` / `--scrollbar-thumb-hover` / `--scrollbar-track` khai
 
 ## 8. A11y & mobile checklist (áp cho mọi PR UI)
 
-- Focus ring rõ (2px accent, offset 2px), điều hướng bàn phím đủ; skip-link.
-- Touch target ≥ 44×44; `safe-area-inset` cho TabBar; không hover-only cho thông tin.
-- Ảnh có alt (bắt buộc trong schema gallery); icon-only button có `aria-label`.
-- Kiểm tra 360px, 390px, 768px, 960px, 1280px; dark/light/theo hệ thống; vi/en (chuỗi EN thường dài hơn ~20%).
+- Focus ring rõ (2px accent, offset 2px), điều hướng bàn phím đủ; skip-link. Thứ gì mở ra (menu, dialog, panel) thì đóng bằng Esc và **trả focus về nút đã mở nó**.
+- Focus không được nằm dưới thanh cố định (WCAG 2.4.11): `scroll-padding` của `html` (global.css) đã trừ header, TabBar, thanh đọc truyện và bảng thông báo pháp lý — thanh mới ở mép trên/dưới phải cộng vào `--subheader-h` / `--bottom-bar-h`.
+- Touch target: TabBar 56px, icon mạng xã hội ở footer 44px, nút header 40px; **không bao giờ dưới 24px** (WCAG 2.5.8). `safe-area-inset` cho TabBar; không hover-only cho thông tin.
+- Trạng thái và "đang ở đâu" **không chỉ bằng màu** (WCAG 1.4.1): nav đang mở có gạch chân, tab đang mở có vạch trên, lựa chọn đang chọn in đậm + viền kép; link nằm giữa câu phải gạch chân.
+- `forced-colors` (Windows High Contrast): thứ chỉ vẽ bằng `background`/`box-shadow` sẽ biến mất — thêm `outline` hoặc màu hệ thống (`Highlight`, `ButtonText`, `Canvas`…) trong `@media (forced-colors: active)`.
+- Ảnh có alt (bắt buộc trong schema gallery; `alt=""` chỉ khi ảnh trang trí); icon-only button có `aria-label` **bắt đầu bằng chữ đang hiển thị** (WCAG 2.5.3 — axe so theo từng từ và bỏ phần trong ngoặc đơn).
+- Heading không nhảy cấp: card (`PostCard`/`ProjectCard`/`GalleryCard`) nhận `headingLevel` — 2 khi nằm ngay dưới `h1`, 3 khi dưới một `h2`. Mỗi `<nav>` một tên riêng (footer đã dùng "Pháp lý" và "Mạng xã hội").
+- Kiểm tra 320px, 360px, 390px, 768px, 960px, 1280px (không cuộn ngang ở bất kỳ mức nào); zoom 200%; dark/light/theo hệ thống; vi/en (chuỗi EN thường dài hơn ~20% — header cần 378px ở bản vi, 400px ở bản en, dưới đó nút ngôn ngữ rút thành `EN`/`VI`).
+- `npm run test:a11y` xanh (axe-core mọi trang + các dialog khi mở, bàn phím, reflow, forced-colors — `tests/a11y/`), rồi nghe lại một lượt bằng trình đọc màn hình. Cam kết đầy đủ: `ACCESSIBILITY.md`.
 - Màu mới phải vào `palette.ts` + `global.css` cùng lúc (test chặn nếu lệch hoặc dưới AA); không hard-code màu trong component — dùng token.
 - `<dialog>` modal giữ `margin: auto` (preflight Tailwind xoá margin — global.css trả lại); danh sách trong `.prose` có marker (preflight xoá `list-style`).
 - Nhãn landmark, aria-label và chuỗi giao diện lấy từ `src/i18n`, không viết cứng.

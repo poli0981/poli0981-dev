@@ -7,6 +7,56 @@ and are not listed here.
 
 ## [Unreleased]
 
+## [2.2.0] — 2026-11-10
+
+### Added
+
+- **Accessibility statement.** A new page, `/legal/accessibility` (Vietnamese and English), says
+  what the site aims for (WCAG 2.2 AA, as a guide — it has not been audited), what is in place, how
+  it is tested, what is known not to work and how to report a barrier: a new address,
+  accessibility@poli0981.dev, or the "Report a bug" button. [`ACCESSIBILITY.md`](ACCESSIBILITY.md)
+  is the repository's copy, with the notes for contributors; there is an accessibility issue
+  template and a pull request template with the checklist.
+- **Accessibility gate in CI.** `npm run test:a11y` runs in the required `build` check: axe-core
+  over every page in the sitemap and over the menu, search, photo viewer, report dialog, reading
+  settings and legal notice while open, then keyboard, reflow and forced-colours tests
+  (`tests/a11y/`, Playwright driving the runner's Chrome). Lighthouse stays advisory.
+- Windows High Contrast (`forced-colors`): the search field and its active result keep a visible
+  indicator, the scrollbar switch shows its knob and state, and the chosen reading option is
+  filled. `prefers-contrast: more` strengthens hairlines and drops the film grain.
+
+### Changed
+
+- The current page is marked by more than colour: an underline in the header and in the legal
+  sidebar, a bar along the top of the current tab on phones. The chosen reading option is bold and
+  double-ruled.
+- Footer social icons are 44 px targets (the icons keep their size); the row is a little wider.
+- On a phone the legal notice rests on top of the tab bar instead of covering it.
+- Below 384 px (Vietnamese pages) or 404 px (English pages) the language switch shows `EN` / `VI`
+  instead of the full name, and below 352 px the header drops the "SkullMute" wordmark.
+- Dependencies: Tailwind CSS 4.3.5. New dev dependencies: `playwright` 1.65 and
+  `@axe-core/playwright` 4.14, both older than the three-day cooldown and without install scripts.
+
+### Fixed
+
+- The header was wider than the screen on narrow phones — it needs 378 px in Vietnamese and 400 px
+  in English — so pages scrolled sideways at 360 px, and English pages did on a 390 px iPhone. Pages
+  now reflow down to 320 px; a long URL in a legal page no longer widens it either.
+- Focus could land underneath the mobile tab bar, the legal notice or the story reader's bar. The
+  page's scroll padding now accounts for all three.
+- Esc in the story reader's "Aa" panel dropped focus to the top of the page; it returns to the
+  button. Pressing play on a video keeps focus on the player.
+- Names: the three "Play video" buttons on the gaming page each carry their video's title; the
+  search's "Esc" button is named "Esc — Close"; the "Social" and "Legal" navs that shared a name
+  with the footer's (dev and gaming pages, menu sheet, legal sidebar) have their own.
+- Headings no longer skip from h1 to h3 on the blog, tag, project and gallery lists. Project,
+  gallery and tag breadcrumbs are navigation landmarks, and the legal notice is a landmark.
+- Links inside the Q&A contact list are underlined, not told apart by colour alone.
+- The report form ties its "too short" message to the text box and returns focus there. The photo
+  viewer announces the caption when you move to another photo, and no longer reads it three times.
+- The sitemap listed seven `/admin/` URLs that only exist on the admin host.
+- The four FrameLedger screenshots have text alternatives (content repository).
+
 ## [2.1.2] — 2026-11-09
 
 ### Security
@@ -164,7 +214,8 @@ The public launch is tagged `v1-launch`; the 1.x changes after it were not tagge
 - **2026-10** — Custom Worker entry in front of every page; Workers Rate Limiting; Web Analytics;
   topic email aliases; R2 media; the Turnstile gate; the admin at `admin.poli0981.dev`.
 
-[Unreleased]: https://github.com/poli0981/poli0981-dev/compare/v2.1.2...HEAD
+[Unreleased]: https://github.com/poli0981/poli0981-dev/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/poli0981/poli0981-dev/compare/v2.1.2...v2.2.0
 [2.1.2]: https://github.com/poli0981/poli0981-dev/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/poli0981/poli0981-dev/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/poli0981/poli0981-dev/compare/v2.0.0...v2.1.0
