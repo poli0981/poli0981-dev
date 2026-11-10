@@ -102,7 +102,12 @@ const slides = await Promise.all(
 </BaseLayout>
 
 <style>
+  /* A flex row with a gap: the build strips the whitespace between the link, the slash
+     and the current page, so the spacing cannot come from the markup. */
   .crumb {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
     color: var(--muted);
     font-family: var(--ff-mono);
     font-size: var(--text-meta);
