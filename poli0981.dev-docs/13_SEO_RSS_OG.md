@@ -16,7 +16,7 @@ Bài không có bản dịch: không render hreflang (tránh trỏ trang không 
 
 ## 3. Sitemap & robots
 
-- `@astrojs/sitemap` với `i18n` config → `sitemap-index.xml`; loại trang lỗi, `/offline`, trang draft.
+- `@astrojs/sitemap` với `i18n` config → `sitemap-index.xml`; loại trang lỗi, `/offline`, trang draft và mọi route `/admin/*` (chỉ tồn tại trên `admin.poli0981.dev`; trước v2.2.0 bị lọt 7 URL vào sitemap). Bộ test trợ năng (`tests/a11y/`) lấy danh sách trang từ chính sitemap này.
 - `public/robots.txt`:
 
 ```
