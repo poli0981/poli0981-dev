@@ -176,7 +176,12 @@
         location.href = flat[selectedIndex].url;
       }
     } else if (e.key === "Tab") {
-      const f = dialogEl?.querySelectorAll("input, a[href], button:not(:disabled)");
+      // Only what Tab can actually reach: the results are options with tabindex="-1"
+      // (arrow keys move through them). Counting them made the last result the "last"
+      // stop, which Tab never lands on — so Tab from the Esc button left the dialog.
+      const f = dialogEl?.querySelectorAll(
+        'input, a[href]:not([tabindex="-1"]), button:not(:disabled)',
+      );
       if (!f || !f.length) return;
       const first = f[0];
       const last = f[f.length - 1];

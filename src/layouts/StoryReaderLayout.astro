@@ -205,6 +205,13 @@ const storySchema = {
     --accent-strong: #6f4808;
     --accent-contrast: #ffffff;
   }
+  /* global.css strengthens --line under "increase contrast", but the sepia block above is
+     more specific and would put the faint hairline back. */
+  @media (prefers-contrast: more) {
+    .reader[data-reader-theme="sepia"] {
+      --line: var(--line-strong);
+    }
+  }
   .reader-head {
     margin-block-end: 1.75rem;
     text-align: center;

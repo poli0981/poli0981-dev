@@ -204,11 +204,13 @@ body {
     /* MobileTabBar: 3.5rem of tabs, its 1px top border, and the home-indicator inset. */
     --bottom-bar-h: calc(3.5rem + 1px + env(safe-area-inset-bottom, 0px));
   }
-  /* …and, while the legal notice is up, for that too: it spans the full width here, and
-     without the extra room the last links of the footer could not scroll out from under it. */
-  body {
-    padding-block-end: max(var(--bottom-bar-h), var(--sheet-h, 0px));
-  }
+}
+/* …and, at every width, room for the legal notice while it is up. Scroll padding cannot
+   help at the very end of the document: without this the last links of the footer could
+   not scroll out from under the sheet (full-width on a phone, a card over the footer's
+   right half on a tablet). */
+body {
+  padding-block-end: max(var(--bottom-bar-h), var(--sheet-h, 0px));
 }
 
 h1,

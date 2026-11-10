@@ -8,8 +8,10 @@
   line-height: 1.7;
   color: var(--text);
   /* A bare URL or an e-mail address is one unbreakable word: on a 320px screen it pushed
-     the page wider than the viewport. Break inside such words only when nothing else fits. */
-  overflow-wrap: anywhere;
+     the page wider than the viewport. Break inside such words only when nothing else fits.
+     `break-word`, not `anywhere`: the latter also lets a table shrink its columns below
+     their longest word, which broke "Anthropic" across two lines in the AI-usage table. */
+  overflow-wrap: break-word;
 }
 .prose--reader {
   --measure: 68ch;
@@ -18,6 +20,17 @@
 }
 
 .prose > * + * {
+  margin-block-start: 1em;
+}
+/* The legal pages wrap each language half in a container that carries `lang`
+   (src/lib/legal-lang.ts). It takes no box of its own, so the rhythm rule above has to
+   reach through it; :where() keeps the specificity of that rule, so the heading margins
+   below still win. */
+.prose > [lang] {
+  display: contents;
+}
+.prose > :where([lang]) > * + *,
+.prose > :where(* + [lang]) > :where(:first-child) {
   margin-block-start: 1em;
 }
 .prose h2,
