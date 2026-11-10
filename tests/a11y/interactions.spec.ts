@@ -256,8 +256,26 @@ describe("focus is not hidden under fixed bars (WCAG 2.4.11)", () => {
         assert.deepEqual(offenders, []);
         assert.ok(await isInside(page, "aside.gate"), "Tab reaches the notice");
 
+        // The height the sheet publishes for the scroll padding has to be right with the
+        // page scrolled too (Tab has scrolled it by now); a resize makes it measure again.
+        const [published, covered] = await page.evaluate(() => {
+          window.dispatchEvent(new Event("resize"));
+          const gate = document.querySelector("aside.gate");
+          const top = gate ? gate.getBoundingClientRect().top : window.innerHeight;
+          const value = getComputedStyle(document.documentElement).getPropertyValue("--sheet-h");
+          return [Number.parseFloat(value), window.innerHeight - top];
+        });
+        assert.ok(
+          Math.abs(published - covered) <= 1,
+          `--sheet-h is ${published}px, the sheet covers ${covered}px`,
+        );
+
         await page.keyboard.press("Escape");
         await page.waitForSelector("aside.gate", { state: "detached" });
+        const cleared = await page.evaluate(() =>
+          getComputedStyle(document.documentElement).getPropertyValue("--sheet-h"),
+        );
+        assert.equal(cleared, "", "--sheet-h is removed with the sheet");
       });
     });
   }

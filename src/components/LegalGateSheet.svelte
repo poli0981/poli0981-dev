@@ -54,15 +54,16 @@
   // The sheet does not take focus and sits at the end of the tab order, so someone tabbing
   // through the page reaches controls that lie underneath it. Publish how much of the
   // viewport's bottom it covers; the page's scroll padding (global.css) then keeps whatever
-  // receives focus above it (WCAG 2.4.11). offsetTop is the laid-out position, so the
-  // slide-in transform does not skew it. Set through CSSOM, never a style attribute (CSP).
+  // receives focus above it (WCAG 2.4.11). The figure is the sheet's own height plus its
+  // gap to the bottom edge — laid-out sizes, so neither the slide-in transform nor how far
+  // the page is scrolled skews it. Set through CSSOM, never a style attribute (CSP).
   $effect(() => {
     if (!visible || !sheetEl) return;
     const el = sheetEl;
     const root = document.documentElement;
     const sync = () => {
-      const covered = Math.max(0, Math.round(window.innerHeight - el.offsetTop));
-      root.style.setProperty("--sheet-h", `${covered}px`);
+      const gap = Number.parseFloat(getComputedStyle(el).bottom) || 0;
+      root.style.setProperty("--sheet-h", `${Math.round(el.offsetHeight + gap)}px`);
     };
     sync();
     const observer = new ResizeObserver(sync);
