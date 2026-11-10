@@ -108,6 +108,10 @@ const pathname = Astro.url.pathname;
   .brand {
     display: inline-flex;
     align-items: center;
+    /* As tall as the buttons beside it, and never narrower: once the wordmark is hidden
+       (below) the link would otherwise be the 32×12px mark alone. */
+    min-block-size: 2.5rem;
+    min-inline-size: 2.5rem;
     gap: 0.5rem;
     color: var(--text);
     font-family: var(--ff-display);

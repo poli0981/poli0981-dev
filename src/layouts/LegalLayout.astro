@@ -3,6 +3,7 @@ import BaseLayout from "./BaseLayout.astro";
 import Prose from "../components/Prose.astro";
 import { useTranslations } from "../i18n";
 import { legalNav, isActivePath } from "../lib/nav";
+import { markLanguageHalves } from "../lib/legal-lang";
 import type { Locale } from "../i18n/routing";
 
 interface Props {
@@ -16,6 +17,8 @@ const t = useTranslations(locale);
 const links = legalNav(locale);
 const pathname = Astro.url.pathname;
 const effectiveLabel = locale === "vi" ? "Hiệu lực" : "Effective";
+// The document holds both languages; each half gets its `lang` at build time.
+const body = markLanguageHalves(await Astro.slots.render("default"));
 ---
 
 <BaseLayout {title} {description} {locale}>
@@ -49,15 +52,18 @@ const effectiveLabel = locale === "vi" ? "Hiệu lực" : "Effective";
         )
       }
       <Prose class="legal-body">
-        <slot />
+        <Fragment set:html={body} />
       </Prose>
     </article>
   </div>
 </BaseLayout>
 
 <style>
+  /* minmax(0, …): a plain `1fr` column never gets narrower than its longest unbreakable
+     word, so a bare URL in the text made the whole page 4px wider than a 320px screen. */
   .legal-wrap {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 2rem;
     padding-block: clamp(2rem, 6vw, 3.5rem);
   }
@@ -108,7 +114,7 @@ const effectiveLabel = locale === "vi" ? "Hiệu lực" : "Effective";
 
   @media (min-width: 900px) {
     .legal-wrap {
-      grid-template-columns: 14rem 1fr;
+      grid-template-columns: 14rem minmax(0, 1fr);
       gap: 3rem;
     }
     .legal-side {
