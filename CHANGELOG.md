@@ -46,6 +46,10 @@ and are not listed here.
   page's scroll padding now accounts for all three.
 - Esc in the story reader's "Aa" panel dropped focus to the top of the page; it returns to the
   button. Pressing play on a video keeps focus on the player.
+- Tab could walk out of the search dialog once results were listed; the trap now counts only what
+  Tab can reach.
+- A legal page holds both languages, and the half that is not in the page's language had no
+  `lang`, so a screen reader read it with the wrong voice. Each half now declares its own.
 - Names: the three "Play video" buttons on the gaming page each carry their video's title; the
   search's "Esc" button is named "Esc — Close"; the "Social" and "Legal" navs that shared a name
   with the footer's (dev and gaming pages, menu sheet, legal sidebar) have their own.

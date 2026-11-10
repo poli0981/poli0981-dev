@@ -64,10 +64,15 @@ export async function newContext(
   return context;
 }
 
-/** Load a page and wait until its `client:idle` islands have hydrated. */
-export async function open(context: BrowserContext, path: string): Promise<Page> {
+/**
+ * Load a page and wait until its `client:idle` islands have hydrated. The status is checked
+ * so that an error page — a 429 from the site-wide rate limit, a route that stopped
+ * building — is never scanned in the route's place and passed.
+ */
+export async function open(context: BrowserContext, path: string, status = 200): Promise<Page> {
   const page = await context.newPage();
-  await page.goto(path, { waitUntil: "load" });
+  const response = await page.goto(path, { waitUntil: "load" });
+  assert.equal(response?.status(), status, `${path} answers ${status}`);
   await settle(page);
   return page;
 }
