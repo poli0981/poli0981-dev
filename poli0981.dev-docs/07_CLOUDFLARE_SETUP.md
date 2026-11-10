@@ -104,6 +104,7 @@ Mail của domain chạy trên **Google Workspace** (MX → `aspmx.l.google.com`
 | `contact@` | Liên hệ chung (fallback) | Footer, /links, /now, trang 403 |
 | `security@` | Báo lỗ hổng | `/.well-known/security.txt`, `SECURITY.md` |
 | `privacy@` | Yêu cầu về dữ liệu cá nhân | Privacy §7–8 |
+| `accessibility@` | Báo rào cản trợ năng (trả lời ≤ 7 ngày) | `/legal/accessibility` §5, `ACCESSIBILITY.md`, issue template `accessibility.yml`, README |
 | `legal@` | Vấn đề pháp lý | Terms |
 | `copyright@` · `dmca@` · `takedown@` | Xin phép · khiếu nại bản quyền · yêu cầu gỡ khác | Licenses, `CONTENT-LICENSE.md` |
 | `collab@` · `press@` · `sponsor@` | Hợp tác · báo chí · tài trợ | /links, Q&A, footer |

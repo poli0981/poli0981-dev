@@ -20,7 +20,7 @@ the SkullMute channel, in Vietnamese and English. Live at **[poli0981.dev](https
 | Content   | Markdown/MDX in [`poli0981/content`](https://github.com/poli0981/content) (git submodule `src/content`)                       |
 | Search    | Pagefind (built after `astro build`)                                                                                          |
 | Tooling   | Node 26 · TypeScript 7 (`tsc`) next to TypeScript 6 (astro check, typescript-eslint) · `node:test` · ESLint · Prettier · knip |
-| Quality   | SonarCloud quality gate · CodeQL · OSV-Scanner · Snyk · Dependabot (3-day cooldown)                                           |
+| Quality   | SonarCloud quality gate · CodeQL · OSV-Scanner · Snyk · Dependabot (3-day cooldown) · axe-core accessibility gate             |
 
 ## How it fits together
 
@@ -65,6 +65,7 @@ identity (`dev@localhost`); saving content needs a `GITHUB_CONTENT_TOKEN` in `.d
 | `npm run lint` · `npm run format:check` · `npm run knip` | ESLint · Prettier · unused files/exports                                                       |
 | `npm test` · `npm run test:coverage`                     | `node:test` suites; coverage writes `coverage/lcov.info` (80% line floor)                      |
 | `npm run smoke`                                          | Runs the built Worker with `wrangler dev` and probes pages, headers, the gate and the denylist |
+| `npm run test:a11y`                                      | axe-core, keyboard, reflow and forced-colours checks against `npm run preview` (Chrome)        |
 | `npm run probe:ratelimit -- [url] [requests] [parallel]` | Spams a live URL and counts 429s from the Worker's site-wide limit vs. the WAF rule            |
 | `npm run new:post`                                       | Scaffold a post or story from `docs/templates/`                                                |
 | `npm run check-exif` · `npm run strip-exif`              | Refuse / remove GPS and camera metadata in images                                              |
@@ -91,6 +92,14 @@ JWT (≤ 24 hours old) and an email allowlist on every request.
 
 Please report vulnerabilities privately — see [`SECURITY.md`](SECURITY.md). Bug reports from the
 site's "Report a bug" button land in a private repository, not in this one's issues.
+
+## Accessibility
+
+The site aims for WCAG 2.2 AA and checks it on every pull request (axe-core over every page, plus
+keyboard, reflow and forced-colours tests). What is in place, what is known not to work and how to
+report a barrier: [`ACCESSIBILITY.md`](ACCESSIBILITY.md); the statement for visitors is at
+[`/legal/accessibility`](https://poli0981.dev/legal/accessibility/). Barriers can be reported to
+**accessibility@poli0981.dev**.
 
 ## License
 

@@ -29,9 +29,9 @@
 | 16 | 16_COST.md | Chi phí chốt + ngưỡng cần theo dõi |
 | 17 | 17_MAINTENANCE.md | Lịch bảo trì, update playbook, backup |
 
-`12_LEGAL/`: `TERMS_OF_USE.md` · `PRIVACY_POLICY.md` · `DISCLAIMER.md` · `THIRD_PARTY_NOTICES.md` · `CONTENT_LICENSE.md` — **bản nháp gốc** (07/2026). Văn bản đang hiệu lực là `legal/*.md` trong repo `poli0981/content` (render ở `/legal/*`); sửa ở đó, không sửa ở đây.
+`12_LEGAL/`: `TERMS_OF_USE.md` · `PRIVACY_POLICY.md` · `DISCLAIMER.md` · `THIRD_PARTY_NOTICES.md` · `CONTENT_LICENSE.md` — **bản nháp gốc** (07/2026). Văn bản đang hiệu lực là `legal/*.md` trong repo `poli0981/content` (render ở `/legal/*`); sửa ở đó, không sửa ở đây. Hai trang thêm sau (`ai-usage`, `accessibility`) chỉ có ở repo content, không có bản nháp tại đây.
 
-## Nhật ký quyết định (chốt 2026-07-17, cập nhật 2026-10-24)
+## Nhật ký quyết định (chốt 2026-07-17, cập nhật 2026-11-10)
 
 | # | Quyết định | Chọn |
 |---|---|---|
@@ -54,6 +54,7 @@
 | D17 | Toolchain (10/2026) | Node 26 · TypeScript 7 (`tsc` kiểm kiểu) chạy song song TypeScript 6 (astro check, typescript-eslint, svelte2tsx cần JS API) · test bằng `node:test` (không thêm deps) · SonarCloud phân tích qua CI (`08` §0) |
 | D18 | Báo lỗi (10/2026) | Issue tạo ở repo **private** `poli0981/site-reports` (repo site đã public) — `10` §4 |
 | D19 | Phát hành | Tag `vX.Y.Z` có ký GPG + GitHub Release + `CHANGELOG.md`; deploy vẫn là "merge `main`" (`08` §8) |
+| D20 | Trợ năng (11/2026, v2.2.0) | Mục tiêu **WCAG 2.2 AA** — kim chỉ nam, không tự nhận đã được kiểm định. Tuyên bố cho khách ở `/legal/accessibility` (song ngữ, repo content); `ACCESSIBILITY.md` ở root là bản của repo kèm ghi chú cho người sửa code (trang site thắng nếu lệch). Rào cản báo về `accessibility@` hoặc nút "Báo lỗi". Cổng tự động: `npm run test:a11y` (axe-core + bàn phím + reflow + forced-colors, Playwright lái Chrome có sẵn) chạy trong check bắt buộc `build` (`08` §0, checklist ở `03` §8) — ngoại lệ có chủ đích của D17 "không thêm deps cho test" |
 
 ## Cách dùng suite
 

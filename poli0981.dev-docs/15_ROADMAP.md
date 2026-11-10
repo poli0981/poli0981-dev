@@ -38,6 +38,8 @@ Trạng thái tại 2026-10-24 (v2.0.0): ✅ xong · 🟡 đang làm · ⬜ chư
 - Cổng Turnstile trước mọi trang (06 §3b) · admin `admin.poli0981.dev` (Access + JWT, R2 media, xuất bản qua workflow) · repo public.
 - **v2.0.0**: Node 26 + TypeScript 7 · SonarCloud + test `node:test` (~99% dòng) · vá bypass cookie cổng · denylist CIDR · ảnh widget qua `/ext-img` · log JSON + version trên `/api/health` · báo lỗi vào repo private · palette Glacier Teal + theme theo hệ điều hành · sửa a11y/i18n · admin mới (tổng quan, hoạt động, bảo mật, audit log). Chi tiết: `CHANGELOG.md`.
 
+- **v2.2.0** (11/2026): tuyên bố trợ năng (`/legal/accessibility` + `ACCESSIBILITY.md`, địa chỉ `accessibility@`) · cổng axe-core + bàn phím trong CI · hỗ trợ Windows High Contrast · "đang ở đâu" không chỉ bằng màu · sửa tràn ngang ở màn hình hẹp (reflow tới 320px) · focus không bị che dưới thanh cố định. Chi tiết: `CHANGELOG.md`, quyết định D20.
+
 ## P4 — Launch công khai 🟡
 
 - [x] Checklist `06` §8 (security) phần tự động (headers, CSP, cổng)

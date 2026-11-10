@@ -67,11 +67,11 @@ poli0981-dev/
 │   ├── lib/               # gate/, admin/, media/, denylist, ext-img, log, version, palette, theme…
 │   ├── pages/             # routes + /en/* + api/* + admin/* + 403/404/429/500
 │   └── styles/            # global.css (token), prose.css, admin.css
-├── tests/                 # node:test + support/ (stub astro:*, fake KV/R2/GitHub…)
+├── tests/                 # node:test + support/ (stub astro:*, fake KV/R2/GitHub…) · a11y/ (*.spec.ts: axe-core + bàn phím qua Playwright)
 ├── workers/widgets/       # worker cron riêng (wrangler.jsonc riêng)
-├── .github/               # ci.yml, content-bump.yml, lighthouse.yml, osv-scanner.yml, dependabot.yml
+├── .github/               # ci.yml, content-bump.yml, lighthouse.yml, osv-scanner.yml, dependabot.yml, ISSUE_TEMPLATE/ (bug_report, accessibility), pull_request_template.md
 ├── astro.config.mjs · wrangler.jsonc · sonar-project.properties · lefthook.yml · knip.json
-└── LICENSE (GPL-3.0) · CONTENT-LICENSE.md · DISCLAIMER.md · THIRD-PARTY-NOTICES.md · SECURITY.md · CHANGELOG.md
+└── LICENSE (GPL-3.0) · CONTENT-LICENSE.md · DISCLAIMER.md · THIRD-PARTY-NOTICES.md · SECURITY.md · ACCESSIBILITY.md · CHANGELOG.md
 ```
 
 ## 4. Rendering & routing
