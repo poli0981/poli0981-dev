@@ -77,4 +77,22 @@
     background: var(--accent);
     translate: 0.775rem -50%;
   }
+  /* Forced colours repaint backgrounds, and the knob is nothing but a background: without
+     this the switch is an empty outline whose state cannot be seen. System colours written
+     here are kept. */
+  @media (forced-colors: active) {
+    .track {
+      border-color: ButtonText;
+    }
+    .knob {
+      background: ButtonText;
+    }
+    .sb-switch[aria-checked="true"] .track {
+      background: Highlight;
+      border-color: Highlight;
+    }
+    .sb-switch[aria-checked="true"] .knob {
+      background: HighlightText;
+    }
+  }
 </style>

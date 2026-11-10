@@ -243,7 +243,10 @@
         autocapitalize="off"
         spellcheck="false"
       />
-      <button type="button" class="close" onclick={close} aria-label={labels.close}>Esc</button>
+      <!-- The name starts with the visible "Esc" so voice control can target it (WCAG 2.5.3). -->
+      <button type="button" class="close" onclick={close} aria-label={`Esc — ${labels.close}`}
+        >Esc</button
+      >
     </div>
 
     <div class="results">
@@ -411,6 +414,22 @@
   .result.active {
     background: var(--surface);
     border-inline-start-color: var(--accent);
+  }
+  /* Forced colours (Windows High Contrast) drop box-shadows and repaint backgrounds, which
+     is all the focus indicator and the active option were made of; outlines are kept. The
+     resting option's transparent edge would turn solid there, so it takes the page colour. */
+  @media (forced-colors: active) {
+    .search-row:focus-within {
+      outline: 2px solid Highlight;
+      outline-offset: -2px;
+    }
+    .result {
+      border-inline-start-color: Canvas;
+    }
+    .result.active {
+      outline: 2px solid Highlight;
+      outline-offset: -2px;
+    }
   }
   .r-title {
     display: block;

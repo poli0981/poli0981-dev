@@ -112,8 +112,10 @@
   </nav>
 
   {#if legal.length}
-    <nav aria-labelledby="menu-sheet-legal">
-      <p id="menu-sheet-legal" class="group-title">{legalTitle}</p>
+    <!-- Named "Menu — Legal", not just "Legal": the footer's nav already has that name, and
+         two landmarks that sound the same cannot be told apart in a landmark list. -->
+    <nav aria-label={`${title} — ${legalTitle}`}>
+      <p class="group-title">{legalTitle}</p>
       <ul class="links legal">
         {#each legal as item (item.href)}
           <li><a href={item.href} onclick={closeMenu}>{item.label}</a></li>

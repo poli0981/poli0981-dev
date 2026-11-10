@@ -12,3 +12,20 @@ const { class: className = "", reader = false } = Astro.props;
 <div class:list={["prose", { "prose--reader": reader }, className]}>
   <slot />
 </div>
+
+<script>
+  // A wide code block scrolls sideways. Chromium and Firefox let the keyboard reach any
+  // scroller, Safari does not — so a <pre> that overflows joins the tab order (and leaves
+  // it again once it fits, e.g. after a resize), where arrow keys scroll it (WCAG 2.1.1).
+  const blocks = document.querySelectorAll<HTMLElement>(".prose pre");
+  if (blocks.length > 0 && "ResizeObserver" in window) {
+    const observer = new ResizeObserver((entries) => {
+      for (const { target } of entries) {
+        if (!(target instanceof HTMLElement)) continue;
+        if (target.scrollWidth > target.clientWidth) target.tabIndex = 0;
+        else target.removeAttribute("tabindex");
+      }
+    });
+    blocks.forEach((pre) => observer.observe(pre));
+  }
+</script>

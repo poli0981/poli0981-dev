@@ -6,8 +6,12 @@ import { useTranslations } from "../i18n";
 interface Props {
   entry: ProjectEntry;
   locale: Locale;
+  /** Heading level of the card title: 3 under a section heading, 2 right under the
+      page's h1 (an index page) — heading levels must not skip. */
+  headingLevel?: 2 | 3;
 }
-const { entry, locale } = Astro.props;
+const { entry, locale, headingLevel = 3 } = Astro.props;
+const Title = `h${headingLevel}` as const;
 const t = useTranslations(locale);
 const href = sectionPath("projects", locale, entry.id);
 const { name, tagline, stack, repo, url, featured, year } = entry.data;
@@ -16,7 +20,7 @@ const { name, tagline, stack, repo, url, featured, year } = entry.data;
 <article class:list={["card project", { featured }]}>
   <a class="card-link" href={href}>
     <div class="head">
-      <h3 class="card-title">{name}</h3>
+      <Title class="card-title">{name}</Title>
       <span class="year">{year}</span>
     </div>
     <p class="tagline">{tagline}</p>

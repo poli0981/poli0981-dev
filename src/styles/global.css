@@ -130,7 +130,13 @@ html {
   /* Height of the sticky site header: the story reader bar docks under it and in-page
      anchors stop below it. */
   --header-h: 3.75rem;
-  scroll-padding-block-start: calc(var(--header-h) + 1rem);
+  /* What covers the bottom edge of the viewport: the fixed mobile tab bar (set below) and,
+     while it is showing, the legal notice sheet (LegalGateSheet sets --sheet-h). */
+  --bottom-bar-h: 0px;
+  scroll-padding-block-start: calc(var(--header-h) + var(--subheader-h, 0px) + 1rem);
+  /* Focus and in-page anchors scroll clear of those bars instead of landing underneath
+     them (WCAG 2.4.11 Focus Not Obscured). */
+  scroll-padding-block-end: calc(max(var(--bottom-bar-h), var(--sheet-h, 0px)) + 1rem);
   -webkit-text-size-adjust: 100%;
   scrollbar-gutter: stable;
   /* Native checkboxes, radios and range inputs take the palette accent. */
@@ -194,8 +200,14 @@ body {
 
 /* Leave room for the fixed mobile tab bar so the footer isn't hidden behind it. */
 @media (max-width: 767px) {
+  html {
+    /* MobileTabBar: 3.5rem of tabs, its 1px top border, and the home-indicator inset. */
+    --bottom-bar-h: calc(3.5rem + 1px + env(safe-area-inset-bottom, 0px));
+  }
+  /* …and, while the legal notice is up, for that too: it spans the full width here, and
+     without the extra room the last links of the footer could not scroll out from under it. */
   body {
-    padding-block-end: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+    padding-block-end: max(var(--bottom-bar-h), var(--sheet-h, 0px));
   }
 }
 
@@ -310,6 +322,21 @@ body::after {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * More contrast (the OS "increase contrast" setting): hairlines take the 3:1 line
+ * colour and the film grain goes away, since it only lowers contrast.
+ * ------------------------------------------------------------------ */
+@media (prefers-contrast: more) {
+  :root,
+  [data-theme],
+  [data-reader-theme] {
+    --line: var(--line-strong);
+  }
+  body::after {
+    display: none;
   }
 }
 

@@ -28,7 +28,7 @@ const projects = await getProjects(locale);
       projects.length > 0 ? (
         <div class="project-grid">
           {projects.map((entry) => (
-            <ProjectCard {entry} {locale} />
+            <ProjectCard {entry} {locale} headingLevel={2} />
           ))}
         </div>
       ) : locale === "vi" ? (

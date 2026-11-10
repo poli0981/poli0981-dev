@@ -117,15 +117,22 @@ function relFor(href: string, me?: boolean): string | undefined {
   .footer-legal a:hover {
     color: var(--accent);
   }
+  /* Each icon is 18px but its link is a 44px square (docs 03 §8; WCAG 2.5.8 asks for 24).
+     The negative margins take back the padding that adds, so the first icon still lines up
+     with the text above and the row keeps its height. */
   .footer-social {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.85rem;
     align-items: center;
-    margin-block: 0.25rem;
+    margin-block: -0.5rem;
+    margin-inline-start: -0.8125rem;
   }
   .footer-social a {
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 2.75rem;
+    min-block-size: 2.75rem;
     color: var(--muted);
     transition: color var(--duration-fast) var(--ease-site);
   }

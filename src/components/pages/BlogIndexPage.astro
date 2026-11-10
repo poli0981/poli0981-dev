@@ -31,11 +31,12 @@ const tags = collectTags(posts);
     }
     {
       locale === "vi" ? (
-        <PostGrid {posts} {locale} emptyText="Chưa có bài viết nào." />
+        <PostGrid {posts} {locale} headingLevel={2} emptyText="Chưa có bài viết nào." />
       ) : (
         <PostGrid
           {posts}
           {locale}
+          headingLevel={2}
           emptyText={t.post.onlyVi}
           emptyHref={sectionPath("blog", "vi")}
           emptyLabel="Blog (tiếng Việt)"

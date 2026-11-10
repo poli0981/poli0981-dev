@@ -9,8 +9,12 @@ interface Props {
   entry: GalleryEntry;
   cover: GalleryPhoto;
   locale: Locale;
+  /** Heading level of the card title: 3 under a section heading, 2 right under the
+      page's h1 (an index page) — heading levels must not skip. */
+  headingLevel?: 2 | 3;
 }
-const { entry, cover, locale } = Astro.props;
+const { entry, cover, locale, headingLevel = 3 } = Astro.props;
+const Title = `h${headingLevel}` as const;
 const href = sectionPath("gallery", locale, entry.data.album);
 const year = entry.data.date.getFullYear();
 ---
@@ -34,7 +38,7 @@ const year = entry.data.date.getFullYear();
       }
     </div>
     <div class="body">
-      <h3 class="title">{entry.data.title}</h3>
+      <Title class="title">{entry.data.title}</Title>
       <span class="year">{year}</span>
     </div>
   </a>

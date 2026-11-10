@@ -50,10 +50,37 @@
       document.removeEventListener("keydown", onKey);
     };
   });
+
+  // The sheet does not take focus and sits at the end of the tab order, so someone tabbing
+  // through the page reaches controls that lie underneath it. Publish how much of the
+  // viewport's bottom it covers; the page's scroll padding (global.css) then keeps whatever
+  // receives focus above it (WCAG 2.4.11). offsetTop is the laid-out position, so the
+  // slide-in transform does not skew it. Set through CSSOM, never a style attribute (CSP).
+  $effect(() => {
+    if (!visible || !sheetEl) return;
+    const el = sheetEl;
+    const root = document.documentElement;
+    const sync = () => {
+      const covered = Math.max(0, Math.round(window.innerHeight - el.offsetTop));
+      root.style.setProperty("--sheet-h", `${covered}px`);
+    };
+    sync();
+    const observer = new ResizeObserver(sync);
+    observer.observe(el);
+    window.addEventListener("resize", sync);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", sync);
+      root.style.removeProperty("--sheet-h");
+    };
+  });
 </script>
 
 {#if visible}
-  <aside bind:this={sheetEl} class="gate" role="note" aria-label={strings.label}>
+  <!-- A named complementary landmark (the <aside> itself): a screen-reader user can jump
+       to the notice from the landmark list instead of meeting it at the very end of the
+       page. role="note" is not a landmark and left the sheet outside every region. -->
+  <aside bind:this={sheetEl} class="gate" aria-label={strings.label}>
     <div class="gate-body">
       <p>{strings.line1}</p>
       <p>{strings.line2}</p>
@@ -73,11 +100,14 @@
     position: fixed;
     z-index: 55;
     inset-inline: 0;
-    inset-block-end: 0;
+    /* On a phone the sheet rests on top of the tab bar instead of covering it: the bar's
+       four controls stay visible and reachable while the notice is up (WCAG 2.4.11), and
+       the bar already pads for the home indicator. --bottom-bar-h is 0 from 768px up. */
+    inset-block-end: var(--bottom-bar-h, 0px);
     /* Does NOT block scroll — no backdrop; only the card is interactive. */
     max-block-size: 40vh;
     overflow-y: auto;
-    padding: 1rem 1.15rem calc(1rem + env(safe-area-inset-bottom, 0));
+    padding: 1rem 1.15rem;
     background: var(--elevated);
     border-block-start: 1px solid var(--line);
     box-shadow: var(--shadow-elevated);

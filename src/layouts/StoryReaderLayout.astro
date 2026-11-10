@@ -130,6 +130,18 @@ const storySchema = {
     border-block-end: 1px solid var(--line);
     font-size: var(--text-meta);
   }
+  /* The bar is a second sticky strip under the header: tell the page's scroll padding
+     (global.css) so a control focused by Shift+Tab is not left underneath it. Its height
+     is the 2.5rem "Aa" button plus the block padding and the border. */
+  :global(html:has(.reader-bar)) {
+    --subheader-h: 3.75rem;
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .reader-bar {
+      background: var(--bg);
+      backdrop-filter: none;
+    }
+  }
   .reader-bar .back {
     display: inline-flex;
     align-items: center;

@@ -7,6 +7,9 @@
   font-size: var(--text-body);
   line-height: 1.7;
   color: var(--text);
+  /* A bare URL or an e-mail address is one unbreakable word: on a 320px screen it pushed
+     the page wider than the viewport. Break inside such words only when nothing else fits. */
+  overflow-wrap: anywhere;
 }
 .prose--reader {
   --measure: 68ch;
