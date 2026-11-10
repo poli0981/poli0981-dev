@@ -9,8 +9,8 @@
 
 ## Accessibility (only if the interface changed)
 
-See [`ACCESSIBILITY.md`](../ACCESSIBILITY.md). `npm run test:a11y` covers what a machine can check; the rest is
-by hand.
+See [`ACCESSIBILITY.md`](https://github.com/poli0981/poli0981-dev/blob/main/ACCESSIBILITY.md).
+`npm run test:a11y` covers what a machine can check; the rest is by hand.
 
 - [ ] Works with the keyboard alone, start to finish; focus is visible and never lands under a fixed bar
 - [ ] Anything that opens (menu, dialog, panel) closes with Esc and hands focus back to what opened it
