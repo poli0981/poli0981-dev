@@ -9,15 +9,17 @@ interface Props {
   emptyText?: string;
   emptyHref?: string;
   emptyLabel?: string;
+  /** Passed to every PostCard; see there. */
+  headingLevel?: 2 | 3;
 }
-const { posts, locale, emptyText, emptyHref, emptyLabel } = Astro.props;
+const { posts, locale, emptyText, emptyHref, emptyLabel, headingLevel } = Astro.props;
 ---
 
 {
   posts.length > 0 ? (
     <div class="post-grid">
       {posts.map((entry) => (
-        <PostCard {entry} {locale} />
+        <PostCard {entry} {locale} {headingLevel} />
       ))}
     </div>
   ) : (

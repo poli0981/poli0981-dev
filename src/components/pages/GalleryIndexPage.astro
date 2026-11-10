@@ -29,7 +29,7 @@ const cards = await Promise.all(
       cards.length > 0 ? (
         <div class="gallery-grid">
           {cards.map(({ entry, cover }) => (
-            <GalleryCard {entry} {cover} {locale} />
+            <GalleryCard {entry} {cover} {locale} headingLevel={2} />
           ))}
         </div>
       ) : (

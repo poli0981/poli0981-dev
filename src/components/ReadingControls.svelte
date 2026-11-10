@@ -19,6 +19,7 @@
 
   let barEl = $state(null);
   let panelEl = $state(null);
+  let aaEl = $state(null);
 
   function target() {
     return document.getElementById("reader-root");
@@ -72,7 +73,12 @@
     onScroll();
 
     const onKey = (e) => {
-      if (e.key === "Escape" && open) open = false;
+      if (e.key !== "Escape" || !open) return;
+      // The panel is unmounted on close: if focus was inside it, hand it back to the "Aa"
+      // button rather than letting it fall to <body> (the next Tab would start at the top).
+      const hadFocus = panelEl?.contains(document.activeElement);
+      open = false;
+      if (hadFocus) aaEl?.focus();
     };
     const onDown = (e) => {
       if (open && panelEl && !panelEl.contains(e.target)) open = false;
@@ -95,6 +101,7 @@
 <div class="rc" bind:this={panelEl}>
   <!-- The name starts with the visible "Aa" so voice control can target it (WCAG 2.5.3). -->
   <button
+    bind:this={aaEl}
     type="button"
     class="aa"
     onclick={() => (open = !open)}
@@ -206,8 +213,23 @@
     cursor: pointer;
     font-size: var(--text-meta);
   }
+  /* The chosen option is heavier and double-ruled as well as accent-coloured, so colour is
+     not the only cue (WCAG 1.4.1). The inset shadow thickens the border without moving
+     the label. */
   .opts button.active {
     border-color: var(--accent);
     color: var(--accent);
+    font-weight: 700;
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+  /* Forced colours drop the shadow and give every button the same border and text colour. */
+  @media (forced-colors: active) {
+    .opts button.active {
+      forced-color-adjust: none;
+      background: Highlight;
+      border-color: Highlight;
+      color: HighlightText;
+      box-shadow: none;
+    }
   }
 </style>

@@ -50,7 +50,8 @@ function relFor(href: string, me?: boolean): string | undefined {
 
   <section class="page block">
     <h2 class="block-title">{t.gaming.community}</h2>
-    <nav class="socials" aria-label={t.footer.social}>
+    {/* Named after its heading: the footer already has a nav called "Social". */}
+    <nav class="socials" aria-label={t.gaming.community}>
       {
         gameSocials.map((link) => (
           <a

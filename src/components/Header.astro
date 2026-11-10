@@ -119,6 +119,14 @@ const pathname = Astro.url.pathname;
     block-size: 0.75rem;
     color: var(--accent);
   }
+  /* Down to a 320px viewport (WCAG 1.4.10 Reflow; also a desktop window at 400% zoom) the
+     header has no room for the wordmark: the mark alone stays, and the link keeps its
+     name through aria-label. */
+  @media (max-width: 21.99rem) {
+    .brand-text {
+      display: none;
+    }
+  }
   .primary-nav {
     display: none;
     gap: 0.35rem;
@@ -138,8 +146,13 @@ const pathname = Astro.url.pathname;
     color: var(--text);
     background: var(--surface);
   }
+  /* Colour is not the only cue for "you are here" (WCAG 1.4.1): the underline also
+     survives forced-colors mode, where the accent is replaced by the link colour. */
   .primary-nav a[aria-current="page"] {
     color: var(--accent);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.45em;
   }
   .actions {
     display: flex;

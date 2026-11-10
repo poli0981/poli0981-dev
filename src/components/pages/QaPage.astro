@@ -112,6 +112,8 @@ const groups = [
   .only-vi a {
     color: var(--accent);
     font-family: var(--ff-mono);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
   }
   .qa-group {
     margin-block-end: 2rem;
@@ -158,12 +160,15 @@ const groups = [
     color: var(--muted);
     margin-block: 0.5rem 1rem;
   }
+  /* These links sit inside a sentence, where the accent alone is only 1.6:1 against the
+     text around it — so they are underlined at rest, not just on hover (WCAG 1.4.1). */
   .contact-list a {
     color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
   }
   .contact-list a:hover {
     color: var(--accent-strong);
-    text-decoration: underline;
   }
   .contact-list {
     list-style: none;

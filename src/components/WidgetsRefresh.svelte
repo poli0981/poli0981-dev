@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { externalImagePath } from "../lib/ext-img";
 
   /**
@@ -17,6 +17,17 @@
   let data = $state(initial);
   /** @type {Record<string, boolean>} */
   let playing = $state({}); // YouTube facade, per video id: false = thumbnail, true = nocookie iframe
+
+  /**
+   * Swap the thumbnail for the player. The play button is unmounted by that swap, so focus
+   * moves to the iframe that replaces it instead of falling back to <body>.
+   * @param {string} id
+   */
+  async function play(id) {
+    playing[id] = true;
+    await tick();
+    document.getElementById(`w-player-${id}`)?.focus();
+  }
 
   // A source counts as present only when its status is not "na" (and it has items).
   const videos = $derived(
@@ -55,6 +66,7 @@
           <div class="w-media">
             {#if playing[video.id]}
               <iframe
+                id={`w-player-${video.id}`}
                 title={video.title}
                 src={`https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1`}
                 allow="autoplay; encrypted-media; picture-in-picture"
@@ -64,11 +76,13 @@
               {#if picture(video.thumb)}
                 <img src={picture(video.thumb)} alt="" loading="lazy" width="480" height="270" />
               {/if}
+              <!-- The name carries the video's title: the gaming page shows up to three of
+                   these, and three buttons all called "Play video" cannot be told apart. -->
               <button
                 type="button"
                 class="w-play"
-                aria-label={labels.playLabel}
-                onclick={() => (playing[video.id] = true)}
+                aria-label={`${labels.playLabel}: ${video.title}`}
+                onclick={() => play(video.id)}
               >
                 ▶
               </button>

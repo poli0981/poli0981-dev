@@ -9,8 +9,12 @@ import { formatDate, isoDate } from "../lib/format";
 interface Props {
   entry: BlogEntry;
   locale: Locale;
+  /** Heading level of the card title: 3 under a section heading, 2 right under the
+      page's h1 (an index page) — heading levels must not skip. */
+  headingLevel?: 2 | 3;
 }
-const { entry, locale } = Astro.props;
+const { entry, locale, headingLevel = 3 } = Astro.props;
+const Title = `h${headingLevel}` as const;
 const t = useTranslations(locale);
 const href = sectionPath("blog", locale, entry.id);
 const mins = readingTime(entry.body);
@@ -42,7 +46,7 @@ const mins = readingTime(entry.body);
       )
     }
     <div class="card-body">
-      <h3 class="card-title">{entry.data.title}</h3>
+      <Title class="card-title">{entry.data.title}</Title>
       <p class="card-desc">{entry.data.description}</p>
       <div class="card-meta">
         <time datetime={isoDate(entry.data.date)}>{formatDate(entry.data.date, locale)}</time>

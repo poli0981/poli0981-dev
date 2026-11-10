@@ -17,9 +17,13 @@ const t = useTranslations(locale);
 {/* Tags are per-locale (a vi tag has no guaranteed en page) → no hreflang. */}
 <BaseLayout title={`#${tag}`} {locale} alternates={null}>
   <section class="page py-section">
-    <p class="crumb"><a href={sectionPath("blog", locale)}>{t.nav.blog}</a> / #{tag}</p>
+    <nav class="crumb" aria-label={t.landmarks.breadcrumb}>
+      <a href={sectionPath("blog", locale)}>{t.nav.blog}</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">#{tag}</span>
+    </nav>
     <h1 class="text-h1">#{tag}</h1>
-    <div class="grid-wrap"><PostGrid {posts} {locale} /></div>
+    <div class="grid-wrap"><PostGrid {posts} {locale} headingLevel={2} /></div>
   </section>
 </BaseLayout>
 

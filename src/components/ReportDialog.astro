@@ -147,6 +147,7 @@ const strings = {
         preview.hidden = true;
       }
       statusEl.textContent = "";
+      clearInvalid();
       if (REPORT_ENABLED) {
         fallback.hidden = true;
         submitBtn.hidden = false;
@@ -173,10 +174,21 @@ const strings = {
       }
     });
 
+    const clearInvalid = () => {
+      desc.removeAttribute("aria-invalid");
+      desc.removeAttribute("aria-describedby");
+    };
+    desc.addEventListener("input", clearInvalid);
+
     submitBtn.addEventListener("click", async () => {
       const description = desc.value.trim();
       if (description.length < 10) {
+        // Tie the message to the field and send focus back to it, so a screen reader
+        // announces what is wrong where it can be fixed (WCAG 3.3.1).
         statusEl.textContent = strings.tooShort;
+        desc.setAttribute("aria-invalid", "true");
+        desc.setAttribute("aria-describedby", "report-status");
+        desc.focus();
         return;
       }
       if (!token) {

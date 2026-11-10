@@ -149,7 +149,11 @@
     aria-describedby="lb-caption"
   >
     <div class="bar">
-      <span class="count" aria-live="polite">{counter}</span>
+      <!-- Arrowing to another photo announces its position and its caption: focus stays on
+           the button, so nothing else would say which photo is now showing. -->
+      <span class="count" aria-live="polite"
+        >{counter}<span class="sr-only"> — {current.alt}</span></span
+      >
       <button type="button" class="close" onclick={close} aria-label={labels.close}>✕</button>
     </div>
 
@@ -188,7 +192,10 @@
       aria-label={labels.next}>›</button
     >
 
-    <p class="caption" id="lb-caption">{current.alt}</p>
+    <!-- The same words are the image's alt and the dialog's description (aria-describedby
+         still resolves a hidden node), so the visible copy is hidden from the reading order
+         rather than read a third time. -->
+    <p class="caption" id="lb-caption" aria-hidden="true">{current.alt}</p>
   </div>
 {/if}
 

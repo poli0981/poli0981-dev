@@ -60,9 +60,11 @@ const crumbs = breadcrumbSchema([
   image={ogUrl("project", entry.id)}
 >
   <article class="proj" data-pagefind-body>
-    <p class="crumb" data-pagefind-ignore>
-      <a href={sectionPath("projects", locale)}>{t.nav.projects}</a> / {name}
-    </p>
+    <nav class="crumb" aria-label={t.landmarks.breadcrumb} data-pagefind-ignore>
+      <a href={sectionPath("projects", locale)}>{t.nav.projects}</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">{name}</span>
+    </nav>
     <h1>{name}</h1>
     <p class="tagline">{tagline}</p>
     <div class="facts">
