@@ -10,8 +10,10 @@ import { rename, rmdir } from "node:fs/promises";
 import { DEFAULT_LOCALE, LOCALES } from "./src/i18n/routing.ts";
 import { THEME_BOOTSTRAP } from "./src/lib/theme.ts";
 
-// Error/system pages that must never appear in the sitemap.
-const NON_INDEXED = /\/(404|500|403|429|offline)\/?$/;
+// Error/system pages that must never appear in the sitemap — and the admin's routes, which
+// only exist on admin.poli0981.dev (on this host they answer 301/403) but were listed
+// because they are prerendered shells like any other page.
+const NON_INDEXED = /\/(404|500|403|429|offline)\/?$|\/admin(\/|$)/;
 
 // Sitemap <lastmod>. Every deploy is a full rebuild, so build time is the truthful
 // "as of" for the whole site.
