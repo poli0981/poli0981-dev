@@ -14,23 +14,36 @@ import {
 
 const paths = await sitemapPaths();
 
-// Pages the sitemap leaves out on purpose, which visitors still land on.
-const unlisted = ["/khong-co-trang-nay/", "/en/no-such-page/", "/offline/"];
+// Pages the sitemap leaves out on purpose, which visitors still land on. The two missing
+// pages answer 404 with the site's own error page, one per language.
+const NOT_FOUND = ["/khong-co-trang-nay/", "/en/no-such-page/"];
+const unlisted = [...NOT_FOUND, "/offline/"];
 
-// One page per template for the second theme and the phone layout: the light palette and
-// the narrow layout change colours and chrome, not the structure of every single post.
+// One page of every template for the second theme and the phone layout: the light palette
+// and the narrow layout change colours and chrome, not the structure of every single post.
+// A template added later belongs in this list.
 const templates = [
   "/",
   "/en/",
+  firstMatch(paths, /^\/about\/$/),
   firstMatch(paths, /^\/blog\/$/),
-  firstMatch(paths, /^\/blog\/[^/]+\/$/),
+  firstMatch(paths, /^\/blog\/tag\/[^/]+\/$/),
+  firstMatch(paths, /^\/blog\/(?!tag\/)[^/]+\/$/),
+  firstMatch(paths, /^\/truyen\/$/),
   firstMatch(paths, /^\/truyen\/[^/]+\/[^/]+\/$/),
+  firstMatch(paths, /^\/projects\/$/),
   firstMatch(paths, /^\/projects\/[^/]+\/$/),
+  firstMatch(paths, /^\/gallery\/$/),
   firstMatch(paths, /^\/gallery\/[^/]+\/$/),
   firstMatch(paths, /^\/gaming\/$/),
+  firstMatch(paths, /^\/dev\/$/),
+  firstMatch(paths, /^\/dev\/uses\/$/),
+  firstMatch(paths, /^\/qa\/$/),
   firstMatch(paths, /^\/links\/$/),
+  firstMatch(paths, /^\/now\/$/),
   firstMatch(paths, /^\/legal\/accessibility\/$/),
   firstMatch(paths, /^\/en\/legal\/accessibility\/$/),
+  ...NOT_FOUND,
 ];
 
 let browser: Browser;
@@ -53,7 +66,7 @@ function scan(title: string, routes: string[], options: Parameters<typeof newCon
 
     for (const route of routes) {
       it(route, async () => {
-        const page = await open(context, route);
+        const page = await open(context, route, NOT_FOUND.includes(route) ? 404 : 200);
         try {
           await expectNoViolations(page, `${route} (${title})`);
         } finally {

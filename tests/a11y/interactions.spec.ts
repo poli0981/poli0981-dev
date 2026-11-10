@@ -91,6 +91,17 @@ describe("search", () => {
 
       await expectNoViolations(page, "search open with results");
 
+      // The trap has to hold with results listed: they are tabindex="-1" options, and
+      // counting them once let Tab walk out of the dialog from the Esc button.
+      for (let i = 0; i < 6; i++) {
+        await page.keyboard.press("Tab");
+        assert.ok(await isInside(page, "#search-modal"), `Tab #${i + 1} stays in the search`);
+      }
+      for (let i = 0; i < 3; i++) {
+        await page.keyboard.press("Shift+Tab");
+        assert.ok(await isInside(page, "#search-modal"), `Shift+Tab #${i + 1} stays in the search`);
+      }
+
       // WCAG 2.5.3: the close button shows "Esc", so its name has to start with it.
       const closeName = await page.locator("#search-modal .close").getAttribute("aria-label");
       assert.match(closeName ?? "", /^Esc\b/);
@@ -176,13 +187,20 @@ describe("reading settings", () => {
 });
 
 /**
- * Tab through the page and collect every control that receives focus while overlapping
- * one of the fixed bars. Stops when focus reaches `until` or after `limit` presses.
+ * Tab (or Shift+Tab) through the page and collect every control that receives focus while
+ * covered by one of the fixed bars. Stops when focus reaches `until` or after `limit`
+ * presses. Forward tabbing exercises the bars at the bottom edge, backward the top ones.
  */
-async function obscuredWhileTabbing(page: Page, bars: string[], until: string | null, limit = 250) {
+async function obscuredWhileTabbing(
+  page: Page,
+  bars: string[],
+  until: string | null,
+  key: "Tab" | "Shift+Tab" = "Tab",
+  limit = 250,
+) {
   const offenders: string[] = [];
   for (let i = 0; i < limit; i++) {
-    await page.keyboard.press("Tab");
+    await page.keyboard.press(key);
     const hit = await page.evaluate(
       ({ bars, until }) => {
         const el = document.activeElement;
@@ -228,8 +246,32 @@ describe("focus is not hidden under fixed bars (WCAG 2.4.11)", () => {
     });
   });
 
+  it("story reader: nothing takes focus underneath the header or the reader bar going back up", async () => {
+    await withPage({ viewport: PHONE }, chapterPath, async (page) => {
+      // Start from the last control of the chapter and walk backwards: only then does the
+      // browser scroll controls in at the top edge, where the two sticky bars are.
+      await page.evaluate(() => {
+        const controls = document.querySelectorAll<HTMLElement>("main a[href], main button");
+        controls[controls.length - 1]?.focus();
+      });
+      assert.ok(await isInside(page, "main"), "the walk starts inside the chapter");
+      const offenders = await obscuredWhileTabbing(
+        page,
+        [".site-header", ".reader-bar"],
+        ".site-header",
+        "Shift+Tab",
+        120,
+      );
+      assert.deepEqual(offenders, []);
+    });
+  });
+
+  // The notice is a full-width sheet on a phone and a card in the bottom-right corner from
+  // 768px up, where on a tablet it lies over the right half of the footer.
   for (const [name, viewport] of [
     ["phone", PHONE],
+    ["tablet", { width: 820, height: 1180 }],
+    ["small laptop", { width: 1024, height: 768 }],
     ["desktop", DESKTOP],
   ] as const) {
     it(`${name}: the legal notice is scanned, covers nothing that takes focus, and Esc dismisses it`, async () => {
@@ -318,30 +360,66 @@ describe("page chrome", () => {
     });
   });
 
-  // 320 is the WCAG 1.4.10 floor; 360 and 390 are the common phone widths, where the header
-  // used to be wider than the screen (it needs 378px in Vietnamese, 400px in English).
-  for (const width of [320, 360, 390]) {
-    it(`no page scrolls sideways at ${width}px (WCAG 1.4.10)`, async () => {
-      const context = await newContext(browser, { viewport: { width, height: 700 } });
-      try {
-        for (const path of [
-          "/",
-          "/en/",
-          "/blog/",
-          chapterPath,
-          albumPath,
-          "/en/legal/accessibility/",
-        ]) {
-          const page = await open(context, path);
-          const overflow = await page.evaluate(
-            () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-          );
-          await page.close();
-          assert.ok(overflow <= 0, `${path} is ${overflow}px wider than a ${width}px viewport`);
-        }
-      } finally {
-        await context.close();
+  it("each half of a legal page declares its own language (WCAG 3.1.2)", async () => {
+    for (const path of ["/legal/accessibility/", "/en/legal/accessibility/"]) {
+      await withPage({}, path, async (page) => {
+        const halves = await page.evaluate(() => {
+          const en = document.querySelector('[id="english"] + *');
+          const vi = document.querySelector('[id="tiếng-việt"] + *');
+          return {
+            en: en?.matches(":lang(en)") ?? false,
+            vi: vi?.matches(":lang(vi)") ?? false,
+            // The wrappers take no box: the paragraph rhythm must survive them.
+            rhythm: vi ? Number.parseFloat(getComputedStyle(vi).marginBlockStart) : 0,
+          };
+        });
+        assert.deepEqual({ en: halves.en, vi: halves.vi }, { en: true, vi: true }, path);
+        assert.ok(halves.rhythm > 0, `${path}: paragraphs inside a half keep their spacing`);
+      });
+    }
+  });
+
+  it("the home link stays a real target when the wordmark is hidden (WCAG 2.5.8)", async () => {
+    await withPage({ viewport: { width: 320, height: 640 } }, "/", async (page) => {
+      const box = await page.locator(".site-header .brand").boundingBox();
+      assert.ok(box && box.width >= 24 && box.height >= 24, JSON.stringify(box));
+    });
+  });
+
+  /** Pages wider than the viewport, three loads at a time. */
+  async function overflowing(width: number, routes: string[]): Promise<string[]> {
+    const context = await newContext(browser, { viewport: { width, height: 700 } });
+    const wide: string[] = [];
+    try {
+      for (let i = 0; i < routes.length; i += 3) {
+        await Promise.all(
+          routes.slice(i, i + 3).map(async (path) => {
+            const page = await open(context, path);
+            const overflow = await page.evaluate(
+              () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+            );
+            await page.close();
+            if (overflow > 0) wide.push(`${path} (+${overflow}px)`);
+          }),
+        );
       }
+    } finally {
+      await context.close();
+    }
+    return wide;
+  }
+
+  // 320px is the WCAG 1.4.10 floor, and every page in the sitemap is held to it.
+  it("no page scrolls sideways at 320px — every page (WCAG 1.4.10)", async () => {
+    assert.deepEqual(await overflowing(320, paths), []);
+  });
+
+  // 360 and 390 are the common phone widths, where the header used to be wider than the
+  // screen (it needs 378px in Vietnamese, 400px in English).
+  for (const width of [360, 390]) {
+    it(`no page scrolls sideways at ${width}px (WCAG 1.4.10)`, async () => {
+      const routes = ["/", "/en/", "/blog/", chapterPath, albumPath, "/en/legal/ai-usage/"];
+      assert.deepEqual(await overflowing(width, routes), []);
     });
   }
 });

@@ -46,14 +46,16 @@ has not been audited by a third party, and this is not a claim of conformance.
   back to what opened them; the report form is a native `<dialog>`. `/` opens the search. The
   page's scroll padding keeps whatever takes focus clear of the sticky header, the mobile tab bar
   and the legal notice.
-- **Screen readers.** Each page declares its language, and so do the bits in the other language.
-  There is one `<h1>` per page and heading levels do not skip. Every `<nav>` has its own name, taken
+- **Screen readers.** Each page declares its language, and text in the other language carries its
+  own: the language switch, and each half of a legal page, which holds both languages
+  (`src/lib/legal-lang.ts`). There is one `<h1>` per page and heading levels do not skip. Every `<nav>` has its own name, taken
   from `src/i18n`. Icon-only controls are named, and a name starts with the text that is visible
   (WCAG 2.5.3). The search is an ARIA combobox. Live regions announce search results, the photo
   viewer's position and caption, and the report form's status.
-- **Colour and contrast.** Both palettes meet AA — 4.5:1 for text, 3:1 for lines and controls —
-  and `tests/palette.test.ts` fails the build if a pair drops below. The current page and a chosen
-  option are never shown by colour alone. Windows High Contrast (`forced-colors`) and
+- **Colour and contrast.** In both palettes, text is at least 4.5:1 on every surface it sits on,
+  and the line colour used where a boundary has to be seen is at least 3:1;
+  `tests/palette.test.ts` fails the build if one drops below. Decorative hairlines are fainter.
+  The current page and a chosen option are never shown by colour alone. Windows High Contrast (`forced-colors`) and
   `prefers-contrast: more` are handled.
 - **Motion.** One global rule collapses every animation under `prefers-reduced-motion`, and
   scripted motion follows it (`src/lib/motion.ts`). Nothing loops or plays by itself; a YouTube
@@ -61,7 +63,8 @@ has not been audited by a third party, and this is not a claim of conformance.
 - **Zoom and reflow.** Type is fluid and in `rem`, zooming is never locked, and pages reflow down
   to a 320 px viewport.
 - **Touch.** The tab bar's targets are 56 px tall, the header's controls 40 px and the footer's
-  icons 44 px; nothing is below the 24 px of WCAG 2.5.8.
+  icons 44 px. Text links in the footer and the sidebars are about 24 px tall or less and meet
+  WCAG 2.5.8 through the space around them.
 - **Reading.** Stories have their own settings: three text sizes and a paper, sepia or dark
   background.
 
@@ -94,7 +97,8 @@ The site supports the current versions of Chrome, Edge, Firefox and Safari, on d
   footer links.
 - **The admin** (`admin.poli0981.dev`) is a single-owner tool and is not covered by this document.
 - **Automated checks run in Chrome only**, and no tool can judge everything: a passing run is
-  necessary, not sufficient.
+  necessary, not sufficient. The live widgets (latest video, now playing) have no data in the
+  test build, so their markup is checked by hand.
 
 ## For contributors
 
@@ -116,10 +120,11 @@ What the pipeline checks:
   cannot be merged. It scans every page listed in the build's sitemap with axe-core (WCAG 2.2 A and
   AA rules plus axe's best practices), a page of each template again in the light theme and at
   phone width, and the menu, search, photo viewer, report dialog, reading settings and legal notice
-  while they are open. It then walks the keyboard contract — the skip link, Esc and focus return,
-  focus not hidden under a bar, no sideways scrolling at 320, 360 and 390 px — and the forced-colours
-  rules. The tests are in `tests/a11y/`.
-- **`tests/palette.test.ts`** checks every colour pair against AA.
+  while they are open. It then walks the keyboard contract — the skip link, focus traps, Esc and
+  focus return, focus not hidden under a bar in either direction — checks that no page scrolls
+  sideways at 320 px (and a sample at 360 and 390 px), and checks the forced-colours rules. The
+  tests are in `tests/a11y/`.
+- **`tests/palette.test.ts`** checks the text and line colours of both palettes against AA.
 - **Lighthouse** reports an accessibility score on pull requests; it is advisory.
 
 To run the suite locally, build and serve the site, then run it from a second terminal:

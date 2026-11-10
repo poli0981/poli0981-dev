@@ -62,6 +62,7 @@ import { toLocale, useTranslations } from "../src/i18n/index.ts";
 import vi from "../src/i18n/vi.ts";
 import en from "../src/i18n/en.ts";
 import { isActivePath, legalNav, menuNav, primaryNav } from "../src/lib/nav.ts";
+import { markLanguageHalves } from "../src/lib/legal-lang.ts";
 import { DURATION, prefersReducedMotion } from "../src/lib/motion.ts";
 import { USES, USES_STACK } from "../src/lib/uses.ts";
 
@@ -395,6 +396,31 @@ describe("SEO, RSS and OG", () => {
     assert.ok(RSS_XMLNS.dc);
     assert.equal(ogKey("story", "series/ch-1"), "story-series__ch-1");
     assert.equal(ogUrl("blog", "hello"), "/og/blog-hello.png");
+  });
+});
+
+describe("legal documents", () => {
+  it("wraps each language half in its lang and leaves other sections alone", () => {
+    const html =
+      '<h2 id="english">English</h2><p>One.</p>' +
+      '<h2 id="tiếng-việt">Tiếng Việt</h2><p>Một.</p><ul><li>Hai</li></ul>' +
+      '<h2 id="models">Models</h2><table></table>';
+    assert.equal(
+      markLanguageHalves(html),
+      '<div lang="en"><h2 id="english">English</h2><p>One.</p></div>' +
+        '<div lang="vi"><h2 id="tiếng-việt">Tiếng Việt</h2><p>Một.</p><ul><li>Hai</li></ul></div>' +
+        '<h2 id="models">Models</h2><table></table>',
+    );
+  });
+
+  it("keeps whatever precedes the first heading, and a document without halves, as they are", () => {
+    assert.equal(
+      markLanguageHalves("<p>Intro.</p><h2>Other</h2><p>x</p>"),
+      "<p>Intro.</p><h2>Other</h2><p>x</p>",
+    );
+    assert.equal(markLanguageHalves(""), "");
+    // A heading that only mentions a language is not a half.
+    assert.equal(markLanguageHalves("<h2>English notes</h2>"), "<h2>English notes</h2>");
   });
 });
 
