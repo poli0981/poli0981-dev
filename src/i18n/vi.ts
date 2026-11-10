@@ -216,6 +216,7 @@ const vi = {
     thirdParty: "Bên thứ ba",
     licenses: "Giấy phép",
     aiUsage: "Sử dụng AI",
+    accessibility: "Trợ năng",
   },
   now: {
     title: "Bây giờ",

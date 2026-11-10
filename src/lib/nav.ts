@@ -44,6 +44,7 @@ export function legalNav(locale: Locale): NavItem[] {
     { href: sectionPath("legal", locale, "third-party"), label: t.legal.thirdParty },
     { href: sectionPath("legal", locale, "licenses"), label: t.legal.licenses },
     { href: sectionPath("legal", locale, "ai-usage"), label: t.legal.aiUsage },
+    { href: sectionPath("legal", locale, "accessibility"), label: t.legal.accessibility },
   ];
 }
 

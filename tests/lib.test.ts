@@ -436,7 +436,8 @@ describe("i18n and nav", () => {
   it("lists nav items and matches active sections exactly", () => {
     assert.equal(primaryNav("en")[0].href, "/en/blog/");
     assert.ok(menuNav("vi").some((item) => item.href === "/now/"));
-    assert.equal(legalNav("en").length, 6);
+    assert.equal(legalNav("en").length, 7);
+    assert.equal(legalNav("vi").at(-1)?.href, "/legal/accessibility/");
     assert.equal(isActivePath("/blog/post/", "/blog/"), true);
     assert.equal(isActivePath("/blogging/", "/blog/"), false);
     assert.equal(isActivePath("/en/blog/", "/en/"), false);

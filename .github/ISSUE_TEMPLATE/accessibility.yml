@@ -1,0 +1,50 @@
+name: Rào cản trợ năng / Accessibility barrier
+description: Điều gì đó trên poli0981.dev khó hoặc không dùng được / Something on poli0981.dev is hard or impossible to use
+title: "[a11y] "
+labels: ["accessibility"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Cảm ơn bạn đã báo. Bạn không cần tự tìm nguyên nhân, và không cần nói gì về tình trạng khuyết tật của mình.
+        Thanks for reporting. You do not have to diagnose anything, and you never need to tell me about a disability.
+
+        Không muốn đăng công khai? Gửi email tới accessibility@poli0981.dev hoặc dùng nút "Báo lỗi" ở cuối mọi trang (không cần tài khoản).
+        Prefer not to post in public? Email accessibility@poli0981.dev, or use "Report a bug" at the bottom of every page (no account needed).
+  - type: textarea
+    id: goal
+    attributes:
+      label: Bạn đang định làm gì? / What were you trying to do?
+      description: Ví dụ "mở menu bằng bàn phím" / For example "open the menu with the keyboard"
+    validations:
+      required: true
+  - type: textarea
+    id: barrier
+    attributes:
+      label: Điều gì đã xảy ra? / What happened instead?
+      description: Các bước tái hiện nếu có / Steps to reproduce, if you have them
+    validations:
+      required: true
+  - type: input
+    id: route
+    attributes:
+      label: Trang / Page
+      placeholder: "https://poli0981.dev/…"
+  - type: textarea
+    id: environment
+    attributes:
+      label: Môi trường / Environment
+      description: Hệ điều hành, trình duyệt, công nghệ hỗ trợ và phiên bản / Operating system, browser, assistive technology and versions
+      placeholder: "Windows 11 · Edge 142 · Narrator"
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Mức độ / Severity
+      description: Để mình biết nên xử lý cái nào trước / So I know what to handle first
+      options:
+        - "Chặn hẳn — không làm được việc chính / Critical — blocks a core task"
+        - "Nghiêm trọng — rất khó, nhưng có cách khác / Serious — major difficulty, a workaround exists"
+        - "Vừa — gây khó chịu hoặc không nhất quán / Moderate — annoying or inconsistent"
+        - "Nhẹ — ảnh hưởng ít / Minor — little impact"
+    validations:
+      required: true
