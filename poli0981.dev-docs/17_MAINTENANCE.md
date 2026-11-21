@@ -2,6 +2,18 @@
 
 Mục tiêu: site "để yên vẫn sống". Tổng thời gian bảo trì định kỳ ~15–30 phút/tuần.
 
+## 0. Chế độ bảo trì (từ v2.3.0, 11/2026 — quyết định D21)
+
+Không thêm tính năng mới. Repo chỉ nhận (`CONTRIBUTING.md`):
+
+1. Cập nhật dependency định kỳ (Dependabot hằng tuần + gộp `npm update --save --before=<hôm nay − 3 ngày>` khoảng mỗi tháng, như PR #123/#134).
+2. Bảo mật: advisory **High/Critical** trong dependency hoặc lỗ hổng nghiêm trọng của Node.js/Workers runtime ⇒ sửa và deploy ngay, ngoài lịch; tính năng chỉ khi thật sự cần.
+3. Nâng cấp lớn ngôn ngữ/runtime/framework (Node 26 → 28, TS 7.1 thay alias TS 6, Astro/Svelte major…).
+4. Sửa lỗi, gồm UI/UX và accessibility.
+5. Sửa lỗi ngôn ngữ (chính tả gây hiểu nhầm, câu chữ không hợp văn hoá/giọng địa phương).
+
+Issue/PR đề xuất tính năng: `.github/workflows/triage.yml` (logic `scripts/triage.mjs`) gắn `enhancement` + `out-of-scope`, trả lời song ngữ và đóng. Bỏ qua: chủ repo, bot, mục có nhãn `maintenance-exception` (ngoại lệ do chủ repo quyết), và mọi thao tác do chính chủ repo làm (mở lại, gắn nhãn). Thử khô: Actions → Triage → Run workflow (nhập tiêu đề). Form issue: lỗi, accessibility, ngôn ngữ; blank issue tắt; câu hỏi/ý tưởng → Discussions.
+
 ## 1. Lịch định kỳ
 
 | Nhịp | Việc |
@@ -9,7 +21,7 @@ Mục tiêu: site "để yên vẫn sống". Tổng thời gian bảo trì đị
 | **Hằng tuần** (thứ 2, sau khi Dependabot chạy) | Triage PR Dependabot: patch/minor xanh CI → merge; security alert → xử lý ≤ 48h. Liếc Discord `#site-reports` |
 | **Hằng tháng** | `npm outdated` đọc report weekly; nâng minor còn sót; **nâng tay `@typescript/native`** (Dependabot bỏ qua alias `npm:`) và xem TS 7.1 đã có JS API chưa (`02` §8); xem Web Analytics + Core Web Vitals; liếc Workers Logs (lọc `level: error`) + dashboard admin (trạng thái cron widgets, secret thiếu); SonarCloud không có issue mới trên `main` |
 | **Hằng quý** | Nâng major có kế hoạch (Astro/Tailwind/Wrangler — đọc upgrade guide trước); chạy lại ma trận error test `09` §5; backup ngoài (§4) |
-| **Hằng năm** | **Xoay secrets**: GITHUB_ISSUES_TOKEN (repo `site-reports`), GITHUB_CONTENT_TOKEN + GITHUB_PUBLISH_TOKEN (admin), GATE_SECRET (vô hiệu mọi vé cổng — làm lúc ít khách), STEAM_API_KEY, SONAR_TOKEN · rà `ADMIN_EMAILS` + policy Access · cập nhật `Expires` trong security.txt · đọc lại 7 trang legal (đổi thì tăng `v` của legalAck) · **rà trợ năng**: đọc lại `/legal/accessibility` + `ACCESSIBILITY.md`, đi một lượt bằng bàn phím và trình đọc màn hình, cập nhật ngày rà ở cả hai nơi · kiểm tra thẻ thanh toán còn hạn cho auto-renew domain |
+| **Hằng năm** | **Xoay secrets**: GITHUB_ISSUES_TOKEN (repo `site-reports`), GITHUB_CONTENT_TOKEN + GITHUB_PUBLISH_TOKEN (admin), GATE_SECRET (vô hiệu mọi vé cổng — làm lúc ít khách), STEAM_API_KEY, SONAR_TOKEN, QODANA_TOKEN (token project trên Qodana Cloud → secret repo) · rà `ADMIN_EMAILS` + policy Access · cập nhật `Expires` trong security.txt · đọc lại 7 trang legal (đổi thì tăng `v` của legalAck) · **rà trợ năng**: đọc lại `/legal/accessibility` + `ACCESSIBILITY.md`, đi một lượt bằng bàn phím và trình đọc màn hình, cập nhật ngày rà ở cả hai nơi · kiểm tra thẻ thanh toán còn hạn cho auto-renew domain |
 
 Đặt reminder: dùng chính hệ notify/cron GitHub Actions quen thuộc — workflow cron tháng/quý/năm bắn Discord nhắc việc (input sẵn trong repo `.github`).
 
@@ -18,7 +30,7 @@ Mục tiêu: site "để yên vẫn sống". Tổng thời gian bảo trì đị
 1. Branch `chore/upgrade-<pkg>-vX` → đọc CHANGELOG/upgrade guide chính thức.
 2. `npm i <pkg>@latest` → chạy full CI local (`format/lint/check/knip/build`).
 3. Mở PR → CI (`build` + smoke) + SonarCloud xanh; Workers Builds upload version preview của nhánh → bấm qua 6 trang đại diện + search + form report (dashboard → Versions → alias của nhánh).
-4. Squash-merge → kiểm `/api/health` trả đúng commit (Workers Builds không deploy ⇒ `wrangler versions deploy`) → chạy nhanh ma trận lỗi 3 dòng đầu (404/403/429).
+4. Squash-merge → Workers Builds deploy `main` (Deploy command `npx wrangler deploy`, `07` §9) → kiểm `/api/health` trả đúng commit (nếu vẫn bản cũ: Deploy command lại thành `versions upload` ⇒ sửa trong dashboard, tạm thời `wrangler versions deploy <id>@100%`) → chạy nhanh ma trận lỗi 3 dòng đầu (404/403/429).
 5. Ghi vào `CHANGELOG.md`; ghi 1 dòng vào `poli0981.dev-docs/00_INDEX.md` nếu có breaking change ảnh hưởng quyết định cũ.
 
 **Rollback**: `npx wrangler versions list` → `npx wrangler versions deploy <id-cũ>@100% --yes` (hoặc `wrangler rollback`). Secret mới đặt sau version đó sẽ không có trong version cũ — đặt lại nếu cần.
@@ -27,7 +39,7 @@ Mục tiêu: site "để yên vẫn sống". Tổng thời gian bảo trì đị
 
 - **Uptime** (tuỳ chọn, free): UptimeRobot/StatusCake ping `https://poli0981.dev/` 5 phút/lần → alert email/Discord. Đủ dùng, không cần status page.
 - **Lỗi runtime**: Workers Logs (log JSON có `event`/`ray`, `06` §10) → tra theo Ray ID mà người dùng gửi kèm báo lỗi; không cần Sentry ở quy mô này (ADR-05).
-- **Đang chạy bản nào**: `curl https://poli0981.dev/api/health` → `version.id` + `version.commit`; dashboard admin hiện cùng thông tin.
+- **Đang chạy bản nào**: `curl https://poli0981.dev/api/health` → `version.id` + `version.commit` + `version.content` (commit repo nội dung mà bản build dùng); dashboard admin hiện cùng thông tin, thanh Xuất bản báo pha "đang build / đã merge — đang deploy / đã lên web".
 - **Admin**: `/admin/activity/` (audit log 90 ngày + commit repo content) — liếc khi nghi có thao tác lạ.
 - **Cron widgets**: tự cảnh báo qua Discord khi fail 3 lần (11 §5).
 

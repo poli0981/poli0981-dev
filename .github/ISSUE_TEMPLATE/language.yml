@@ -1,0 +1,46 @@
+name: Lỗi ngôn ngữ / Language problem
+description: >-
+  Lỗi chính tả gây hiểu nhầm, câu chữ không hợp văn hoá hay giọng địa phương (tiếng Việt hoặc tiếng
+  Anh). / A misleading typo, or wording that does not fit the culture or local voice (Vietnamese or
+  English).
+title: "[language] "
+labels: ["language"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Cảm ơn bạn! Mỗi báo cáo một chỗ (hoặc một nhóm chỗ cùng một lỗi). / Thanks! One report per
+        place, or per group of places with the same problem.
+  - type: input
+    id: page
+    attributes:
+      label: Trang / Page
+      description: Đường dẫn trang, hoặc file nếu bạn biết. / The page's URL, or the file if you know it.
+      placeholder: "https://poli0981.dev/blog/…"
+    validations:
+      required: true
+  - type: dropdown
+    id: language
+    attributes:
+      label: Ngôn ngữ / Language
+      options:
+        - Tiếng Việt / Vietnamese
+        - Tiếng Anh / English
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Câu hiện tại / Current text
+      description: Chép nguyên văn. / Copy it exactly.
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Đề xuất sửa và lý do / Suggested wording and why
+      description: >-
+        Vì sao câu hiện tại gây hiểu nhầm hoặc không hợp? / Why is the current text misleading or a
+        poor fit?
+    validations:
+      required: true

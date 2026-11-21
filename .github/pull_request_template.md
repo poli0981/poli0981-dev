@@ -2,6 +2,17 @@
 
 <!-- One or two sentences. Link the issue if there is one. -->
 
+## Kind of change
+
+The project is in maintenance mode ([CONTRIBUTING.md](https://github.com/poli0981/poli0981-dev/blob/main/CONTRIBUTING.md)):
+new features are not accepted, and a `feat:` pull request is closed automatically.
+
+- [ ] Dependency update
+- [ ] Security fix (High/Critical advisory, or a runtime vulnerability)
+- [ ] Major language, runtime or framework upgrade
+- [ ] Bug fix — including UI/UX and accessibility
+- [ ] Language fix — a misleading typo, or wording that does not fit
+
 ## Checks
 
 - [ ] `npm run format:check`, `npm run lint`, `npm run check`, `npm run typecheck`, `npm test`

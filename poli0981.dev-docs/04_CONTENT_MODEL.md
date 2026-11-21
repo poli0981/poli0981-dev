@@ -53,6 +53,8 @@ Alt text ảnh gallery: file `src/assets/gallery/<album>/captions.json` (`{"IMG_
   tên vi/en ở `src/i18n` nhóm `labels`): `horror`, `blood`, `jumpscare`, `violence`, `self-harm`,
   `death` — **làm mờ ảnh** + banner; `politics`, `religion`, `strong-language`, `flashing-lights`,
   `spoilers` — chỉ banner. Nhãn lạ ⇒ build fail.
+- **Album**: nhãn và `ageRating` lấy từ **cả hai** file ngôn ngữ (cùng ảnh, hai trang) — gắn ở một
+  bản là đủ; mốc tuổi chặt hơn được dùng (`albumWarning()` trong `src/lib/collections.ts`).
 - **Từng ảnh** có thể có nhãn riêng: `contentWarning` cạnh caption trong `gallery-photos/<album>.json`
   (admin → Gallery → "Nhãn") hoặc `captions.json` (`{"IMG_001.avif": {"vi":"…","en":"…","contentWarning":["blood"]}}`).
 - **Giới hạn tuổi** (`ageRating`: `13+` | `16+` | `18+`): phần nội dung thu gọn tới khi người đọc xác

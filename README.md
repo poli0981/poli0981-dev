@@ -4,12 +4,24 @@
 [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=poli0981_poli0981-dev&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=poli0981_poli0981-dev)
 [![Qodana](https://github.com/poli0981/poli0981-dev/actions/workflows/qodana.yml/badge.svg)](https://github.com/poli0981/poli0981-dev/actions/workflows/qodana.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/code-GPL--3.0-blue)](LICENSE)
+[![Status: maintenance mode](https://img.shields.io/badge/status-maintenance%20mode-orange)](CONTRIBUTING.md#maintenance-mode)
 
 The personal site of Kokone (SkullMute) — dev portfolio, blog, short fiction and a hub for
 the SkullMute channel, in Vietnamese and English. Live at **[poli0981.dev](https://poli0981.dev)**.
 
 > Trang cá nhân của Kokone (SkullMute): dự án, blog, truyện ngắn và kênh SkullMute — song ngữ
 > Việt/Anh. Tài liệu thiết kế đầy đủ (tiếng Việt) nằm trong [`poli0981.dev-docs/`](poli0981.dev-docs/00_INDEX.md).
+
+## Status
+
+**Maintenance mode since v2.3.0 (November 2026).** The site is complete. It still gets
+dependency updates, security fixes (High/Critical advisories, runtime vulnerabilities), major
+runtime and framework upgrades, bug fixes (UI/UX and accessibility included) and language fixes,
+but no new features. Issues and pull requests asking for one are closed automatically. Details:
+[`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+> **Trạng thái:** chế độ bảo trì từ v2.3.0 — chỉ cập nhật dependency, vá bảo mật, nâng cấp
+> runtime/framework, sửa lỗi (cả UI/UX, accessibility) và sửa lỗi ngôn ngữ; không thêm tính năng mới.
 
 ## Stack
 
@@ -84,9 +96,11 @@ pipeline: [`08_CI_CD.md`](poli0981.dev-docs/08_CI_CD.md); changes per release: [
 ## Admin
 
 `admin.poli0981.dev` is the owner's editor: write and edit posts (commits to the content repo),
-upload images (transformed once into AVIF/WebP and stored in R2), manage gallery albums,
-publish (opens a submodule-bump PR that CI must pass), review an audit log and manage the IP
-denylist. It sits behind Cloudflare Access, and the Worker independently verifies the Access
+upload images (transformed once into AVIF/WebP and stored in R2), manage gallery albums, set
+content labels and age ratings, review an audit log and manage the IP denylist. Every save or
+delete publishes itself: it starts a submodule-bump PR that CI must pass, which then merges and
+deploys, and the admin follows it until the change is live (`/api/health` reports the content
+commit too). It sits behind Cloudflare Access, and the Worker independently verifies the Access
 JWT (≤ 24 hours old) and an email allowlist on every request.
 
 ## Security

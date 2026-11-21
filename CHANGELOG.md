@@ -7,6 +7,80 @@ and are not listed here.
 
 ## [Unreleased]
 
+## [2.3.0] — 2026-11-21
+
+The last feature release: from here on the project is in **maintenance mode**
+([`CONTRIBUTING.md`](CONTRIBUTING.md)).
+
+### Added
+
+- **Content labels, an age check and blurred images.** Posts, chapters and albums — and single
+  gallery photos — can carry labels from a fixed list (horror, blood, jump scares, violence,
+  self-harm, death, politics, religion, strong language, flashing lights, spoilers) and an age
+  rating (13+, 16+, 18+).
+  - A banner names the labels in the page's language.
+  - For the visual labels, images are blurred until "Show images" is ticked. That is a real
+    checkbox, and the blur is plain CSS, so it works from the keyboard and without JavaScript.
+  - An age-rated text stays folded until the reader confirms their age in a native dialog. It
+    never pops up on its own, and Esc never means "yes". The answer stays in the browser
+    (`localStorage`: an age threshold, never a birth date).
+  - Cards, the photo viewer, RSS descriptions and OG cards carry the warning too. The privacy
+    policy (§6) lists the new local-storage item
+    ([#138](https://github.com/poli0981/poli0981-dev/pull/138)).
+- **The admin publishes on its own.** Every save or delete starts the publish workflow; bursts
+  coalesce. The admin now follows a change until it is actually live: the build records the
+  content commit it was made from (`version.content` in `/api/health`), and the publish bar
+  shows building / waiting for review / merged and deploying / live / failed. The editor and
+  gallery manager set labels, age ratings and per-photo labels
+  ([#137](https://github.com/poli0981/poli0981-dev/pull/137)).
+- **Qodana** (JetBrains, Qodana for JS) on every pull request and on `main`, with a zero-problem
+  quality gate. Results go to Qodana Cloud and, for `main`, to code scanning
+  ([#135](https://github.com/poli0981/poli0981-dev/pull/135)).
+- **Licence check over the whole dependency tree**: every package in `package-lock.json`, with
+  reviews per package instead of per licence. A package with no licence fails CI (#135).
+- Maintenance-mode governance:
+  - `CONTRIBUTING.md`, in Vietnamese and English;
+  - a language-problem issue form, with blank issues off and questions sent to Discussions;
+  - a "kind of change" checklist in the pull request template;
+  - a triage workflow that labels and closes new-feature requests.
+
+### Changed
+
+- Admin commits in the public content repository no longer carry the admin's email address; the
+  private audit log keeps who did what (#137).
+- The admin's checks now match the content schema, so a save cannot queue a failing build:
+  chapters are positive whole numbers, `cover` and `coverMedia` exclude each other, and an album
+  must be a slug that already has photos (#137).
+- Deleting an image is refused while the **live** site's content still uses it, not only while
+  `main` does (#137).
+- The post page uses the cover's alt text when one is set (#138); the editor has a field for it,
+  and the media picker takes alt text for uploads (#137).
+- One-shot stories (`stories/<slug>.md`) can be created and edited in the admin (#137).
+- Dependencies, keeping the three-day cooldown: astro 7.4.12, @astrojs/cloudflare 14.4.8,
+  @astrojs/svelte 9.1.6, jose 6.2.17, marked 18.2.1, wrangler 4.164.0, eslint 10.15.0,
+  typescript-eslint 8.73.0, prettier 3.10.1, prettier-plugin-svelte 4.2.0 (14 Svelte files
+  reformatted; the rendered markup is unchanged), playwright 1.65.1, knip 6.45.1
+  ([#134](https://github.com/poli0981/poli0981-dev/pull/134),
+  [#136](https://github.com/poli0981/poli0981-dev/pull/136)). The SonarQube scan action is at 8.5.0
+  and the OSV-Scanner workflow at 2.7.1 ([#127](https://github.com/poli0981/poli0981-dev/pull/127),
+  [#128](https://github.com/poli0981/poli0981-dev/pull/128)).
+
+### Fixed
+
+- In the editor, Ctrl/⌘+S while typing in a tags field saved the previous tags (#137).
+- Qodana's first findings (#135):
+  - the smoke test's forged Access token is built at run time instead of sitting in the source
+    as a token literal;
+  - redundant escapes in a Markdown-to-text regex;
+  - a single-character alternation in the CSP check;
+  - a heading table keyed by a mixed-script property name.
+
+### Security
+
+- deepmerge GHSA-gcqx-w48m-w2h4 (alias CVE-2026-93753) was withdrawn on 2026-11-16, and its
+  Dependabot alert is closed. The OSV-Scanner ignore entries for it are gone (#134).
+- Node.js 26.13.1 (security release of 2026-11-10) is what CI and the build use (`.nvmrc` = 26).
+
 ## [2.2.0] — 2026-11-10
 
 ### Added
@@ -218,7 +292,8 @@ The public launch is tagged `v1-launch`; the 1.x changes after it were not tagge
 - **2026-10** — Custom Worker entry in front of every page; Workers Rate Limiting; Web Analytics;
   topic email aliases; R2 media; the Turnstile gate; the admin at `admin.poli0981.dev`.
 
-[Unreleased]: https://github.com/poli0981/poli0981-dev/compare/v2.2.0...HEAD
+[Unreleased]: https://github.com/poli0981/poli0981-dev/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/poli0981/poli0981-dev/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/poli0981/poli0981-dev/compare/v2.1.2...v2.2.0
 [2.1.2]: https://github.com/poli0981/poli0981-dev/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/poli0981/poli0981-dev/compare/v2.1.0...v2.1.1
