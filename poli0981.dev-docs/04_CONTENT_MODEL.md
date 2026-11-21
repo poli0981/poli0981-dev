@@ -25,6 +25,8 @@ const base = z.object({
   tags: z.array(z.string()).default([]),
   cover: image().optional(),
   draft: z.boolean().default(false),
+  contentWarning: z.array(z.enum(LABEL_IDS)).default([]),  // nhãn: src/lib/content-labels.ts
+  ageRating: z.enum(["13+","16+","18+"]).optional(),       // có ⇒ hỏi tuổi trước khi hiện
 });
 
 blog:    base                                    // tags gợi ý: dev-log, diary, share, gaming
@@ -32,7 +34,6 @@ stories: base.extend({
   series: z.string().optional(),
   chapter: z.number().int().positive().optional(),
   status: z.enum(['ongoing','complete','dropped']).default('ongoing'),
-  contentWarning: z.array(z.string()).default([]),  // vd: ['horror','blood']
 })
 projects: z.object({ name, tagline, lang, stack: z.array(z.string()),
   repo: z.string().url().optional(), url: z.string().url().optional(),
@@ -45,6 +46,20 @@ gallery: z.object({ title, lang, date, description: z.string().optional(),
 ```
 
 Alt text ảnh gallery: file `src/assets/gallery/<album>/captions.json` (`{"IMG_001.avif": {"vi":"...","en":"..."}}`) — build fail nếu thiếu key.
+
+### Nhãn nội dung & giới hạn tuổi (v2.3.0)
+
+- **Nhãn** (`contentWarning`, blog · truyện · album; danh sách cố định ở `src/lib/content-labels.ts`,
+  tên vi/en ở `src/i18n` nhóm `labels`): `horror`, `blood`, `jumpscare`, `violence`, `self-harm`,
+  `death` — **làm mờ ảnh** + banner; `politics`, `religion`, `strong-language`, `flashing-lights`,
+  `spoilers` — chỉ banner. Nhãn lạ ⇒ build fail.
+- **Từng ảnh** có thể có nhãn riêng: `contentWarning` cạnh caption trong `gallery-photos/<album>.json`
+  (admin → Gallery → "Nhãn") hoặc `captions.json` (`{"IMG_001.avif": {"vi":"…","en":"…","contentWarning":["blood"]}}`).
+- **Giới hạn tuổi** (`ageRating`: `13+` | `16+` | `18+`): phần nội dung thu gọn tới khi người đọc xác
+  nhận tuổi; câu trả lời chỉ lưu localStorage `ageGate` (mốc tuổi, không ngày sinh) — xem chính sách
+  quyền riêng tư §6. Tắt JS: bấm mở là tự xác nhận.
+- Làm mờ là lớp hiển thị, **không** phải kiểm soát truy cập (ảnh vẫn được tải). Thẻ danh sách, RSS và
+  ảnh OG đều nêu nhãn; trích đoạn tìm kiếm không lấy banner và phần nội dung có giới hạn tuổi.
 
 ## 3. Frontmatter mẫu
 
@@ -71,6 +86,7 @@ series: "Đêm không tiếng"
 chapter: 1
 status: ongoing
 contentWarning: [horror]
+ageRating: "16+"
 tags: [horror, short-story]
 ---
 ```
@@ -121,6 +137,6 @@ Tiện ích khuyến nghị: snippet VS Code cho từng frontmatter; `npm run ne
 - [ ] frontmatter đủ + đúng schema (`astro check` pass)
 - [ ] slug không dấu, chưa từng dùng
 - [ ] ảnh đã strip EXIF, có alt/caption
-- [ ] truyện: contentWarning đặt đúng; chương đánh số liên tục
+- [ ] nhãn nội dung (`contentWarning`) và mốc tuổi (`ageRating`) đặt đúng; truyện: chương đánh số liên tục
 - [ ] đọc lại trên preview mobile (dev server, viewport 390px)
 - [ ] bài EN/VI có `translationKey` nếu là bản dịch

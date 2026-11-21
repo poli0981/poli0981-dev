@@ -1,0 +1,254 @@
+---
+import { useTranslations } from "../i18n";
+import { homePath, type Locale } from "../i18n/routing";
+import { withAge } from "../lib/age-gate";
+import { minAge, type AgeRating } from "../lib/content-labels";
+
+interface Props {
+  rating: AgeRating;
+  locale: Locale;
+}
+
+// Folds an age-rated text away until the reader confirms their age (src/lib/age-gate.ts).
+//  - In the HTML the text is a closed <details>: the safe state needs no script, and without
+//    JavaScript opening it is the confirmation (privacy policy §8: core content works with
+//    JavaScript off).
+//  - With JavaScript, the summary asks first, in a native modal <dialog> (focus stays inside,
+//    Esc cancels — it never means "yes"); the answer is kept in this browser's localStorage.
+//  - It never pops up on its own: the page around it (title, banner, navigation) stays usable.
+// Search indexes the page's title, not anything inside the gate.
+const { rating, locale } = Astro.props;
+const t = useTranslations(locale);
+const age = minAge(rating) ?? 18;
+---
+
+<!-- Search indexes none of it: not the text, and not the status lines either — they would
+     become the search excerpt of a page the reader has not been allowed into. -->
+<div class="age-gate" data-min-age={age} data-pagefind-ignore>
+  <!-- The answer's state sits above the text, where the reader is, not after a long chapter. -->
+  <p class="age-status" data-state="allow" hidden>
+    <span>{withAge(t.cw.confirmed, age)}</span>
+    <button type="button" class="age-reset">{t.cw.reset}</button>
+  </p>
+  <p class="age-status" data-state="deny" hidden>
+    <span>{withAge(t.cw.denied, age)}</span>
+    <a href={homePath(locale)}>{t.cw.home}</a>
+    <button type="button" class="age-retry">{t.cw.retry}</button>
+  </p>
+
+  <details class="age-fold">
+    <summary class="age-summary">
+      <span class="age-badge">{rating}</span>
+      <span>{withAge(t.cw.gate, age)}</span>
+      <!-- "Select to confirm and read": true until the reader has answered yes. -->
+      <span class="age-hint">{t.cw.gateHint}</span>
+    </summary>
+    <div class="age-body" data-pagefind-ignore>
+      <slot />
+    </div>
+  </details>
+
+  <dialog class="age-dialog" aria-labelledby="age-question" aria-describedby="age-explain">
+    <form method="dialog">
+      <h2 id="age-question">{withAge(t.cw.question, age)}</h2>
+      <p id="age-explain">{withAge(t.cw.explain, age)}</p>
+      <div class="age-actions">
+        <button type="submit" value="yes" class="age-yes">{withAge(t.cw.yes, age)}</button>
+        <!-- Focus starts here: pressing Enter by habit must not mean "yes". -->
+        <button type="submit" value="no" class="age-no" autofocus>{t.cw.no}</button>
+      </div>
+    </form>
+  </dialog>
+</div>
+
+<script>
+  import { answer, decide, readAnswer, resetAnswer, saveAnswer } from "../lib/age-gate";
+
+  // localStorage can throw on access (blocked storage); the answer then lives for this page.
+  let store: Storage | null = null;
+  try {
+    store = window.localStorage;
+  } catch {
+    store = null;
+  }
+  let current = readAnswer(store);
+
+  for (const gate of document.querySelectorAll<HTMLElement>(".age-gate")) {
+    const age = Number(gate.dataset.minAge);
+    const fold = gate.querySelector<HTMLDetailsElement>(".age-fold");
+    const summary = fold?.querySelector("summary");
+    const dialog = gate.querySelector<HTMLDialogElement>(".age-dialog");
+    const allowRow = gate.querySelector<HTMLElement>('[data-state="allow"]');
+    const denyRow = gate.querySelector<HTMLElement>('[data-state="deny"]');
+    if (!fold || !summary || !dialog || !allowRow || !denyRow || !age) continue;
+
+    const render = () => {
+      const decision = decide(current, age);
+      gate.dataset.decision = decision;
+      fold.open = decision === "allow";
+      fold.hidden = decision === "deny";
+      allowRow.hidden = decision !== "allow";
+      denyRow.hidden = decision !== "deny";
+    };
+
+    summary.addEventListener("click", (event) => {
+      if (decide(current, age) === "allow") return; // an ordinary fold from here on
+      event.preventDefault();
+      dialog.returnValue = "";
+      dialog.showModal();
+    });
+
+    // The browser also opens a <details> by itself — find-in-page, a #:~:text= link from a
+    // search engine, an #id inside the text. Without a "yes" on record, fold it straight back.
+    fold.addEventListener("toggle", () => {
+      if (fold.open && decide(current, age) !== "allow") fold.open = false;
+    });
+
+    dialog.addEventListener("close", () => {
+      const choice = dialog.returnValue; // "yes", "no", or "" when cancelled with Esc
+      if (choice !== "yes" && choice !== "no") return;
+      current = answer(current, age, choice === "yes");
+      saveAnswer(store, current);
+      render();
+      // "Yes": the summary, right above the text — the dialog may have handed focus back to
+      // "Chọn lại", which render() just hid. "No": the summary is hidden now, so focus goes to
+      // the row that explains why and offers to choose again.
+      if (choice === "yes") summary.focus();
+      else denyRow.querySelector("button")?.focus();
+    });
+
+    denyRow.querySelector(".age-retry")?.addEventListener("click", () => {
+      dialog.returnValue = "";
+      dialog.showModal();
+    });
+
+    allowRow.querySelector(".age-reset")?.addEventListener("click", () => {
+      resetAnswer(store);
+      current = readAnswer(null);
+      render();
+      summary.focus();
+    });
+
+    render();
+  }
+</script>
+
+<style>
+  .age-gate {
+    display: grid;
+    gap: 0.75rem;
+  }
+  .age-fold {
+    border: 1px solid color-mix(in srgb, var(--horror) 55%, var(--line));
+    border-radius: var(--radius-card);
+  }
+  .age-fold[open] {
+    border-color: var(--line);
+  }
+  .age-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    min-block-size: 2.75rem;
+    padding: 0.9rem 1.1rem;
+    cursor: pointer;
+    list-style: none;
+    color: var(--text);
+  }
+  .age-summary::-webkit-details-marker {
+    display: none;
+  }
+  .age-fold[open] > .age-summary {
+    border-block-end: 1px solid var(--line);
+  }
+  .age-hint {
+    color: var(--muted);
+  }
+  .age-gate[data-decision="allow"] .age-hint {
+    display: none;
+  }
+  .age-badge {
+    padding: 0.1em 0.55em;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--horror) 45%, transparent);
+    background: color-mix(in srgb, var(--horror) 18%, transparent);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+    font-weight: 600;
+  }
+  .age-body {
+    padding: 1.1rem;
+  }
+  .age-status[hidden],
+  .age-fold[hidden] {
+    display: none;
+  }
+  .age-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--text-meta);
+  }
+  .age-status a {
+    color: var(--accent);
+  }
+  .age-dialog {
+    max-inline-size: min(30rem, calc(100vw - 2rem));
+    padding: 1.4rem 1.5rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-modal);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow-elevated);
+  }
+  .age-dialog::backdrop {
+    background: var(--overlay, rgb(2 6 23 / 0.66));
+  }
+  .age-dialog h2 {
+    margin: 0 0 0.6rem;
+    font-size: var(--text-lead);
+  }
+  .age-dialog p {
+    margin: 0 0 1.2rem;
+    color: var(--muted);
+  }
+  .age-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+  .age-actions button {
+    min-block-size: 2.75rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-control);
+    background: var(--elevated);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .age-actions .age-yes {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--accent-contrast);
+  }
+  .age-status button {
+    min-block-size: 2.75rem;
+    padding: 0.25rem 0.75rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+  }
+  @media (forced-colors: active) {
+    .age-fold,
+    .age-badge,
+    .age-dialog {
+      border-color: CanvasText;
+    }
+  }
+</style>

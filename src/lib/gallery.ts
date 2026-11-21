@@ -1,6 +1,7 @@
 import type { ImageMetadata } from "astro";
+import type { ContentLabel } from "./content-labels";
 import type { MediaRef } from "./media";
-import { galleryPhotoListSchema } from "./media-schema";
+import { galleryPhotoListSchema, photoLabelsSchema } from "./media-schema";
 
 // An album's photos come from two places, merged in this order:
 //  - local files under src/assets/gallery/<album>/ (build-time sharp), captions in a
@@ -10,21 +11,33 @@ import { galleryPhotoListSchema } from "./media-schema";
 //    here rather than as a content collection so a repo without that folder builds
 //    without warnings.
 // Missing captions fail the build, and so does an album with no photos at all.
+// A photo may carry content labels of its own (`contentWarning` next to its caption, in
+// either place); unknown labels fail the build like they do in frontmatter.
 
 type Caption = { vi: string; en: string };
 export type GalleryPhoto =
-  | { kind: "local"; image: ImageMetadata; alt: Caption }
-  | { kind: "media"; media: MediaRef; alt: Caption };
+  | { kind: "local"; image: ImageMetadata; alt: Caption; labels: ContentLabel[] }
+  | { kind: "media"; media: MediaRef; alt: Caption; labels: ContentLabel[] };
+
+/** A photo's own labels, checked against the label list. */
+function photoLabels(value: unknown, where: string): ContentLabel[] {
+  const parsed = photoLabelsSchema.safeParse(value);
+  if (!parsed.success) throw new Error(`[gallery] Invalid contentWarning in ${where}.`);
+  return parsed.data ?? [];
+}
 
 // Vite requires static string-literal glob patterns.
 const IMAGES = import.meta.glob<ImageMetadata>(
   "/src/assets/gallery/**/*.{avif,webp,jpg,jpeg,png}",
   { eager: true, import: "default" },
 );
-const CAPTIONS = import.meta.glob<Record<string, Caption>>("/src/assets/gallery/**/captions.json", {
-  eager: true,
-  import: "default",
-});
+const CAPTIONS = import.meta.glob<Record<string, Caption & { contentWarning?: unknown }>>(
+  "/src/assets/gallery/**/captions.json",
+  {
+    eager: true,
+    import: "default",
+  },
+);
 const PHOTO_LISTS = import.meta.glob<unknown>("/src/content/gallery-photos/*.json", {
   eager: true,
   import: "default",
@@ -43,11 +56,12 @@ function localPhotos(album: string): GalleryPhoto[] {
   }
   return entries.map(([path, image]) => {
     const file = path.slice(prefix.length);
-    const alt = captions[file];
-    if (!alt?.vi || !alt?.en) {
+    const entry = captions[file];
+    if (!entry?.vi || !entry?.en) {
       throw new Error(`[gallery] Missing vi/en caption for "${file}" in ${prefix}captions.json.`);
     }
-    return { kind: "local", image, alt };
+    const labels = photoLabels(entry.contentWarning, `${prefix}captions.json ("${file}")`);
+    return { kind: "local", image, alt: { vi: entry.vi, en: entry.en }, labels };
   });
 }
 
@@ -66,10 +80,11 @@ function mediaPhotos(album: string): GalleryPhoto[] {
   if (!parsed.success) {
     throw new Error(`[gallery] Invalid ${file}: ${parsed.error.message}`);
   }
-  return parsed.data.photos.map(({ caption, ...media }) => ({
+  return parsed.data.photos.map(({ caption, contentWarning, ...media }) => ({
     kind: "media",
     media,
     alt: caption,
+    labels: contentWarning ?? [],
   }));
 }
 

@@ -12,6 +12,9 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { ogKey } from "../src/lib/og.ts";
 import { PALETTE } from "../src/lib/palette.ts";
+import { labelNames } from "../src/lib/content-labels.ts";
+import vi from "../src/i18n/vi.ts";
+import en from "../src/i18n/en.ts";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const fontsDir = path.join(root, "src/assets/fonts");
@@ -69,7 +72,7 @@ function entryCard({ title, badge, cw }) {
   const t = esc(title);
   const size = t.length > 70 ? 50 : t.length > 45 ? 60 : 74;
   const strip = cw
-    ? `<div style="display:flex; align-items:center; align-self:flex-start; padding:6px 18px; border-radius:999px; background:${mix(C.horror, C.bg, 0.18)}; color:${C.horror}; font-size:22px; font-weight:500;">CW · ${esc(cw)}</div>`
+    ? `<div style="display:flex; align-items:center; align-self:flex-start; padding:6px 18px; border-radius:999px; background:${mix(C.horror, C.bg, 0.18)}; color:${C.horror}; font-size:22px; font-weight:500;">${esc(cw)}</div>`
     : "";
   return html(
     SHELL(`
@@ -141,10 +144,16 @@ for (const { dir, section, titleKey } of SECTIONS) {
     const id = relPosix.replace(/\.(md|mdx)$/, "");
     const lang = data.lang === "en" ? "en" : "vi";
     const title = data[titleKey] ?? id;
+    // A labelled post or chapter says so on its card, in its own language: a link preview
+    // shows no banner. Cards are text only, so no image of the item ever appears on them.
+    const strings = lang === "en" ? en : vi;
+    const labels = Array.isArray(data.contentWarning) ? data.contentWarning.map(String) : [];
+    const parts = [
+      ...labelNames(labels, strings.labels),
+      ...(data.ageRating ? [String(data.ageRating)] : []),
+    ];
     const cw =
-      section === "story" && Array.isArray(data.contentWarning) && data.contentWarning.length
-        ? data.contentWarning.join(" · ")
-        : null;
+      section !== "project" && parts.length ? [strings.cw.title, ...parts].join(" · ") : null;
     const png = await render(entryCard({ title, badge: BADGES[section][lang], cw }));
     writeFileSync(path.join(outDir, `${ogKey(section, id)}.png`), png);
     count++;

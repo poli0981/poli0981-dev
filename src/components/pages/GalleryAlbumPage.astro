@@ -1,14 +1,18 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import Lightbox from "@/components/Lightbox.svelte";
-import { Image, getImage } from "astro:assets";
-import MediaImage from "@/components/MediaImage.astro";
+import { getImage } from "astro:assets";
+import GalleryGrid from "@/components/GalleryGrid.astro";
 import { mediaSrcset, mediaUrl, variantWidths } from "@/lib/media";
 import type { GalleryEntry } from "@/lib/collections";
 import type { GalleryPhoto } from "@/lib/gallery";
 import { sectionPath, type Locale } from "@/i18n/routing";
 import { useTranslations } from "@/i18n";
 import { formatDate } from "@/lib/format";
+import ContentNotice from "@/components/ContentNotice.astro";
+import AgeGate from "@/components/AgeGate.astro";
+import { labelNames, needsBlur } from "@/lib/content-labels";
+import { albumWarning } from "@/lib/collections";
 
 interface Props {
   locale: Locale;
@@ -17,6 +21,19 @@ interface Props {
 }
 const { entry, photos, locale } = Astro.props as Props;
 const t = useTranslations(locale);
+
+// Labels: the album's own blur every photo; a photo's own blur just that one. The notice
+// lists both, and its "Hiện ảnh" box un-blurs the page's photos and the viewer's slides.
+// The album's labels and age rating come from both language entries (same photos).
+const { labels: albumLabels, ageRating } = await albumWarning(entry.data.album);
+const albumBlur = needsBlur(albumLabels);
+const allLabels = [...new Set([...albumLabels, ...photos.flatMap((p) => p.labels)])];
+const photoBlur = photos.map((p) => albumBlur || needsBlur(p.labels));
+const anyPhotoBlur = !albumBlur && photoBlur.some(Boolean);
+const warningOf = (p: GalleryPhoto) => {
+  const names = labelNames([...new Set([...albumLabels, ...p.labels])], t.labels);
+  return names.length ? t.cw.photo.replace("{labels}", names.join(", ")) : "";
+};
 
 // Full-size AVIF slides for the lightbox island (plain <img> with /_astro URLs → CSP-safe).
 const slides = await Promise.all(
@@ -30,6 +47,8 @@ const slides = await Promise.all(
         width: p.media.w,
         height: p.media.h,
         alt: p.alt[locale],
+        blur: albumBlur || needsBlur(p.labels),
+        warning: warningOf(p),
       };
     }
     const full = await getImage({
@@ -44,13 +63,24 @@ const slides = await Promise.all(
       width: p.image.width,
       height: p.image.height,
       alt: p.alt[locale],
+      blur: albumBlur || needsBlur(p.labels),
+      warning: warningOf(p),
     };
   }),
+);
+const hrefs = slides.map((slide) => slide.src);
+const ownBlur = photoBlur.map((blurred) => blurred && !albumBlur);
+const thumbLabels = photos.map((p) =>
+  [t.gallery.open, p.alt[locale], warningOf(p)].filter(Boolean).join(" — "),
 );
 ---
 
 <BaseLayout title={entry.data.title} description={entry.data.description} {locale}>
-  <section class="page py-section">
+  <section
+    class="page py-section"
+    data-cw-blur={albumBlur ? "" : undefined}
+    data-cw-scope={anyPhotoBlur ? "" : undefined}
+  >
     <nav class="crumb" aria-label={t.landmarks.breadcrumb}>
       <a href={sectionPath("gallery", locale)}>{t.nav.gallery}</a>
       <span aria-hidden="true">/</span>
@@ -60,45 +90,23 @@ const slides = await Promise.all(
     {entry.data.description && <p class="lead">{entry.data.description}</p>}
     <p class="date">{formatDate(entry.data.date, locale)}</p>
 
-    {
-      /* Each thumbnail links to its full-size image, so the album works without JS; the
-        lightbox island takes over plain clicks once it hydrates. */
-    }
-    <div class="photo-grid">
-      {
-        photos.map((p, i) => (
-          <a
-            class="thumb"
-            href={slides[i].src}
-            data-lightbox-index={i}
-            aria-label={`${t.gallery.open} — ${p.alt[locale]}`}
-          >
-            {p.kind === "local" ? (
-              <Image
-                src={p.image}
-                alt=""
-                widths={[400, 800]}
-                sizes="(max-width: 640px) 50vw, 320px"
-                loading={i === 0 ? "eager" : "lazy"}
-                decoding="async"
-                {...(i === 0 ? { fetchpriority: "high" as const } : {})}
-              />
-            ) : (
-              <MediaImage
-                media={p.media}
-                alt=""
-                sizes="(max-width: 640px) 50vw, 320px"
-                loading={i === 0 ? "eager" : "lazy"}
-                {...(i === 0 ? { fetchpriority: "high" as const } : {})}
-              />
-            )}
-          </a>
-        ))
-      }
-    </div>
+    <ContentNotice labels={allLabels} ageRating={ageRating} {locale} />
 
-    <Lightbox client:idle {slides} labels={t.gallery} />
+    {
+      ageRating ? (
+        <AgeGate rating={ageRating} {locale}>
+          <GalleryGrid {photos} {hrefs} blurred={ownBlur} labels={thumbLabels} {locale} />
+        </AgeGate>
+      ) : (
+        <GalleryGrid {photos} {hrefs} blurred={ownBlur} labels={thumbLabels} {locale} />
+      )
+    }
   </section>
+  {
+    /* Outside the labelled section on purpose: its blur rule would otherwise also blur the
+      viewer's photo, which has its own "show" button. */
+  }
+  <Lightbox client:idle {slides} labels={{ ...t.gallery, reveal: t.cw.reveal }} />
 </BaseLayout>
 
 <style>
@@ -125,47 +133,5 @@ const slides = await Promise.all(
     color: var(--muted);
     font-family: var(--ff-mono);
     font-size: var(--text-meta);
-  }
-  .photo-grid {
-    margin-block-start: 1.5rem;
-    display: grid;
-    gap: 0.75rem;
-    /* minmax(0, 1fr), not 1fr: a `1fr` column is at least as wide as its photos' minimum
-       content size, which made the first column 235px wide and the page wider than a
-       320px screen. With a zero minimum the columns stay equal. */
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  @media (min-width: 640px) {
-    .photo-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-  @media (min-width: 960px) {
-    .photo-grid {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-  }
-  .thumb {
-    display: block;
-    padding: 0;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-card);
-    background: var(--surface);
-    overflow: clip;
-    cursor: pointer;
-    aspect-ratio: 1 / 1;
-    transition:
-      transform var(--duration-fast) var(--ease-site),
-      border-color var(--duration-fast) var(--ease-site);
-  }
-  .thumb:hover {
-    transform: translateY(-2px);
-    border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
-  }
-  .thumb :global(img) {
-    display: block;
-    inline-size: 100%;
-    block-size: 100%;
-    object-fit: cover;
   }
 </style>

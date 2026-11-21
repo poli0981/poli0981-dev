@@ -186,6 +186,91 @@ describe("reading settings", () => {
   });
 });
 
+// The first chapter in the sitemap is rated 16+ and labelled horror (content repo), so the
+// age check and the image blur run on a real page.
+describe("age check and content warning", () => {
+  const foldOpen = (page: Page) =>
+    page.locator(".age-fold").evaluate((el) => (el as HTMLDetailsElement).open);
+  const stored = (page: Page) => page.evaluate(() => localStorage.getItem("ageGate"));
+
+  it("starts folded, is scanned with the question open, and Esc never confirms", async () => {
+    await withPage({}, chapterPath, async (page) => {
+      assert.equal(await page.locator(".age-gate").count(), 1, "the chapter is age-rated");
+      assert.equal(await foldOpen(page), false);
+      await expectNoViolations(page, "chapter behind the age check");
+
+      await page.locator(".age-summary").focus();
+      await page.keyboard.press("Enter");
+      await page.waitForSelector(".age-dialog[open]");
+      await expectNoViolations(page, "age question open");
+      assert.equal(await focused(page), "button.age-no", "focus starts on No, not Yes");
+
+      await page.keyboard.press("Escape");
+      await page.waitForSelector(".age-dialog:not([open])", { state: "attached" });
+      assert.equal(await foldOpen(page), false, "Esc leaves the text folded");
+      assert.equal(await stored(page), null, "Esc stores nothing");
+      assert.equal(await focused(page), "summary.age-summary", "focus returns to the summary");
+
+      // Find-in-page or a #:~:text= link opens a <details> without asking anyone; without a
+      // "yes" on record the gate folds it straight back.
+      await page.evaluate(() => {
+        const fold = document.querySelector<HTMLDetailsElement>(".age-fold");
+        if (fold) fold.open = true;
+      });
+      await page.waitForFunction(
+        () => document.querySelector<HTMLDetailsElement>(".age-fold")?.open === false,
+      );
+    });
+  });
+
+  it("No hides the text and says why; Yes opens it, is remembered, and can be reset", async () => {
+    await withPage({}, chapterPath, async (page) => {
+      await page.locator(".age-summary").click();
+      await page.locator(".age-dialog .age-no").click();
+      await page.waitForSelector('.age-status[data-state="deny"]:not([hidden])');
+      assert.ok(await page.locator(".age-fold").isHidden(), "the text is gone, not just folded");
+      assert.equal(await focused(page), "button.age-retry", "focus lands on the explanation");
+      await expectNoViolations(page, "age check declined");
+
+      await page.keyboard.press("Enter");
+      await page.waitForSelector(".age-dialog[open]");
+      await page.locator(".age-dialog .age-yes").click();
+      await page.waitForSelector(".age-fold[open]");
+      // The dialog hands focus back to "Chọn lại", which is hidden now: it must not be lost.
+      assert.equal(await focused(page), "summary.age-summary", "focus lands on the summary");
+      assert.match((await stored(page)) ?? "", /"ok":16/);
+      assert.ok(await page.locator(".age-body .prose p").first().isVisible(), "the text shows");
+
+      await page.reload();
+      await settle(page);
+      assert.equal(await foldOpen(page), true, "a confirmed age opens the text on the next visit");
+      await page.locator(".age-reset").click();
+      assert.equal(await foldOpen(page), false);
+      assert.equal(await stored(page), null);
+    });
+  });
+
+  it("the 'show images' box un-blurs the page's images, from the keyboard too", async () => {
+    await withPage({ confirmedAge: 18 }, chapterPath, async (page) => {
+      // Stories carry no picture today: drop one into the text to watch the blur rule.
+      await page.evaluate(() => {
+        const img = document.createElement("img");
+        img.id = "probe";
+        img.alt = "probe";
+        img.width = 10;
+        img.height = 10;
+        img.src = "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
+        document.querySelector("#reader-root .prose")?.appendChild(img);
+      });
+      const filter = () => page.locator("#probe").evaluate((el) => getComputedStyle(el).filter);
+      assert.match(await filter(), /blur/, "blurred by default, before any script");
+      await page.locator(".cw-reveal-input").focus();
+      await page.keyboard.press("Space");
+      assert.equal(await filter(), "none");
+    });
+  });
+});
+
 /**
  * Tab (or Shift+Tab) through the page and collect every control that receives focus while
  * covered by one of the fixed bars. Stops when focus reaches `until` or after `limit`
@@ -247,7 +332,8 @@ describe("focus is not hidden under fixed bars (WCAG 2.4.11)", () => {
   });
 
   it("story reader: nothing takes focus underneath the header or the reader bar going back up", async () => {
-    await withPage({ viewport: PHONE }, chapterPath, async (page) => {
+    // Age already confirmed: the walk should cross the chapter text, not a folded gate.
+    await withPage({ viewport: PHONE, confirmedAge: 18 }, chapterPath, async (page) => {
       // Start from the last control of the chapter and walk backwards: only then does the
       // browser scroll controls in at the top edge, where the two sticky bars are.
       await page.evaluate(() => {

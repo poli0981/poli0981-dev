@@ -5,6 +5,7 @@ import { type BlogEntry, readingTime } from "../lib/collections";
 import { sectionPath, type Locale } from "../i18n/routing";
 import { useTranslations } from "../i18n";
 import { formatDate, isoDate } from "../lib/format";
+import { labelNames, needsBlur } from "../lib/content-labels";
 
 interface Props {
   entry: BlogEntry;
@@ -18,13 +19,20 @@ const Title = `h${headingLevel}` as const;
 const t = useTranslations(locale);
 const href = sectionPath("blog", locale, entry.id);
 const mins = readingTime(entry.body);
+// A labelled or age-rated post: its cover stays blurred here (no "show" box on a card — open
+// the post), and the card names the labels and any age rating.
+const blurCover = needsBlur(entry.data.contentWarning) || Boolean(entry.data.ageRating);
+const warning = [
+  ...labelNames(entry.data.contentWarning, t.labels),
+  ...(entry.data.ageRating ? [entry.data.ageRating] : []),
+].join(" · ");
 ---
 
 <article class="card">
   <a class="card-link" href={href}>
     {
       (entry.data.cover || entry.data.coverMedia) && (
-        <div class="card-cover">
+        <div class="card-cover" data-cw-blur={blurCover ? "" : undefined}>
           {entry.data.cover ? (
             <Image
               src={entry.data.cover}
@@ -53,6 +61,15 @@ const mins = readingTime(entry.body);
         <span class="dot" aria-hidden="true">·</span>
         <span>{mins} {t.post.minRead}</span>
       </div>
+      {
+        warning && (
+          <p class="card-cw">
+            <span aria-hidden="true">⚠</span>
+            <span class="sr-only">{t.cw.title}:</span>
+            {warning}
+          </p>
+        )
+      }
     </div>
   </a>
 </article>
@@ -106,6 +123,16 @@ const mins = readingTime(entry.body);
     align-items: center;
     gap: 0.5rem;
     color: var(--muted);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+  }
+  /* The build strips whitespace between the icon and the words: the gap spaces them. */
+  .card-cw {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35em;
+    margin-block-start: 0.5rem;
+    color: color-mix(in srgb, var(--horror) 35%, var(--text));
     font-family: var(--ff-mono);
     font-size: var(--text-meta);
   }

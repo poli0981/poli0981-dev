@@ -1,0 +1,55 @@
+---
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+import MediaImage from "./MediaImage.astro";
+import type { MediaRef } from "../lib/media";
+
+interface Props {
+  /** A local cover (src/assets), or */
+  cover?: ImageMetadata | undefined;
+  /** an R2 upload; its alt text, when set in the admin, describes it (else decorative). */
+  coverMedia?: (MediaRef & { alt?: string }) | undefined;
+}
+
+// A post's cover image. Its own component so the post page can put it inside the age check
+// when the post is age-rated, and outside it otherwise.
+const { cover, coverMedia } = Astro.props;
+---
+
+{
+  (cover || coverMedia) && (
+    <div class="post-cover">
+      {cover ? (
+        <Image
+          src={cover}
+          alt=""
+          widths={[720, 1080, 1440]}
+          sizes="(max-width: 768px) 100vw, 720px"
+          fetchpriority="high"
+        />
+      ) : (
+        coverMedia && (
+          <MediaImage
+            media={coverMedia}
+            alt={coverMedia.alt ?? ""}
+            sizes="(max-width: 768px) 100vw, 720px"
+            loading="eager"
+            fetchpriority="high"
+          />
+        )
+      )}
+    </div>
+  )
+}
+
+<style>
+  .post-cover {
+    margin-block-end: 2rem;
+  }
+  .post-cover :global(img) {
+    inline-size: 100%;
+    block-size: auto;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--line);
+  }
+</style>

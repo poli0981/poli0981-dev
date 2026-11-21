@@ -48,7 +48,8 @@ Item: title, link, pubDate, description, `<language>` theo bài, category = tags
 ## 5. OG image tự sinh
 
 - Build-time bằng Satori + resvg (hoặc `astro-og-canvas` nếu gọn hơn lúc triển khai): template 1200×630, nền glacier night (palette tối) + Waveline + title (Bricolage) + badge khu (Blog/Truyện/Project) + `poli0981.dev`.
-- Truyện có contentWarning: OG thêm dải màu horror + nhãn CW (không spoil chi tiết).
+- Bài/truyện có nhãn (`contentWarning`) hoặc mốc tuổi (`ageRating`): OG thêm dải màu horror "Cảnh báo · Kinh dị · 16+" bằng ngôn ngữ của bài (không spoil chi tiết). Thẻ OG chỉ có chữ nên không bao giờ lộ ảnh bìa.
+- RSS: description của mục có nhãn được thêm tiền tố "[Cảnh báo: Kinh dị · 16+] " (theo ngôn ngữ của mục) — feed reader không có banner.
 - Cache theo hash(title+khu) để build nhanh.
 
 ## 6. Dữ liệu có cấu trúc (JSON-LD)

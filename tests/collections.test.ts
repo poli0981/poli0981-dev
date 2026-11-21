@@ -82,6 +82,28 @@ describe("frontmatter validation", () => {
     assert.equal(galleryPhotosPath("../x"), null);
   });
 
+  it("takes content labels from the label list and an age rating from the ratings", () => {
+    assert.deepEqual(
+      validateFrontmatter(blog, {
+        ...valid,
+        contentWarning: ["horror", "politics"],
+        ageRating: "16+",
+      }),
+      [],
+    );
+    assert.deepEqual(validateFrontmatter(blog, { ...valid, contentWarning: ["gore"] }), [
+      { field: "contentWarning", code: "option" },
+    ]);
+    assert.deepEqual(validateFrontmatter(blog, { ...valid, contentWarning: "horror" }), [
+      { field: "contentWarning", code: "type" },
+    ]);
+    assert.deepEqual(validateFrontmatter(blog, { ...valid, ageRating: "21+" }), [
+      { field: "ageRating", code: "option" },
+    ]);
+    const labels = COLLECTIONS.stories.fields.find((f) => f.key === "contentWarning");
+    assert.equal(labels?.optionLabels?.horror, "Kinh dị");
+  });
+
   it("holds the admin to the content schema's own rules", () => {
     const stories = COLLECTIONS.stories;
     // chapter: z.number().int().positive()

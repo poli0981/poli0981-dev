@@ -28,6 +28,9 @@ interface ContextOptions {
   forcedColors?: "active" | "none";
   /** false = a first-time visitor, who gets the legal notice sheet. */
   acknowledged?: boolean;
+  /** An age the visitor already confirmed (src/lib/age-gate.ts), e.g. 18: age-rated text
+      starts open. Unset = never answered, so it starts folded behind the age check. */
+  confirmedAge?: number;
 }
 
 /**
@@ -42,6 +45,7 @@ export async function newContext(
     viewport = DESKTOP,
     forcedColors = "none",
     acknowledged = true,
+    confirmedAge,
   }: ContextOptions = {},
 ): Promise<BrowserContext> {
   const context = await browser.newContext({
@@ -60,6 +64,15 @@ export async function newContext(
         /* storage unavailable: the sheet shows, which only makes the scan stricter */
       }
     });
+  }
+  if (confirmedAge) {
+    await context.addInitScript((age) => {
+      try {
+        localStorage.setItem("ageGate", JSON.stringify({ v: 1, ok: age, no: null }));
+      } catch {
+        /* storage unavailable: the text stays folded, which the tests would notice */
+      }
+    }, confirmedAge);
   }
   return context;
 }

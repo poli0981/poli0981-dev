@@ -3,9 +3,12 @@
   import { prefersReducedMotion } from "../lib/motion";
 
   /**
+   * `blur`: the photo has a content label that blurs images (src/lib/content-labels.ts);
+   * `warning` names it. Such a slide opens blurred, behind a "show" button, unless the page's
+   * own "Hiện ảnh" box (ContentNotice) is ticked.
    * @type {{
-   *   slides: { src: string, srcset: string, width: number, height: number, alt: string }[],
-   *   labels: { viewer: string, close: string, prev: string, next: string, counter: string }
+   *   slides: { src: string, srcset: string, width: number, height: number, alt: string, blur?: boolean, warning?: string }[],
+   *   labels: { viewer: string, close: string, prev: string, next: string, counter: string, reveal?: string }
    * }}
    */
   let { slides = [], labels } = $props();
@@ -15,8 +18,12 @@
   let dialogEl = $state(null);
   let trackEl = $state(null);
   let opener = null; // element to restore focus to on close
+  /** @type {Record<number, boolean>} slides shown unblurred in this viewing */
+  let revealed = $state({});
+  let pageRevealed = $state(false);
 
   const current = $derived(slides[index]);
+  const veiled = $derived(Boolean(current?.blur) && !pageRevealed && !revealed[index]);
   const counter = $derived(
     labels.counter.replace("{i}", String(index + 1)).replace("{n}", String(slides.length)),
   );
@@ -25,6 +32,7 @@
     if (i < 0 || i >= slides.length) return;
     opener = document.activeElement;
     index = i;
+    pageRevealed = document.querySelector(".cw-reveal-input:checked") !== null;
     open = true;
     await tick();
     dialogEl?.querySelector(".close")?.focus();
@@ -152,7 +160,9 @@
       <!-- Arrowing to another photo announces its position and its caption: focus stays on
            the button, so nothing else would say which photo is now showing. -->
       <span class="count" aria-live="polite">
-        {counter}<span class="sr-only"> — {current.alt}</span>
+        {counter}<span class="sr-only">
+          — {current.alt}{veiled && current.warning ? ` — ${current.warning}` : ""}
+        </span>
       </span>
       <button type="button" class="close" onclick={close} aria-label={labels.close}>✕</button>
     </div>
@@ -176,6 +186,7 @@
       onpointercancel={onPointerUp}
     >
       <img
+        class:veiled
         src={current.src}
         srcset={current.srcset}
         sizes="92vw"
@@ -184,6 +195,21 @@
         alt={current.alt}
         decoding="async"
       />
+      {#if veiled}
+        <div class="veil">
+          {#if current.warning}<p>{current.warning}</p>{/if}
+          <!-- The button goes away once used, so focus moves on to the close button. -->
+          <button
+            type="button"
+            onclick={() => {
+              revealed[index] = true;
+              keepFocus();
+            }}
+          >
+            {labels.reveal ?? "Show"}
+          </button>
+        </div>
+      {/if}
     </div>
 
     <button
@@ -278,6 +304,43 @@
     inline-size: auto;
     block-size: auto;
     object-fit: contain;
+  }
+  .track {
+    position: relative;
+  }
+  .track img.veiled {
+    filter: blur(1.5rem) saturate(0.6);
+    clip-path: inset(0);
+  }
+  .veil {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    text-align: center;
+    color: var(--text);
+  }
+  .veil p {
+    margin: 0;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-control);
+    background: color-mix(in srgb, var(--bg) 80%, transparent);
+    font-size: var(--text-meta);
+  }
+  .veil button {
+    min-block-size: 2.75rem;
+    padding: 0.5rem 1.1rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-control);
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .veil button:hover {
+    border-color: var(--accent);
   }
   .caption {
     grid-column: 1 / -1;

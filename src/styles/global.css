@@ -314,6 +314,35 @@ body::after {
 }
 
 /* ------------------------------------------------------------------ *
+ * Content labels (src/lib/content-labels.ts, ContentNotice.astro). In a region marked
+ * [data-cw-blur], every image is blurred until the reader ticks that region's "Hiện ảnh"
+ * checkbox. Blurred is the default state and plain CSS: nothing sharp flashes before a
+ * script runs, and it works with JavaScript off. A browser without :has() keeps the blur
+ * (safe side). clip-path keeps the blur inside the image's own box.
+ * ------------------------------------------------------------------ */
+[data-cw-blur] :is(img, video) {
+  filter: blur(1.5rem) saturate(0.6);
+  clip-path: inset(0);
+}
+[data-cw-blur]:has(.cw-reveal-input:checked) :is(img, video) {
+  filter: none;
+  clip-path: none;
+}
+/* Nothing to blur (a chapter without pictures): no "images are blurred / show" line. */
+[data-cw-blur]:not(:has(img, video)) .cw-blur-row {
+  display: none;
+}
+/* One photo in an unlabelled album (its own contentWarning): blurred the same way. */
+.cw-photo :is(img, video) {
+  filter: blur(1.5rem) saturate(0.6);
+  clip-path: inset(0);
+}
+[data-cw-scope]:has(.cw-reveal-input:checked) .cw-photo :is(img, video) {
+  filter: none;
+  clip-path: none;
+}
+
+/* ------------------------------------------------------------------ *
  * Reduced motion — every animation/transition has a still branch.
  * ------------------------------------------------------------------ */
 @media (prefers-reduced-motion: reduce) {

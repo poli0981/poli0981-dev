@@ -107,6 +107,25 @@ describe("collection queries", () => {
     );
   });
 
+  it("takes an album's labels and age rating from both language entries", async () => {
+    setCollection("gallery", [
+      { id: "trip", data: { lang: "vi", album: "trip", contentWarning: ["blood"] } },
+      {
+        id: "trip-en",
+        data: { lang: "en", album: "trip", contentWarning: ["horror", "blood"], ageRating: "16+" },
+      },
+      { id: "dark", data: { lang: "vi", album: "dark", ageRating: "13+" } },
+      { id: "dark-en", data: { lang: "en", album: "dark", ageRating: "18+" } },
+      { id: "plain", data: { lang: "vi", album: "plain" } },
+    ]);
+    assert.deepEqual(await collections.albumWarning("trip"), {
+      labels: ["horror", "blood"],
+      ageRating: "16+",
+    });
+    assert.deepEqual(await collections.albumWarning("dark"), { labels: [], ageRating: "18+" });
+    assert.deepEqual(await collections.albumWarning("plain"), { labels: [] });
+  });
+
   it("counts reading time, tags, translations and story ids", async () => {
     assert.equal(collections.readingTime(undefined), 1);
     assert.equal(collections.readingTime("word ".repeat(1000)), 5);

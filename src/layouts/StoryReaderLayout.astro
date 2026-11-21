@@ -2,7 +2,8 @@
 import BaseLayout from "./BaseLayout.astro";
 import Prose from "../components/Prose.astro";
 import Waveline from "../components/Waveline.svelte";
-import ContentWarning from "../components/ContentWarning.astro";
+import ContentNotice from "../components/ContentNotice.astro";
+import AgeGate from "../components/AgeGate.astro";
 import ReadingControls from "../components/ReadingControls.svelte";
 import Pagination from "../components/Pagination.astro";
 import type { StoryEntry } from "../lib/collections";
@@ -10,6 +11,7 @@ import { useTranslations } from "../i18n";
 import type { Locale } from "../i18n/routing";
 import { SITE, authorRef } from "../lib/seo";
 import { ogUrl } from "../lib/og";
+import { labelNames, needsBlur } from "../lib/content-labels";
 
 interface NavLink {
   href: string;
@@ -34,8 +36,9 @@ const {
   translationHref = null,
 } = Astro.props;
 const t = useTranslations(locale);
-const { title, description, series, contentWarning } = entry.data;
-const hasCW = contentWarning.length > 0;
+const { title, description, series, contentWarning, ageRating } = entry.data;
+const blur = needsBlur(contentWarning);
+const rating = ageRating ?? labelNames(contentWarning, t.labels).join(", ");
 
 const pathname = Astro.url.pathname;
 const alternates = translationHref
@@ -51,7 +54,7 @@ const storySchema = {
   description,
   inLanguage: locale === "vi" ? "vi-VN" : "en-US",
   ...(series ? { isPartOf: { "@type": "CreativeWorkSeries", name: series } } : {}),
-  ...(hasCW ? { contentRating: contentWarning.join(", ") } : {}),
+  ...(rating ? { contentRating: rating } : {}),
   author: authorRef(),
   url: new URL(pathname, SITE.url).href,
 };
@@ -76,19 +79,25 @@ const storySchema = {
     <ReadingControls client:idle labels={t.reader} />
   </div>
 
-  <article id="reader-root" class="reading-column reader" data-pagefind-body>
+  <article
+    id="reader-root"
+    class="reading-column reader"
+    data-pagefind-body
+    data-cw-blur={blur ? "" : undefined}
+  >
     <header class="reader-head">
       {series && <p class="series">{series}</p>}
       <h1>{title}</h1>
     </header>
 
+    <ContentNotice labels={contentWarning} {ageRating} {locale} />
     {
-      hasCW ? (
-        <ContentWarning warnings={contentWarning} title={t.story.cwTitle} hint={t.story.cwHint}>
+      ageRating ? (
+        <AgeGate rating={ageRating} {locale}>
           <Prose reader>
             <slot />
           </Prose>
-        </ContentWarning>
+        </AgeGate>
       ) : (
         <Prose reader>
           <slot />
