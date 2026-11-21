@@ -25,7 +25,8 @@ The last feature release: from here on the project is in **maintenance mode**
     never pops up on its own, and Esc never means "yes". The answer stays in the browser
     (`localStorage`: an age threshold, never a birth date).
   - Cards, the photo viewer, RSS descriptions and OG cards carry the warning too. The privacy
-    policy (§6) lists the new local-storage item.
+    policy (§6) lists the new local-storage item
+    ([#138](https://github.com/poli0981/poli0981-dev/pull/138)).
 - **The admin publishes on its own.** Every save or delete starts the publish workflow; bursts
   coalesce. The admin now follows a change until it is actually live: the build records the
   content commit it was made from (`version.content` in `/api/health`), and the publish bar
@@ -52,8 +53,8 @@ The last feature release: from here on the project is in **maintenance mode**
   must be a slug that already has photos (#137).
 - Deleting an image is refused while the **live** site's content still uses it, not only while
   `main` does (#137).
-- The post page uses the cover's alt text when one is set; the editor has a field for it, and the
-  media picker takes alt text for uploads.
+- The post page uses the cover's alt text when one is set (#138); the editor has a field for it,
+  and the media picker takes alt text for uploads (#137).
 - One-shot stories (`stories/<slug>.md`) can be created and edited in the admin (#137).
 - Dependencies, keeping the three-day cooldown: astro 7.4.12, @astrojs/cloudflare 14.4.8,
   @astrojs/svelte 9.1.6, jose 6.2.17, marked 18.2.1, wrangler 4.164.0, eslint 10.15.0,
