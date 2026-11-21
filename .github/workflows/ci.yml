@@ -102,6 +102,11 @@ jobs:
       - name: Third-party notices
         run: npm run gen-notices -- --check
 
+      # The same policy over every package in package-lock.json, transitive dependencies and
+      # each platform's binaries included; anything outside it needs a per-package review.
+      - name: Licences (whole dependency tree)
+        run: npm run check-licenses
+
       # Fail if any changed image under src/assets/ still carries GPS or a camera serial.
       - name: Check EXIF (changed images)
         env:

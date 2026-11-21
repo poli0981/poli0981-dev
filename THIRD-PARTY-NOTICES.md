@@ -74,9 +74,11 @@ inventory is `package-lock.json`; platform binaries are covered in prose below.
 
 ## Licenses outside the standard allowlist
 
-**MPL-2.0** — 3 package(s): `@axe-core/playwright`, `@resvg/resvg-js`, `satori`
+**MPL-2.0** — 3 package(s):
 
-> Reviewed: File-level copyleft. satori and @resvg/resvg-js are used unmodified as build-time tools and never shipped to the browser, so no source-disclosure obligation is triggered.
+- `@axe-core/playwright` — reviewed: File-level copyleft. Runs only in the accessibility tests (tests/a11y); never shipped.
+- `@resvg/resvg-js` — reviewed: File-level copyleft. Used unmodified at build time to draw the OG cards (scripts/gen-og.mjs); never shipped to the browser or the Worker.
+- `satori` — reviewed: File-level copyleft. Used unmodified at build time to draw the OG cards (scripts/gen-og.mjs); never shipped to the browser or the Worker.
 
 <!-- END GENERATED -->
 
@@ -108,8 +110,8 @@ Not packages — listed for transparency:
 - **Discord** — a webhook receiving bug-report notifications.
 - **YouTube, Steam and GitHub public APIs** — read by the widgets cron worker; visitors' browsers
   never call them (images are mirrored and served from the site).
-- **SonarCloud, CodeQL, OSV-Scanner, Snyk** — code and dependency analysis in CI; nothing they do
-  reaches the running site.
+- **SonarCloud, Qodana (JetBrains), CodeQL, OSV-Scanner, Snyk** — code and dependency analysis in
+  CI; nothing they do reaches the running site.
 
 ## Fonts
 
