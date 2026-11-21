@@ -6,7 +6,8 @@ name: Triage
 # items, bots, and anything labelled `maintenance-exception` are left alone.
 #
 # pull_request_target runs with this repository's token, so it must never run a pull
-# request's code: the checkout below takes the default branch, and only the one script file.
+# request's code. Nothing is checked out at all: the script reads scripts/triage.mjs from the
+# default branch through the API and imports it from memory.
 on:
   issues:
     types: [opened, reopened, edited, labeled]
@@ -37,19 +38,18 @@ jobs:
       issues: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event.repository.default_branch }}
-          persist-credentials: false
-          sparse-checkout: scripts/triage.mjs
-          sparse-checkout-cone-mode: false
-
       - name: Label and close feature requests
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
+            const { data: file } = await github.rest.repos.getContent({
+              ...context.repo,
+              path: "scripts/triage.mjs",
+              ref: context.payload.repository.default_branch,
+            });
+            const source = file.content.replaceAll("\n", "");
             const { decide, closingComment, LABELS } = await import(
-              `${process.env.GITHUB_WORKSPACE}/scripts/triage.mjs`
+              `data:text/javascript;base64,${source}`
             );
 
             if (context.eventName === "workflow_dispatch") {

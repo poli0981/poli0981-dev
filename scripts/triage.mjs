@@ -1,8 +1,8 @@
 /**
  * Maintenance-mode triage (CONTRIBUTING.md): an issue or pull request that asks for a new
  * feature is labelled and closed with an explanation; everything else is left for the owner.
- * .github/workflows/triage.yml runs this through actions/github-script, from the default
- * branch — never from a pull request's own code.
+ * .github/workflows/triage.yml reads this file from the default branch through the API and runs
+ * it in actions/github-script: nothing is checked out, so no pull request's code ever runs.
  *
  * Deliberately narrow: only clear signals count (the title, or a label the reporter could not
  * set by accident). A bug report that happens to say "add" is not a feature request.
@@ -17,11 +17,13 @@ export const LABELS = {
   exception: "maintenance-exception",
 };
 
+// Tested against the trimmed title. Each pattern is linear: no two quantifiers compete for the
+// same characters.
 const FEATURE_TITLES = [
-  /^\s*feat(\([^)]*\))?!?:/i, // conventional commits: "feat: …", "feat(ui)!: …"
-  /^\s*\[\s*(feat|feature|features|enhancement|request|idea|tính năng|đề xuất)\b[^\]]*\]/iu,
+  /^feat(\([^)]*\))?!?:/i, // conventional commits: "feat: …", "feat(ui)!: …"
+  /^\[(feat|feature|features|enhancement|request|idea|tính năng|đề xuất)\b/iu,
   /\bfeature[\s-]+request\b/i,
-  /\b(new|add(ing)?\s+a?)\s*feature\b/i,
+  /\b(new|add|adding)(\s+a)?\s+feature\b/i,
   /(đề xuất|yêu cầu|thêm|bổ sung)\s+tính năng|tính năng mới/iu,
 ];
 
@@ -42,12 +44,13 @@ export function decide(item) {
   if (item.state && item.state !== "open") return { action: "none", reason: "not open" };
   if (labels.includes(LABELS.exception)) return { action: "none", reason: "owner's exception" };
   if (TRUSTED.has(item.association ?? "")) return { action: "none", reason: "trusted author" };
-  if (/\[bot\]$/.test(item.author)) return { action: "none", reason: "bot" };
+  if (item.author.endsWith("[bot]")) return { action: "none", reason: "bot" };
   if (item.sender && item.owner && item.sender === item.owner) {
     return { action: "none", reason: "the owner acted on it" };
   }
   if (labels.includes(LABELS.feature)) return { action: "close", reason: "labelled as a feature" };
-  if (FEATURE_TITLES.some((pattern) => pattern.test(item.title))) {
+  const title = item.title.trim();
+  if (FEATURE_TITLES.some((pattern) => pattern.test(title))) {
     return { action: "close", reason: "the title asks for a feature" };
   }
   return { action: "none", reason: "not a feature request" };
