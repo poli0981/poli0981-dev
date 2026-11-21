@@ -20,11 +20,15 @@ const entry = (id: string, lang: string, date: string) => ({
 });
 
 before(() => {
+  const politics = entry("post-en", "en", "2026-10-03");
   setCollection("blog", [
     entry("post-vi", "vi", "2026-10-01"),
-    entry("post-en", "en", "2026-10-03"),
+    { ...politics, data: { ...politics.data, contentWarning: ["politics"] } },
   ]);
-  setCollection("stories", [entry("series/ch-1", "vi", "2026-10-02")]);
+  const chapter = entry("series/ch-1", "vi", "2026-10-02");
+  setCollection("stories", [
+    { ...chapter, data: { ...chapter.data, contentWarning: ["horror"], ageRating: "16+" } },
+  ]);
 });
 
 const xml = async (feed: (context: APIContext) => Promise<Response>, site?: string) =>
@@ -50,5 +54,12 @@ describe("RSS feeds", () => {
     assert.match(stories, /poli0981\.dev — truyện/);
     assert.match(stories, /About series\/ch-1/);
     assert.doesNotMatch(stories, /post-vi/);
+  });
+
+  it("puts each item's content warning in front of its description, in its language", async () => {
+    const body = await xml(allFeed, "https://poli0981.dev");
+    assert.match(body, /\[Cảnh báo: Kinh dị · 16\+\] About series\/ch-1/);
+    assert.match(body, /\[Content warning: Politics\] About post-en/);
+    assert.match(body, /<description>About post-vi<\/description>/);
   });
 });

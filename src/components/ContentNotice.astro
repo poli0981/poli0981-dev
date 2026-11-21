@@ -1,0 +1,119 @@
+---
+import { useTranslations } from "../i18n";
+import type { Locale } from "../i18n/routing";
+import { labelNames, needsBlur, type AgeRating } from "../lib/content-labels";
+
+interface Props {
+  /** The item's content labels (src/lib/content-labels.ts). */
+  labels: readonly string[];
+  ageRating?: AgeRating | undefined;
+  locale: Locale;
+}
+
+// The banner at the top of a labelled post, chapter or album. When a label blurs images, the
+// region this sits in must carry `data-cw-blur` (global.css): every image in it stays blurred
+// until "Hiện ảnh" is ticked. That is a real checkbox read by CSS `:has()`, so it works with
+// JavaScript off and nothing sharp shows before a script runs. Search skips the banner.
+const { labels, ageRating, locale } = Astro.props;
+const t = useTranslations(locale);
+const names = labelNames(labels, t.labels);
+const blur = needsBlur(labels);
+---
+
+{
+  (names.length > 0 || ageRating) && (
+    <div class="cw-notice" role="note" aria-labelledby="cw-title" data-pagefind-ignore>
+      <p class="cw-head">
+        <span class="cw-icon" aria-hidden="true">
+          ⚠
+        </span>
+        <strong id="cw-title">{t.cw.title}</strong>
+      </p>
+      <ul class="cw-tags" role="list">
+        {names.map((name) => (
+          <li class="cw-tag">{name}</li>
+        ))}
+        {ageRating && <li class="cw-tag cw-age">{ageRating}</li>}
+      </ul>
+      {blur && (
+        <p class="cw-blur-row">
+          <span>{t.cw.blurNote}</span>
+          <label class="cw-reveal">
+            <input type="checkbox" class="cw-reveal-input" />
+            {t.cw.reveal}
+          </label>
+        </p>
+      )}
+    </div>
+  )
+}
+
+<style>
+  .cw-notice {
+    display: grid;
+    gap: 0.6rem;
+    margin-block: 0 1.75rem;
+    padding: 0.9rem 1.1rem;
+    border: 1px solid color-mix(in srgb, var(--horror) 55%, var(--line));
+    border-radius: var(--radius-card);
+    background: color-mix(in srgb, var(--horror) 10%, var(--surface));
+    color: var(--text);
+  }
+  .cw-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+  }
+  .cw-icon {
+    color: var(--horror);
+    font-size: 1.1em;
+  }
+  .cw-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .cw-tag {
+    padding: 0.1em 0.55em;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--horror) 45%, transparent);
+    background: color-mix(in srgb, var(--horror) 18%, transparent);
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
+  }
+  .cw-age {
+    font-weight: 600;
+  }
+  .cw-blur-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--text-meta);
+  }
+  .cw-reveal {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-block-size: 2.75rem; /* WCAG 2.5.8: a comfortable target, not just the box */
+    color: var(--text);
+    cursor: pointer;
+  }
+  .cw-reveal-input {
+    inline-size: 1.1rem;
+    block-size: 1.1rem;
+    accent-color: var(--accent);
+  }
+  @media (forced-colors: active) {
+    .cw-notice,
+    .cw-tag {
+      border-color: CanvasText;
+    }
+  }
+</style>

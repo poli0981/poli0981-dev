@@ -3,6 +3,7 @@ import { type StoryEntry } from "../lib/collections";
 import { sectionPath, type Locale } from "../i18n/routing";
 import { useTranslations } from "../i18n";
 import { formatDate, isoDate } from "../lib/format";
+import { labelNames } from "../lib/content-labels";
 
 interface Props {
   entry: StoryEntry;
@@ -18,7 +19,11 @@ const statusLabel = {
   dropped: t.story.statusDropped,
 }[entry.data.status];
 
-const hasCW = entry.data.contentWarning.length > 0;
+// Every label, translated, plus the age rating — the reader decides before opening it.
+const warning = [
+  ...labelNames(entry.data.contentWarning, t.labels),
+  ...(entry.data.ageRating ? [entry.data.ageRating] : []),
+].join(" · ");
 ---
 
 <article class="card story">
@@ -27,9 +32,11 @@ const hasCW = entry.data.contentWarning.length > 0;
       <div class="badges">
         <span class:list={["status", entry.data.status]}>{statusLabel}</span>
         {
-          hasCW && (
-            <span class="cw-badge" title={entry.data.contentWarning.join(", ")}>
-              ⚠ {entry.data.contentWarning[0]}
+          warning && (
+            <span class="cw-badge">
+              <span aria-hidden="true">⚠</span>
+              <span class="sr-only">{t.cw.title}:</span>
+              {warning}
             </span>
           )
         }
@@ -87,6 +94,9 @@ const hasCW = entry.data.contentWarning.length > 0;
     border-color: color-mix(in srgb, var(--ok) 45%, var(--line));
   }
   .cw-badge {
+    /* The build strips whitespace between the icon and the words: the gap spaces them. */
+    display: inline-flex;
+    gap: 0.35em;
     padding: 0.1em 0.55em;
     border-radius: 999px;
     font-family: var(--ff-mono);

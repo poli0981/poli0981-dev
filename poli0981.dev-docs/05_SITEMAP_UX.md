@@ -40,7 +40,8 @@
 ```
 [thanh mảnh: ← series | tiêu đề chương | Aa]   ← Aa mở ReadingControls
 [progress bar 2px sticky top]
-[ContentWarning nếu có → bấm mới hiện nội dung]
+[ContentNotice nếu có nhãn → banner; nhãn làm mờ ⇒ ảnh mờ tới khi tick "Hiện ảnh"]
+[AgeGate nếu có ageRating → bấm summary ⇒ hỏi tuổi ⇒ mới hiện nội dung]
   Literata 68ch, 1.125–1.25rem
 [Chương trước ─ Mục lục series ─ Chương sau]
 ```

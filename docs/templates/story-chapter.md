@@ -7,6 +7,7 @@ series: "{{SERIES}}"
 chapter: 1
 status: ongoing
 contentWarning: []
+# ageRating: "16+"
 tags: []
 draft: true
 ---
@@ -16,7 +17,11 @@ draft: true
   series in one folder, e.g. stories/dem-khong-tieng/chuong-01.md
   chapter         integer, consecutive; drives prev/next links and ordering
   status          ongoing | complete | dropped
-  contentWarning  e.g. [horror, violence] — renders a warning gate before the text
+  contentWarning  labels from src/lib/content-labels.ts, e.g. [horror, violence]: a warning
+                  banner; horror, blood, jumpscare, violence, self-harm and death also
+                  blur the images
+  ageRating       "13+" | "16+" | "18+" (optional): the text stays folded until the
+                  reader confirms their age (remembered in their browser only)
 -->
 
 Chương bắt đầu ở đây.

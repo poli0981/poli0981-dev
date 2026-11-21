@@ -4,6 +4,8 @@ import MediaImage from "./MediaImage.astro";
 import { type GalleryEntry } from "../lib/collections";
 import type { GalleryPhoto } from "../lib/gallery";
 import { sectionPath, type Locale } from "../i18n/routing";
+import { useTranslations } from "../i18n";
+import { labelNames, needsBlur } from "../lib/content-labels";
 
 interface Props {
   entry: GalleryEntry;
@@ -17,11 +19,18 @@ const { entry, cover, locale, headingLevel = 3 } = Astro.props;
 const Title = `h${headingLevel}` as const;
 const href = sectionPath("gallery", locale, entry.data.album);
 const year = entry.data.date.getFullYear();
+// The cover stays blurred when the album, or that photo, carries a label that blurs images.
+const t = useTranslations(locale);
+const blurCover = needsBlur(entry.data.contentWarning) || needsBlur(cover.labels);
+const warning = [
+  ...labelNames(entry.data.contentWarning, t.labels),
+  ...(entry.data.ageRating ? [entry.data.ageRating] : []),
+].join(" · ");
 ---
 
 <article class="card">
   <a class="card-link" href={href}>
-    <div class="cover">
+    <div class="cover" data-cw-blur={blurCover ? "" : undefined}>
       {
         cover.kind === "local" ? (
           <Image
@@ -40,6 +49,15 @@ const year = entry.data.date.getFullYear();
     <div class="body">
       <Title class="title">{entry.data.title}</Title>
       <span class="year">{year}</span>
+      {
+        warning && (
+          <span class="cw">
+            <span aria-hidden="true">⚠</span>
+            <span class="sr-only">{t.cw.title}:</span>
+            {warning}
+          </span>
+        )
+      }
     </div>
   </a>
 </article>
@@ -70,10 +88,21 @@ const year = entry.data.date.getFullYear();
   }
   .body {
     display: flex;
+    flex-wrap: wrap;
     align-items: baseline;
     justify-content: space-between;
-    gap: 0.75rem;
+    gap: 0.25rem 0.75rem;
     padding: 0.9rem 1.1rem 1rem;
+  }
+  /* Its own line under the title; the gap stands in for the whitespace the build strips. */
+  .cw {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.35em;
+    flex-basis: 100%;
+    color: color-mix(in srgb, var(--horror) 35%, var(--text));
+    font-family: var(--ff-mono);
+    font-size: var(--text-meta);
   }
   .title {
     font-size: var(--text-lead);

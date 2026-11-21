@@ -67,6 +67,17 @@ has not been audited by a third party, and this is not a claim of conformance.
   WCAG 2.5.8 through the space around them.
 - **Reading.** Stories have their own settings: three text sizes and a paper, sepia or dark
   background.
+- **Content warnings.** A labelled post, chapter or album opens with a banner that names its
+  labels (horror, violence, politics…) in words, not by colour or icon alone. For the visual
+  labels, images in the page are blurred until "Show images" is ticked. That control is a real
+  checkbox, and the blur is plain CSS, so it works from the keyboard and without JavaScript.
+  Blurring is a courtesy layer, not access control: the images are still downloaded.
+- **Age check.** An age-rated text is folded inside a `<details>` element. With JavaScript, its
+  summary asks for the reader's age in a native modal `<dialog>`: focus starts on "No", Esc
+  cancels and never counts as "yes", and focus returns to the summary. If the reader says no,
+  focus moves to a line that explains why and offers to choose again. Nothing pops up on its own.
+  Without JavaScript the summary opens the text. The answer stays in the browser
+  (`localStorage`); see the privacy policy.
 
 ## Tested with
 

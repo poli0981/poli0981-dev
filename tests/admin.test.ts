@@ -532,6 +532,29 @@ describe("/api/admin/gallery", () => {
     assert.equal(github.dispatched.length, 2);
   });
 
+  it("keeps each photo's own content labels, and refuses unknown ones", async () => {
+    const put = (list: unknown) =>
+      call(
+        galleryApi.PUT,
+        jsonRequest(
+          "PUT",
+          { album: "game", photos: list, sha: github.sha("gallery-photos/game.json") },
+          "/api/admin/gallery",
+        ),
+      );
+    const labelled = [{ ...photos[0], contentWarning: ["horror", "blood"] }];
+    assert.equal((await put(labelled)).status, 200);
+    const saved = JSON.parse(github.files.get("gallery-photos/game.json") ?? "{}");
+    assert.deepEqual(saved.photos[0].contentWarning, ["horror", "blood"]);
+    // A photo without labels keeps no empty key in the JSON.
+    assert.equal(
+      JSON.parse(github.files.get("gallery-photos/trip.json") ?? '{"photos":[{}]}').photos[0]
+        .contentWarning,
+      undefined,
+    );
+    assert.equal((await put([{ ...photos[0], contentWarning: ["gore"] }])).status, 400);
+  });
+
   it("deletes an album and publishes that too", async () => {
     const response = await call(
       galleryApi.DELETE,

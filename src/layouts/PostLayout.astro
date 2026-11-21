@@ -6,7 +6,10 @@ import Prose from "../components/Prose.astro";
 import Waveline from "../components/Waveline.svelte";
 import TagPill from "../components/TagPill.astro";
 import Pagination from "../components/Pagination.astro";
+import ContentNotice from "../components/ContentNotice.astro";
+import AgeGate from "../components/AgeGate.astro";
 import type { BlogEntry } from "../lib/collections";
+import { labelNames, needsBlur } from "../lib/content-labels";
 import { useTranslations } from "../i18n";
 import { sectionPath, type Locale } from "../i18n/routing";
 import { formatDate, isoDate } from "../lib/format";
@@ -34,8 +37,11 @@ const {
   next = null,
 } = Astro.props;
 const t = useTranslations(locale);
-const { title, description, date, updated, tags, cover, coverMedia } = entry.data;
+const { title, description, date, updated, tags, cover, coverMedia, contentWarning, ageRating } =
+  entry.data;
 const blogHref = sectionPath("blog", locale);
+const blur = needsBlur(contentWarning);
+const rating = ageRating ?? labelNames(contentWarning, t.labels).join(", ");
 
 const pathname = Astro.url.pathname;
 const alternates = translationHref
@@ -58,6 +64,7 @@ const postSchema = {
   image: new URL(ogUrl("blog", entry.id), SITE.url).href,
   mainEntityOfPage: { "@type": "WebPage", "@id": canonicalUrl },
   ...(tags.length > 0 ? { keywords: tags.join(", ") } : {}),
+  ...(rating ? { contentRating: rating } : {}),
   url: canonicalUrl,
 };
 // Mirrors the visible breadcrumb below, so the two can't drift.
@@ -82,7 +89,7 @@ const crumbs = breadcrumbSchema([
   }}
   image={ogUrl("blog", entry.id)}
 >
-  <article class="reading-column post" data-pagefind-body>
+  <article class="reading-column post" data-pagefind-body data-cw-blur={blur ? "" : undefined}>
     <nav class="breadcrumb" aria-label={t.landmarks.breadcrumb} data-pagefind-ignore>
       <a href={blogHref}>{t.nav.blog}</a>
       <span aria-hidden="true">/</span>
@@ -124,6 +131,8 @@ const crumbs = breadcrumbSchema([
       }
     </header>
 
+    <ContentNotice labels={contentWarning} {ageRating} {locale} />
+
     {
       (cover || coverMedia) && (
         <div class="post-cover">
@@ -139,7 +148,7 @@ const crumbs = breadcrumbSchema([
             coverMedia && (
               <MediaImage
                 media={coverMedia}
-                alt=""
+                alt={coverMedia.alt ?? ""}
                 sizes="(max-width: 768px) 100vw, 720px"
                 loading="eager"
                 fetchpriority="high"
@@ -150,9 +159,19 @@ const crumbs = breadcrumbSchema([
       )
     }
 
-    <Prose class="post-body">
-      <slot />
-    </Prose>
+    {
+      ageRating ? (
+        <AgeGate rating={ageRating} {locale}>
+          <Prose class="post-body">
+            <slot />
+          </Prose>
+        </AgeGate>
+      ) : (
+        <Prose class="post-body">
+          <slot />
+        </Prose>
+      )
+    }
 
     <footer class="post-foot" data-pagefind-ignore>
       <Waveline client:visible height={36} />

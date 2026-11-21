@@ -1,3 +1,5 @@
+import vi from "../../i18n/vi";
+import { AGE_RATINGS, LABEL_IDS } from "../content-labels";
 import { MEDIA_ID } from "../media";
 
 // What the admin can edit: per-collection form fields and file-path rules. Shared by the
@@ -5,7 +7,16 @@ import { MEDIA_ID } from "../media";
 // Mirrors src/content.config.ts; the CI build on the publish PR is the final validator.
 
 type FieldType =
-  "text" | "textarea" | "date" | "select" | "tags" | "number" | "checkbox" | "url" | "media";
+  | "text"
+  | "textarea"
+  | "date"
+  | "select"
+  | "multiselect"
+  | "tags"
+  | "number"
+  | "checkbox"
+  | "url"
+  | "media";
 
 interface FieldSpec {
   key: string;
@@ -13,6 +24,8 @@ interface FieldSpec {
   type: FieldType;
   required?: boolean;
   options?: readonly string[];
+  /** How the editor names each option (defaults to the option itself). */
+  optionLabels?: Readonly<Record<string, string>>;
   /** Longest text (characters). */
   max?: number;
   /** Numbers: whole numbers only, and the smallest allowed. */
@@ -57,6 +70,23 @@ const TRANSLATION: FieldSpec = {
 };
 const DRAFT: FieldSpec = { key: "draft", label: "Bản nháp (ẩn khỏi site)", type: "checkbox" };
 const COVER: FieldSpec = { key: "coverMedia", label: "Ảnh bìa", type: "media" };
+// Content labels and age rating (src/lib/content-labels.ts): the site shows a banner, blurs
+// images for the visual labels, and asks the reader's age for a rated item.
+const LABELS: FieldSpec = {
+  key: "contentWarning",
+  label: "Nhãn nội dung",
+  type: "multiselect",
+  options: LABEL_IDS,
+  optionLabels: vi.labels,
+  hint: "Kinh dị, máu me, hù doạ, bạo lực, tự hại, cái chết: ảnh bị làm mờ. Còn lại: chỉ banner.",
+};
+const AGE: FieldSpec = {
+  key: "ageRating",
+  label: "Giới hạn tuổi",
+  type: "select",
+  options: AGE_RATINGS,
+  hint: "Có giới hạn tuổi thì phần nội dung được ẩn tới khi người đọc xác nhận tuổi.",
+};
 
 const LONGFORM: readonly FieldSpec[] = [
   { key: "title", label: "Tiêu đề", type: "text", required: true, max: 120 },
@@ -67,6 +97,8 @@ const LONGFORM: readonly FieldSpec[] = [
   { key: "updated", label: "Cập nhật", type: "date" },
   { key: "tags", label: "Thẻ", type: "tags" },
   COVER,
+  LABELS,
+  AGE,
   DRAFT,
 ];
 
@@ -87,7 +119,6 @@ export const COLLECTIONS: Record<CollectionId, CollectionSpec> = {
         type: "select",
         options: ["ongoing", "complete", "dropped"],
       },
-      { key: "contentWarning", label: "Cảnh báo nội dung", type: "tags" },
     ],
   },
   projects: {
@@ -153,6 +184,8 @@ export const COLLECTIONS: Record<CollectionId, CollectionSpec> = {
         hint: "Chữ thường, số, gạch nối — album phải đã có ảnh",
       },
       { key: "coverIndex", label: "Ảnh bìa (thứ tự, từ 0)", type: "number" },
+      LABELS,
+      AGE,
     ],
   },
   legal: {
@@ -270,6 +303,9 @@ function checkField(field: FieldSpec, value: unknown): FieldErrorCode | null {
       return typeof value === "string" && (field.options ?? []).includes(value) ? null : "option";
     case "tags":
       return Array.isArray(value) && value.every((tag) => typeof tag === "string") ? null : "type";
+    case "multiselect":
+      if (!Array.isArray(value)) return "type";
+      return value.every((item) => (field.options ?? []).includes(item)) ? null : "option";
     case "number":
       if (typeof value !== "number" || !Number.isFinite(value)) return "type";
       if (field.integer && !Number.isInteger(value)) return "type";

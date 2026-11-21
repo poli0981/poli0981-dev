@@ -271,6 +271,19 @@
     touch();
   }
 
+  /**
+   * Tick or untick one option of a multiselect; the list keeps the options' own order, and an
+   * empty list is dropped from the frontmatter on save.
+   * @param {{ key: string; options?: readonly string[] }} field @param {string} option @param {boolean} on
+   */
+  function toggleOption(field, option, on) {
+    /** @type {string[]} */
+    const before = data[field.key] ?? [];
+    const chosen = on ? [...before, option] : before.filter((item) => item !== option);
+    data[field.key] = (field.options ?? []).filter((item) => chosen.includes(item));
+    touch();
+  }
+
   /** @param {string} key */
   const invalid = (key) => triedSave && key in fieldError;
 </script>
@@ -365,6 +378,32 @@
               {/if}
               {#if invalid(field.key)}
                 <span class="field-error" id={errorId}>{fieldError[field.key]}</span>
+              {/if}
+            {:else if field.type === "multiselect"}
+              <fieldset
+                class="multi"
+                aria-describedby={invalid(field.key)
+                  ? errorId
+                  : field.hint
+                    ? `hint-${field.key}`
+                    : undefined}
+              >
+                <legend class="label">{field.label}</legend>
+                {#each field.options ?? [] as option (option)}
+                  <label class="check">
+                    <input
+                      type="checkbox"
+                      checked={(data[field.key] ?? []).includes(option)}
+                      onchange={(event) => toggleOption(field, option, event.currentTarget.checked)}
+                    />
+                    {field.optionLabels?.[option] ?? option}
+                  </label>
+                {/each}
+              </fieldset>
+              {#if invalid(field.key)}
+                <span class="field-error" id={errorId}>{fieldError[field.key]}</span>
+              {:else if field.hint}
+                <span class="hint" id={`hint-${field.key}`}>{field.hint}</span>
               {/if}
             {:else}
               <label>
@@ -572,6 +611,18 @@
     display: flex !important;
     align-items: center;
     gap: 0.5rem;
+  }
+  .multi {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+    gap: 0.35rem 0.75rem;
+    margin: 0;
+    padding: 0.6rem 0.75rem 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-control);
+  }
+  .multi legend {
+    padding-inline: 0.25rem;
   }
   .cover {
     display: block;

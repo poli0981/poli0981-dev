@@ -112,10 +112,11 @@ Token `--scrollbar-thumb` / `--scrollbar-thumb-hover` / `--scrollbar-track` khai
 | Header / MobileTabBar / Footer | .astro | TabBar: Home·Blog·Truyện·Menu, ẩn ≥768px; nav chính của header hiện từ 960px (dưới đó dùng nút menu — bản EN cần ~900px) |
 | ThemeToggle, LangSwitch | island nhỏ / .astro | ThemeToggle 3 trạng thái (§6); LangSwitch nhận href đã giải bản dịch từ BaseLayout |
 | ScrollbarToggle | island nhỏ (footer, chỉ hiện khi `pointer: fine`) | switch `role="switch"`; localStorage `scrollbar=hidden` → `html[data-scrollbar="hidden"]`, áp trước first paint cùng bootstrap theme |
-| PostCard / StoryCard / ProjectCard | .astro | StoryCard có badge status + CW |
+| PostCard / StoryCard / ProjectCard | .astro | StoryCard có badge status + nhãn đã dịch + mốc tuổi; PostCard/GalleryCard: bìa mờ khi có nhãn làm mờ |
 | Prose | .astro + `src/styles/prose.css` | typography cho nội dung md; cùng stylesheet dùng cho preview trong admin |
 | ReadingControls | island | cỡ chữ (3 mức, localStorage `reader`), theme giấy/sepia/tối, progress bar 2px |
-| ContentWarning | .astro | banner `--horror`, bấm để mở nội dung |
+| ContentNotice | .astro | banner `--horror` nêu mọi nhãn (`src/lib/content-labels.ts`); nhãn làm mờ ⇒ ô "Hiện ảnh" (checkbox + CSS `:has()`, chạy khi tắt JS); vùng bài mang `data-cw-blur` |
+| AgeGate | .astro | nội dung có `ageRating` nằm trong `<details>`; có JS ⇒ `<dialog>` hỏi tuổi (Esc = huỷ), trả lời lưu localStorage `ageGate` (`src/lib/age-gate.ts`) |
 | Lightbox | island | vuốt được, lazy; thumbnail là link tới ảnh lớn (chạy được khi tắt JS) |
 | SearchModal | island | Pagefind, mở bằng `/` hoặc nút; ARIA combobox (`aria-activedescendant`), báo lỗi khi không tải được index |
 | MenuSheet | island | dialog modal, bẫy focus, trả focus về nút mở |

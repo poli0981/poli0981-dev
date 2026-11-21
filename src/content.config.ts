@@ -2,8 +2,14 @@ import { defineCollection, type SchemaContext } from "astro:content";
 import { z } from "astro/zod";
 import { glob } from "astro/loaders";
 import { mediaRefSchema as mediaRef } from "./lib/media-schema";
+import { AGE_RATINGS, LABEL_IDS } from "./lib/content-labels";
 
 const LANG = z.enum(["vi", "en"]);
+
+/** Content labels (src/lib/content-labels.ts): a banner, plus blurred images for visual ones. */
+const contentWarning = z.array(z.enum(LABEL_IDS)).default([]);
+/** An age rating also folds the text away until the reader confirms their age. */
+const ageRating = z.enum(AGE_RATINGS).optional();
 
 /** A cover is either a local asset (`cover`) or an R2 upload (`coverMedia`), not both. */
 const hasOneCover = (data: { cover?: unknown; coverMedia?: unknown }) =>
@@ -24,6 +30,8 @@ const base = ({ image }: SchemaContext) =>
     cover: image().optional(),
     coverMedia: mediaRef.optional(),
     draft: z.boolean().default(false),
+    contentWarning, // e.g. ['horror', 'blood']
+    ageRating,
   });
 
 // Markdown/MDX files, ignoring `_`-prefixed partials.
@@ -44,7 +52,6 @@ const stories = defineCollection({
         series: z.string().optional(),
         chapter: z.number().int().positive().optional(),
         status: z.enum(["ongoing", "complete", "dropped"]).default("ongoing"),
-        contentWarning: z.array(z.string()).default([]), // e.g. ['horror', 'blood']
       })
       .refine(hasOneCover, ONE_COVER),
 });
@@ -91,6 +98,9 @@ const gallery = defineCollection({
     description: z.string().optional(),
     album: z.string(), // = folder name under src/assets/gallery/<album>/
     coverIndex: z.number().default(0),
+    // For the whole album; single photos can carry their own (captions.json, gallery-photos).
+    contentWarning,
+    ageRating,
   }),
 });
 

@@ -1,0 +1,99 @@
+---
+import { Image } from "astro:assets";
+import MediaImage from "./MediaImage.astro";
+import type { GalleryPhoto } from "../lib/gallery";
+import type { Locale } from "../i18n/routing";
+
+interface Props {
+  photos: GalleryPhoto[];
+  /** The lightbox slide (full-size image) each thumbnail links to. */
+  hrefs: string[];
+  /** Per photo: blurred on its own (a label of its own, in an album that isn't blurred). */
+  blurred: boolean[];
+  /** Per photo: the accessible name — "open", the caption, and any warning. */
+  labels: string[];
+  locale: Locale;
+}
+
+// The album's thumbnails. Each links to its full-size image, so the album works without JS;
+// the lightbox island takes over plain clicks once it hydrates.
+const { photos, hrefs, blurred, labels } = Astro.props;
+---
+
+<div class="photo-grid">
+  {
+    photos.map((p, i) => (
+      <a
+        class:list={["thumb", { "cw-photo": blurred[i] }]}
+        href={hrefs[i]}
+        data-lightbox-index={i}
+        aria-label={labels[i]}
+      >
+        {p.kind === "local" ? (
+          <Image
+            src={p.image}
+            alt=""
+            widths={[400, 800]}
+            sizes="(max-width: 640px) 50vw, 320px"
+            loading={i === 0 ? "eager" : "lazy"}
+            decoding="async"
+            {...(i === 0 ? { fetchpriority: "high" as const } : {})}
+          />
+        ) : (
+          <MediaImage
+            media={p.media}
+            alt=""
+            sizes="(max-width: 640px) 50vw, 320px"
+            loading={i === 0 ? "eager" : "lazy"}
+            {...(i === 0 ? { fetchpriority: "high" as const } : {})}
+          />
+        )}
+      </a>
+    ))
+  }
+</div>
+
+<style>
+  .photo-grid {
+    margin-block-start: 1.5rem;
+    display: grid;
+    gap: 0.75rem;
+    /* minmax(0, 1fr), not 1fr: a `1fr` column is at least as wide as its photos' minimum
+       content size, which made the first column 235px wide and the page wider than a
+       320px screen. With a zero minimum the columns stay equal. */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @media (min-width: 640px) {
+    .photo-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 960px) {
+    .photo-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  .thumb {
+    display: block;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    overflow: clip;
+    cursor: pointer;
+    aspect-ratio: 1 / 1;
+    transition:
+      transform var(--duration-fast) var(--ease-site),
+      border-color var(--duration-fast) var(--ease-site);
+  }
+  .thumb:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+  }
+  .thumb :global(img) {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+</style>

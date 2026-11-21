@@ -5,9 +5,11 @@
   import { confirmAction, toast } from "./ui";
   import { SLUG_PATTERN } from "@/lib/admin/collections";
   import { afterSaveMessage } from "@/lib/admin/publish-phase";
+  import { LABEL_IDS } from "@/lib/content-labels";
   import { mediaFallbackSrc } from "@/lib/media";
+  import vi from "@/i18n/vi";
 
-  /** @typedef {{ id: string; w: number; h: number; caption: { vi: string; en: string } }} Photo */
+  /** @typedef {{ id: string; w: number; h: number; caption: { vi: string; en: string }; contentWarning?: string[] }} Photo */
   /** @typedef {{ album: string; titles: Record<string, string>; photos: Photo[]; sha: string | null; coverIndex: number; local: number }} Album */
   /** @typedef {{ album: string; titles: Record<string, string>; photos: Photo[]; sha: string | null; local: number; coverId: string | null }} Editing */
 
@@ -118,6 +120,19 @@
       if (added.length < items.length) toast("Bỏ qua ảnh đã có trong album.", "info");
     }
     picking = false;
+  }
+
+  /**
+   * Tick or untick one of a photo's labels; the list keeps the label order, and a photo with
+   * none has no `contentWarning` key at all in the saved JSON.
+   * @param {Photo} photo @param {string} id @param {boolean} on
+   */
+  function togglePhotoLabel(photo, id, on) {
+    const before = photo.contentWarning ?? [];
+    const chosen = on ? [...before, id] : before.filter((label) => label !== id);
+    const labels = LABEL_IDS.filter((label) => chosen.includes(label));
+    if (labels.length > 0) photo.contentWarning = labels;
+    else delete photo.contentWarning;
   }
 
   /** @param {Photo} photo */
@@ -287,6 +302,26 @@
                   <span class="sr-only">English caption, photo {index + 1}</span>
                   <input bind:value={photo.caption.en} placeholder="Caption (en)" />
                 </label>
+                <!-- This photo's own content labels: blurred on the site when one asks for it. -->
+                <details class="photo-labels">
+                  <summary>
+                    Nhãn{photo.contentWarning?.length ? ` (${photo.contentWarning.length})` : ""}
+                    <span class="sr-only">của ảnh {index + 1}</span>
+                  </summary>
+                  <div class="label-list">
+                    {#each LABEL_IDS as id (id)}
+                      <label class="check">
+                        <input
+                          type="checkbox"
+                          checked={photo.contentWarning?.includes(id) ?? false}
+                          onchange={(event) =>
+                            togglePhotoLabel(photo, id, event.currentTarget.checked)}
+                        />
+                        {vi.labels[id]}
+                      </label>
+                    {/each}
+                  </div>
+                </details>
               </div>
               <div class="order">
                 <button
@@ -437,6 +472,23 @@
   .captions {
     display: grid;
     gap: 0.35rem;
+  }
+  .photo-labels summary {
+    cursor: pointer;
+    color: var(--muted);
+    font-size: var(--text-meta);
+  }
+  .label-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+    gap: 0.25rem 0.75rem;
+    padding-block: 0.35rem;
+    font-size: var(--text-meta);
+  }
+  .label-list .check {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
   }
   .order {
     display: flex;
