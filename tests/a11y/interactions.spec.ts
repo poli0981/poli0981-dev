@@ -248,7 +248,7 @@ describe("age check and content warning", () => {
         img.width = 10;
         img.height = 10;
         img.src = "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
-        document.querySelector("#reader-root .prose")?.append(img);
+        document.querySelector("#reader-root .prose")?.appendChild(img);
       });
       const filter = () => page.locator("#probe").evaluate((el) => getComputedStyle(el).filter);
       assert.match(await filter(), /blur/, "blurred by default, before any script");
