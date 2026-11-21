@@ -6,6 +6,7 @@
   import { confirmAction, toast } from "./ui";
   import { dateTime } from "./format";
   import { collectionOf, newEntryPath, validateFrontmatter } from "@/lib/admin/collections";
+  import { afterSaveMessage } from "@/lib/admin/publish-phase";
   import { mediaFallbackSrc, mediaPictureHtml } from "@/lib/media";
 
   /** @type {{ path?: string | null; create?: { collection: string; slug: string; lang: string; series?: string } | null }} */
@@ -48,10 +49,13 @@
         const field = spec?.fields.find((f) => f.key === e.field);
         const message = {
           required: "Bắt buộc.",
-          type: "Sai kiểu dữ liệu.",
+          type: field?.integer ? "Cần một số nguyên." : "Sai kiểu dữ liệu.",
           option: "Chọn một giá trị trong danh sách.",
           max: `Tối đa ${field?.max ?? ""} ký tự.`,
           format: field?.type === "url" ? "Cần một URL http(s)." : "Sai định dạng.",
+          min: `Nhỏ nhất là ${field?.min ?? ""}.`,
+          conflict: "Bài đã có ảnh bìa local (cover trong file) — chỉ được dùng một trong hai.",
+          missing: "Album này chưa có ảnh — tạo album ở trang Gallery trước.",
         }[e.code];
         return [e.field, message];
       }),
@@ -200,7 +204,9 @@
       sha = result.sha;
       dirty = false;
       clearDraft();
-      toast("Đã lưu vào repo nội dung — bấm “Xuất bản” để đưa lên site.");
+      const message = afterSaveMessage(result.publish, "Đã lưu");
+      toast(message.text, message.kind);
+      if (message.queued) dispatchEvent(new Event("admin:published"));
       if (isNew) {
         isNew = false;
         history.replaceState(
@@ -337,8 +343,28 @@
                     Bỏ
                   </button>
                 </div>
+                <!-- The alt travels with this post: picking copies the library's text once,
+                     and editing it here changes only this cover, not the library. -->
+                <label>
+                  <span class="label">Mô tả ảnh bìa (alt)</span>
+                  <input
+                    maxlength="300"
+                    value={data[field.key].alt ?? ""}
+                    oninput={(event) => {
+                      const alt = event.currentTarget.value.trim();
+                      const next = { ...data[field.key] };
+                      if (alt) next.alt = alt;
+                      else delete next.alt;
+                      data[field.key] = next;
+                    }}
+                    placeholder="Ảnh cho thấy gì — để trống nếu chỉ trang trí"
+                  />
+                </label>
               {:else}
                 <button type="button" onclick={() => (picking = "cover")}>Chọn ảnh bìa</button>
+              {/if}
+              {#if invalid(field.key)}
+                <span class="field-error" id={errorId}>{fieldError[field.key]}</span>
               {/if}
             {:else}
               <label>
@@ -362,9 +388,11 @@
                       </option>{/each}
                   </select>
                 {:else if field.type === "tags"}
+                  <!-- On every keystroke, not on change: Ctrl/⌘+S while the cursor is still
+                       here must save what is typed, and `change` only fires on blur. -->
                   <input
                     value={(data[field.key] ?? []).join(", ")}
-                    onchange={(event) => setTags(field.key, event.currentTarget.value)}
+                    oninput={(event) => setTags(field.key, event.currentTarget.value)}
                     placeholder="cách nhau bởi dấu phẩy"
                   />
                 {:else if field.type === "number"}

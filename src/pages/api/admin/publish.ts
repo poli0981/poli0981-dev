@@ -2,22 +2,34 @@ import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
 import { recordAudit } from "@/lib/admin/audit";
 import { GITHUB_CONTENT_TOKEN, GITHUB_PUBLISH_TOKEN } from "astro:env/server";
+import { publishToken } from "@/lib/admin/autopublish";
 import { dispatchPublish, publishStatus } from "@/lib/admin/github";
 import { errorResponse, json } from "@/lib/admin/http";
+import { publishPhase } from "@/lib/admin/publish-phase";
 import { log } from "@/lib/log";
+import { versionInfo } from "@/lib/version";
 
 // Publish = run .github/workflows/content-bump.yml on the site repo: it points the
 // src/content submodule at content's main, opens/updates the content/bump PR, and lets
 // CI + auto-merge deploy it (Workers Builds). Edits that touch .mdx wait for review.
+// Saves and deletes start it on their own (lib/admin/autopublish); POST is the manual retry.
 export const prerender = false;
 
 export const GET: APIRoute = async () => {
   if (!GITHUB_CONTENT_TOKEN) return json({ error: "not_configured" }, 503);
   try {
     const status = await publishStatus(GITHUB_CONTENT_TOKEN);
-    // Without its own publish token, the content token is doing the dispatching — which
-    // means it has rights on this repo too. The admin shows a warning for this.
-    return json({ ...status, singleToken: !GITHUB_PUBLISH_TOKEN });
+    // The admin runs in the same Worker as the public site, so the content commit this
+    // build was made from is exactly what visitors are seeing.
+    const live = versionInfo(env as unknown as Parameters<typeof versionInfo>[0]).content;
+    return json({
+      ...status,
+      live,
+      phase: publishPhase({ ...status, live }),
+      // Without its own publish token, the content token is doing the dispatching — which
+      // means it has rights on this repo too. The admin shows a warning for this.
+      singleToken: !GITHUB_PUBLISH_TOKEN,
+    });
   } catch (error) {
     return errorResponse(error);
   }
@@ -26,7 +38,7 @@ export const GET: APIRoute = async () => {
 export const POST: APIRoute = async ({ locals }) => {
   // Dispatching needs Actions write on the site repo — the publish token's only power.
   // Falls back to the content token for single-token setups.
-  const token = GITHUB_PUBLISH_TOKEN ?? GITHUB_CONTENT_TOKEN;
+  const token = publishToken();
   if (!token) return json({ error: "not_configured" }, 503);
   try {
     await dispatchPublish(token);

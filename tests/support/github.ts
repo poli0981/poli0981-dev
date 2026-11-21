@@ -26,6 +26,10 @@ export class FakeGitHub {
   buildCheck: { status: string; conclusion: string | null } | null = null;
   lastRun: { status: string; conclusion: string | null } | null = null;
   readonly dispatched: string[] = [];
+  /** Answer workflow dispatches with this status instead of 204 (a token without Actions). */
+  failDispatch: number | null = null;
+  /** The repo's files at older commits, for GraphQL reads `at` a sha (listContentFiles). */
+  readonly snapshots = new Map<string, Record<string, string>>();
   /** Commits made through the API, newest first (GET …/commits). */
   readonly history: { sha: string; message: string }[] = [];
   private pendingMessage = "";
@@ -59,7 +63,15 @@ export class FakeGitHub {
     const path = decodeURIComponent(url.pathname);
     const body = call.body ? (JSON.parse(call.body) as Record<string, unknown>) : {};
 
-    if (path === "/graphql") return jsonResponse({ data: this.graphqlTree() });
+    if (path === "/graphql") {
+      const expr = String((body.variables as { expr?: string } | undefined)?.expr ?? "main:");
+      const at = expr.slice(0, -1);
+      if (at === "main" || at === this.head) return jsonResponse({ data: this.graphqlTree() });
+      const snapshot = this.snapshots.get(at);
+      return jsonResponse({
+        data: this.graphqlTree(snapshot ? new Map(Object.entries(snapshot)) : null),
+      });
+    }
 
     if (path.startsWith(`${CONTENT}/contents/`)) {
       const file = path.slice(`${CONTENT}/contents/`.length);
@@ -134,6 +146,9 @@ export class FakeGitHub {
       path === `${SITE}/actions/workflows/content-bump.yml/dispatches` &&
       call.method === "POST"
     ) {
+      if (this.failDispatch) {
+        return jsonResponse({ message: "Resource not accessible" }, this.failDispatch);
+      }
       this.dispatched.push(String(body.ref));
       return new Response(null, { status: 204 });
     }
@@ -142,8 +157,12 @@ export class FakeGitHub {
 
   private pendingTree: { path: string; sha?: null; content?: string }[] = [];
 
-  /** The GraphQL tree query's answer: collection/series/file, three levels deep. */
-  private graphqlTree() {
+  /**
+   * The GraphQL tree query's answer: collection/series/file, three levels deep — of the
+   * current files, of a snapshot, or (null) a commit the repo doesn't have: no tree at all.
+   */
+  private graphqlTree(files: Map<string, string> | null = this.files) {
+    if (!files) return { repository: { ref: { target: { oid: this.head } }, object: null } };
     type Node = { path: string; type: string; object: Record<string, unknown> };
     const root: Node[] = [];
     const dirs = new Map<string, Node[]>([["", root]]);
@@ -156,7 +175,7 @@ export class FakeGitHub {
       dirs.set(dir, entries);
       return entries;
     };
-    for (const [path, text] of [...this.files.entries()].sort()) {
+    for (const [path, text] of [...files.entries()].sort()) {
       const dir = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
       ensureDir(dir).push({ path, type: "blob", object: { oid: shaOf(text), text } });
     }

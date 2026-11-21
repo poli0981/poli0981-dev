@@ -13,9 +13,18 @@ interface FieldSpec {
   type: FieldType;
   required?: boolean;
   options?: readonly string[];
+  /** Longest text (characters). */
   max?: number;
+  /** Numbers: whole numbers only, and the smallest allowed. */
+  integer?: boolean;
+  min?: number;
+  /** Text: the whole value must match. */
+  pattern?: RegExp;
   hint?: string;
 }
+
+const SLUG = "[a-z0-9][a-z0-9-]*";
+export const SLUG_PATTERN = new RegExp(`^${SLUG}$`);
 
 export type CollectionId = "blog" | "stories" | "projects" | "faq" | "gallery" | "legal" | "now";
 
@@ -71,7 +80,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionSpec> = {
     fields: [
       ...LONGFORM,
       { key: "series", label: "Tên bộ truyện", type: "text" },
-      { key: "chapter", label: "Chương", type: "number" },
+      { key: "chapter", label: "Chương", type: "number", integer: true, min: 1 },
       {
         key: "status",
         label: "Trạng thái",
@@ -140,7 +149,8 @@ export const COLLECTIONS: Record<CollectionId, CollectionSpec> = {
         label: "Mã album",
         type: "text",
         required: true,
-        hint: "Chữ thường, số, gạch nối",
+        pattern: SLUG_PATTERN,
+        hint: "Chữ thường, số, gạch nối — album phải đã có ảnh",
       },
       { key: "coverIndex", label: "Ảnh bìa (thứ tự, từ 0)", type: "number" },
     ],
@@ -170,11 +180,10 @@ export const COLLECTIONS: Record<CollectionId, CollectionSpec> = {
   },
 };
 
-const SLUG = "[a-z0-9][a-z0-9-]*";
+// Stories are stories/<series>/<chapter>.md, or stories/<slug>.md for a one-shot.
 const ENTRY_PATH = new RegExp(
-  `^(blog|projects|faq|gallery|legal|now)/${SLUG}\\.mdx?$|^stories/${SLUG}/${SLUG}\\.mdx?$`,
+  `^(blog|projects|faq|gallery|legal|now)/${SLUG}\\.mdx?$|^stories/(${SLUG}/)?${SLUG}\\.mdx?$`,
 );
-export const SLUG_PATTERN = new RegExp(`^${SLUG}$`);
 
 /** The collection a content path belongs to, or null if the admin may not touch it. */
 export function collectionOf(path: string): CollectionSpec | null {
@@ -192,10 +201,10 @@ export function newEntryPath(
   series?: string,
 ): string | null {
   if (!COLLECTIONS[collection]?.creatable || !SLUG_PATTERN.test(slug)) return null;
-  if (collection === "stories") {
-    if (!series || !SLUG_PATTERN.test(series)) return null;
-    return `stories/${series}/${slug}.md`;
+  if (collection === "stories" && series) {
+    return SLUG_PATTERN.test(series) ? `stories/${series}/${slug}.md` : null;
   }
+  // No series: a one-shot story (stories/<slug>.md), or any other collection.
   return `${collection}/${slug}.md`;
 }
 
@@ -204,7 +213,13 @@ export function galleryPhotosPath(album: string): string | null {
   return SLUG_PATTERN.test(album) ? `gallery-photos/${album}.json` : null;
 }
 
-type FieldErrorCode = "required" | "type" | "option" | "max" | "format";
+/**
+ * `min`: a number below the field's minimum. `conflict`: the value can't coexist with another
+ * key (a local `cover` next to `coverMedia`). `missing`: it names something that doesn't
+ * exist (an album without photos — checked by the API, which can see the repos).
+ */
+type FieldErrorCode =
+  "required" | "type" | "option" | "max" | "format" | "min" | "conflict" | "missing";
 
 export interface FieldError {
   field: string;
@@ -243,7 +258,8 @@ function checkField(field: FieldSpec, value: unknown): FieldErrorCode | null {
     case "text":
     case "textarea":
       if (typeof value !== "string") return "type";
-      return field.max !== undefined && value.length > field.max ? "max" : null;
+      if (field.max !== undefined && value.length > field.max) return "max";
+      return field.pattern && !field.pattern.test(value) ? "format" : null;
     case "url":
       if (typeof value !== "string") return "type";
       return isHttpUrl(value) ? null : "format";
@@ -255,7 +271,9 @@ function checkField(field: FieldSpec, value: unknown): FieldErrorCode | null {
     case "tags":
       return Array.isArray(value) && value.every((tag) => typeof tag === "string") ? null : "type";
     case "number":
-      return typeof value === "number" && Number.isFinite(value) ? null : "type";
+      if (typeof value !== "number" || !Number.isFinite(value)) return "type";
+      if (field.integer && !Number.isInteger(value)) return "type";
+      return field.min !== undefined && value < field.min ? "min" : null;
     case "checkbox":
       return typeof value === "boolean" ? null : "type";
     case "media":
@@ -288,6 +306,11 @@ export function validateFrontmatter(
     }
     const code = checkField(field, value);
     if (code) errors.push({ field: field.key, code });
+  }
+  // The content schema allows one cover: a local image (`cover`, set by hand in the repo) or
+  // an R2 upload (`coverMedia`, set here) — not both.
+  if (!isEmpty(data.cover) && !isEmpty(data.coverMedia)) {
+    errors.push({ field: "coverMedia", code: "conflict" });
   }
   return errors;
 }

@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
 import { GITHUB_CONTENT_TOKEN } from "astro:env/server";
 import { recordAudit } from "@/lib/admin/audit";
+import { autoPublish } from "@/lib/admin/autopublish";
 import { galleryPhotosPath, SLUG_PATTERN } from "@/lib/admin/collections";
 import { buildFile, splitFile } from "@/lib/admin/frontmatter";
 import {
@@ -181,7 +182,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     const verb = input.create ? "create" : "update";
     const commit = await commitContent(
       GITHUB_CONTENT_TOKEN,
-      `content(gallery): ${verb} album ${input.album}\n\nvia admin (${email})`,
+      `content(gallery): ${verb} album ${input.album}\n\nvia admin`,
       changes,
     );
     await recordAudit(env.KV, {
@@ -191,7 +192,8 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       detail: commit,
     });
     log.info("admin.gallery_saved", { album: input.album, verb, commit, admin: email });
-    return json({ commit });
+    const publish = await autoPublish(email, commit);
+    return json({ commit, publish });
   } catch (error) {
     return errorResponse(error);
   }
@@ -214,7 +216,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     const email = locals.admin?.email ?? "unknown";
     const commit = await commitContent(
       GITHUB_CONTENT_TOKEN,
-      `content(gallery): delete album ${album}\n\nvia admin (${email})`,
+      `content(gallery): delete album ${album}\n\nvia admin`,
       doomed.map((file) => ({ path: file.path, text: null, expectSha: file.sha })),
     );
     await recordAudit(env.KV, {
@@ -224,7 +226,8 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
       detail: commit,
     });
     log.info("admin.gallery_deleted", { album, commit, admin: email });
-    return json({ commit, deleted: doomed.map((file) => file.path) });
+    const publish = await autoPublish(email, commit);
+    return json({ commit, deleted: doomed.map((file) => file.path), publish });
   } catch (error) {
     return errorResponse(error);
   }

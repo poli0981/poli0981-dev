@@ -346,6 +346,59 @@ describe("/api/admin/content", () => {
     assert.match(github.files.get("blog/dem-dau.md") ?? "", /description: Mô tả mới/);
   });
 
+  it("publishes by itself after each save and delete, keeping the admin out of public commits", async () => {
+    const saved = await call(
+      contentApi.PUT,
+      jsonRequest("PUT", { path: "blog/moi.md", sha: null, frontmatter: valid, body: "Hello" }),
+    );
+    assert.equal(((await saved.json()) as { publish: string }).publish, "queued");
+    const deleted = await call(
+      contentApi.DELETE,
+      jsonRequest("DELETE", { path: "blog/moi.md", sha: github.sha("blog/moi.md") }),
+    );
+    assert.equal(((await deleted.json()) as { publish: string }).publish, "queued");
+    assert.deepEqual(github.dispatched, ["main", "main"]);
+    // The content repo is public: the commit says "via admin", the email stays in the audit log.
+    for (const { message } of github.history) {
+      assert.match(message, /\n\nvia admin$/);
+      assert.doesNotMatch(message, /owner@example\.com/);
+    }
+  });
+
+  it("keeps a save that could not start its publish, and says so", async () => {
+    github.failDispatch = 403;
+    const { result } = await captureLogs(() =>
+      call(
+        contentApi.PUT,
+        jsonRequest("PUT", { path: "blog/moi.md", sha: null, frontmatter: valid, body: "Hi" }),
+      ),
+    );
+    assert.equal(result.status, 200);
+    assert.equal(((await result.json()) as { publish: string }).publish, "failed");
+    assert.ok(github.files.has("blog/moi.md"));
+    assert.deepEqual(github.dispatched, []);
+  });
+
+  it("refuses an album entry pointing at an album with no photos", async () => {
+    github.files.set("gallery/game.md", "---\ntitle: Game\nlang: vi\nalbum: game\n---\n");
+    github.files.set("gallery-photos/game.json", JSON.stringify({ photos: [] }));
+    const put = (album: string) =>
+      call(
+        contentApi.PUT,
+        jsonRequest("PUT", {
+          path: "gallery/game.md",
+          sha: github.sha("gallery/game.md"),
+          frontmatter: { title: "Game", lang: "vi", date: "2026-10-24", album },
+          body: "",
+        }),
+      );
+    assert.equal((await put("game")).status, 200);
+    assert.deepEqual(await (await put("nope")).json(), {
+      error: "invalid_fields",
+      fields: [{ field: "album", code: "missing" }],
+    });
+  });
+
   it("validates before writing anything", async () => {
     const put = (body: unknown) => call(contentApi.PUT, jsonRequest("PUT", body));
     assert.equal((await put({ path: 1 })).status, 400);
@@ -473,8 +526,25 @@ describe("/api/admin/gallery", () => {
       },
     });
     assert.equal(created.status, 200);
+    assert.equal(((await created.json()) as { publish: string }).publish, "queued");
     assert.match(github.files.get("gallery/trip-en.md") ?? "", /description: Hello/);
     assert.equal(JSON.parse(github.files.get("gallery-photos/trip.json") ?? "{}").photos.length, 1);
+    assert.equal(github.dispatched.length, 2);
+  });
+
+  it("deletes an album and publishes that too", async () => {
+    const response = await call(
+      galleryApi.DELETE,
+      jsonRequest("DELETE", { album: "game" }, "/api/admin/gallery"),
+    );
+    const result = (await response.json()) as { deleted: string[]; publish: string };
+    assert.deepEqual(result.deleted.sort(), [
+      "gallery-photos/game.json",
+      "gallery/game-en.md",
+      "gallery/game.md",
+    ]);
+    assert.equal(result.publish, "queued");
+    assert.match(github.history[0].message, /^content\(gallery\): delete album game\n\nvia admin$/);
   });
 
   it("refuses bad input and existing albums", async () => {
@@ -612,6 +682,35 @@ describe("/api/admin/media", () => {
     assert.equal(response.status, 409);
     assert.deepEqual(((await response.json()) as { usedIn: string[] }).usedIn, ["blog/a.md"]);
   });
+
+  it("also refuses while the live site's content still uses it", async () => {
+    // Main no longer mentions the image, but the build visitors see was made before that.
+    github.files.delete("blog/a.md");
+    github.snapshots.set("live-commit", { "blog/a.md": "uses 0123456789abcdef" });
+    await r2.put(
+      "private/meta/0123456789abcdef.json",
+      JSON.stringify({ id: "0123456789abcdef", variants: [] }),
+    );
+    const constants = globalThis as { __CONTENT_COMMIT__?: string };
+    constants.__CONTENT_COMMIT__ = "live-commit";
+    try {
+      const response = await call(
+        mediaApi.DELETE,
+        jsonRequest("DELETE", { id: "0123456789abcdef" }, "/api/admin/media"),
+      );
+      assert.equal(response.status, 409);
+      assert.deepEqual(((await response.json()) as { usedIn: string[] }).usedIn, ["blog/a.md"]);
+      // A live commit the repo doesn't know (yet) reads as empty, not as an error.
+      constants.__CONTENT_COMMIT__ = "unknown-commit";
+      const gone = await call(
+        mediaApi.DELETE,
+        jsonRequest("DELETE", { id: "0123456789abcdef" }, "/api/admin/media"),
+      );
+      assert.equal(gone.status, 200);
+    } finally {
+      delete constants.__CONTENT_COMMIT__;
+    }
+  });
 });
 
 describe("/api/admin/publish", () => {
@@ -621,10 +720,16 @@ describe("/api/admin/publish", () => {
 
   it("reports status (flagging single-token mode) and dispatches", async () => {
     setServerEnv({ GITHUB_CONTENT_TOKEN: TOKEN });
-    const status = (await (
-      await call(publishApi.GET, new Request("https://admin.poli0981.dev/api/admin/publish"))
-    ).json()) as { singleToken: boolean };
+    const read = async () =>
+      (await (
+        await call(publishApi.GET, new Request("https://admin.poli0981.dev/api/admin/publish"))
+      ).json()) as { singleToken: boolean; phase: string; live: string | null };
+    const status = await read();
     assert.equal(status.singleToken, true);
+    assert.equal(status.live, null);
+    assert.equal(status.phase, "live");
+    github.head = "commit-9";
+    assert.equal((await read()).phase, "pending");
     setServerEnv({ GITHUB_CONTENT_TOKEN: TOKEN, GITHUB_PUBLISH_TOKEN: "publish-token" });
     const dispatched = await call(
       publishApi.POST,

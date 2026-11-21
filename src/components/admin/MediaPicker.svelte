@@ -24,6 +24,8 @@
   let items = $state([]);
   let status = $state("");
   let query = $state("");
+  /** Alt text for the next upload: inserted images and covers copy it from the library. */
+  let uploadAlt = $state("");
   /** @type {string[]} */
   let selected = $state([]);
   /** @type {HTMLDialogElement | undefined} */
@@ -67,7 +69,7 @@
     for (const file of Array.from(input.files ?? [])) {
       status = `Đang xử lý ${file.name}…`;
       try {
-        const { item } = await uploadImage(file);
+        const { item } = await uploadImage(file, uploadAlt.trim());
         items = cache = [item, ...items.filter((i) => i.id !== item.id)];
         if (multiple && !selected.includes(item.id)) selected = [...selected, item.id];
         status = "";
@@ -76,6 +78,7 @@
       }
     }
     input.value = "";
+    uploadAlt = "";
   }
 
   /** @param {MediaItem} item */
@@ -98,6 +101,13 @@
   <div class="top">
     <strong id="picker-title">{multiple ? "Chọn ảnh (nhiều)" : "Chọn ảnh"}</strong>
     <input type="search" bind:value={query} placeholder="Tìm ảnh" aria-label="Tìm ảnh" />
+    <input
+      class="alt"
+      bind:value={uploadAlt}
+      maxlength="300"
+      placeholder="Mô tả (alt) cho ảnh sắp tải"
+      aria-label="Mô tả (alt) cho ảnh sắp tải lên"
+    />
     <label class="button upload">
       Tải ảnh lên <input type="file" accept="image/*" multiple onchange={upload} />
     </label>
@@ -152,7 +162,8 @@
     align-items: center;
     gap: 0.5rem;
   }
-  .top input[type="search"] {
+  .top input[type="search"],
+  .top .alt {
     flex: 1;
     min-inline-size: 10rem;
   }

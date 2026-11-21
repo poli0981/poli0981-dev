@@ -7,6 +7,7 @@ import { errorResponse, json, readJson } from "@/lib/admin/http";
 import { assertDeclaredSize, BodyTooLargeError } from "@/lib/body";
 import { log } from "@/lib/log";
 import { MEDIA_ID } from "@/lib/media";
+import { versionInfo } from "@/lib/version";
 import {
   deleteMedia,
   listMedia,
@@ -19,6 +20,22 @@ import {
 
 // The R2 media library: list, upload (transform once → R2), edit alt text, delete.
 export const prerender = false;
+
+/**
+ * Content files that mention an image: on the content repo's main AND in the content the
+ * live site was built from. Main alone is not enough — an edit that dropped the image but is
+ * not live yet would let the delete break the page visitors still see.
+ */
+async function filesUsing(token: string, id: string): Promise<string[]> {
+  const live = versionInfo(env as unknown as Parameters<typeof versionInfo>[0]).content;
+  const main = await listContentFiles(token);
+  const snapshots = [main];
+  if (live && live !== main.head) snapshots.push(await listContentFiles(token, live));
+  const paths = snapshots.flatMap(({ files }) =>
+    files.filter((file) => file.text.includes(id)).map((file) => file.path),
+  );
+  return [...new Set(paths)];
+}
 
 /** Multipart framing (boundaries, the alt field, headers) on top of the file itself. */
 const FORM_OVERHEAD_BYTES = 64 * 1024;
@@ -117,8 +134,7 @@ export const DELETE: APIRoute = async ({ request, url, locals }) => {
     // Refuse while any content still points at it — the live site would break, and a
     // publish would fail the build anyway.
     if (GITHUB_CONTENT_TOKEN) {
-      const { files } = await listContentFiles(GITHUB_CONTENT_TOKEN);
-      const usedIn = files.filter((f) => f.text.includes(input.id)).map((f) => f.path);
+      const usedIn = await filesUsing(GITHUB_CONTENT_TOKEN, input.id);
       if (usedIn.length) return json({ error: "in_use", usedIn }, 409);
     }
     await deleteMedia(env, input.id, url.origin);

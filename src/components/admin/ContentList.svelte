@@ -71,7 +71,8 @@
   function create() {
     if (!newPath || taken) return;
     const params = new URLSearchParams({ new: collection, slug: slug.trim(), lang: newLang });
-    if (collection === "stories") params.set("series", series.trim());
+    // No series = a one-shot story (stories/<slug>.md).
+    if (collection === "stories" && series.trim()) params.set("series", series.trim());
     location.href = `/admin/edit/?${params}`;
   }
 
@@ -86,7 +87,7 @@
 <div class="page-head">
   <div>
     <h1>Nội dung</h1>
-    <p>Lưu là commit vào repo nội dung; bấm “Xuất bản” để đưa lên site.</p>
+    <p>Lưu hoặc xoá là commit vào repo nội dung rồi tự xuất bản lên site (thường 10–15 phút).</p>
   </div>
 </div>
 
@@ -108,7 +109,10 @@
       </select>
     </label>
     {#if collection === "stories"}
-      <label>Bộ truyện (slug) <input bind:value={series} placeholder="dem-khong-tieng" /></label>
+      <label>
+        Bộ truyện (slug, để trống nếu truyện một chương)
+        <input bind:value={series} placeholder="dem-khong-tieng" />
+      </label>
     {/if}
     <label>
       Slug

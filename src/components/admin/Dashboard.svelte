@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { api, describeError } from "./api";
   import { ago, dateTime, shortSha } from "./format";
+  import { PHASE_TEXT } from "@/lib/admin/publish-phase";
 
   /**
    * @typedef {{ id: string; label: string; total: number; drafts: number; vi: number; en: number }} CollectionCount
@@ -11,7 +12,7 @@
    *   widgets: { yt: string; steam: string; gh: string; lastRun: string } | null;
    *   config: import("@/lib/admin/status").ConfigStatus;
    * }} Overview
-   * @typedef {{ contentHead: string; published: string; pr: { number: number; url: string; checks: string | null } | null; run: { status: string; conclusion: string | null; url: string } | null }} Publish
+   * @typedef {{ contentHead: string; published: string; live: string | null; phase: import("@/lib/admin/publish-phase").PublishPhase; pr: { number: number; url: string; checks: string | null } | null; run: { status: string; conclusion: string | null; url: string } | null }} Publish
    */
 
   /** @type {Overview | null} */
@@ -125,22 +126,26 @@
     <section class="card">
       <h2>Xuất bản</h2>
       {#if publish}
-        {#if publish.contentHead === publish.published}
-          <p><span class="pill" data-tone="ok">Đã đồng bộ</span></p>
+        <p>
+          <span class="pill" data-tone={PHASE_TEXT[publish.phase].tone}>
+            {PHASE_TEXT[publish.phase].label}
+          </span>
+        </p>
+        <p class="muted small">
+          Repo nội dung <code>{shortSha(publish.contentHead)}</code> · đã merge
+          <code>{shortSha(publish.published)}</code>
+          {#if publish.live}· đang chạy <code>{shortSha(publish.live)}</code>{/if}
+        </p>
+        {#if publish.phase === "deploying"}
           <p class="muted small">
-            Site đang dùng nội dung <code>{shortSha(publish.published)}</code>.
-          </p>
-        {:else}
-          <p><span class="pill" data-tone="warn">Có thay đổi chưa xuất bản</span></p>
-          <p class="muted small">
-            Repo <code>{shortSha(publish.contentHead)}</code> · site
-            <code>{shortSha(publish.published)}</code>
+            Thường mất 1–3 phút sau khi merge. Lâu hơn: kiểm tra Workers Builds trên Cloudflare.
           </p>
         {/if}
-        {#if publish.run?.conclusion === "failure"}
+        {#if publish.phase === "failed" && publish.run}
           <p class="small">
-            <span class="pill" data-tone="err">Lần chạy gần nhất lỗi</span>
-            <a href={publish.run.url} target="_blank" rel="noopener noreferrer">Xem log ↗</a>
+            <a href={publish.pr?.url ?? publish.run.url} target="_blank" rel="noopener noreferrer">
+              Xem lỗi ↗
+            </a>
           </p>
         {/if}
       {:else}

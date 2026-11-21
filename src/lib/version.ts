@@ -9,6 +9,11 @@ export interface VersionInfo {
   timestamp: string | null;
   /** The commit Workers Builds built (astro.config.mjs defines __BUILD_COMMIT__). */
   commit: string | null;
+  /**
+   * The poli0981/content commit that build's src/content pointed at (__CONTENT_COMMIT__):
+   * what the live site actually shows, as opposed to what the site repo's main points at.
+   */
+  content: string | null;
 }
 
 type VersionEnv = { CF_VERSION_METADATA?: Partial<WorkerVersionMetadata> };
@@ -21,5 +26,6 @@ export function versionInfo(env: VersionEnv | undefined): VersionInfo {
     timestamp: meta?.timestamp || null,
     // `typeof` so this also runs where the build-time constant was never defined (tests).
     commit: typeof __BUILD_COMMIT__ === "string" ? __BUILD_COMMIT__ : null,
+    content: typeof __CONTENT_COMMIT__ === "string" ? __CONTENT_COMMIT__ : null,
   };
 }
