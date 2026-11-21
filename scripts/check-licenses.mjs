@@ -34,6 +34,7 @@ function verdict(name, license) {
 }
 
 const problems = new Set();
+const byName = (a, b) => a.localeCompare(b);
 const reviewed = new Set();
 const usedReviews = new Set();
 let total = 0;
@@ -60,7 +61,7 @@ for (const entry of REVIEWED) {
 
 if (problems.size > 0) {
   console.error(`Licence check failed (${problems.size}):`);
-  for (const problem of [...problems].sort()) console.error(`  ${problem}`);
+  for (const problem of [...problems].sort(byName)) console.error(`  ${problem}`);
   console.error(
     "Clear a package in REVIEWED (scripts/license-policy.mjs) with a reason, or drop it.",
   );
@@ -68,5 +69,5 @@ if (problems.size > 0) {
 }
 console.log(
   `licences ok — ${total} packages in package-lock.json; cleared by review: ` +
-    `${reviewed.size} (${[...reviewed].sort().join(", ")})`,
+    `${reviewed.size} (${[...reviewed].sort(byName).join(", ")})`,
 );
