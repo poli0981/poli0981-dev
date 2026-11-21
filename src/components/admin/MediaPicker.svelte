@@ -98,9 +98,9 @@
   <div class="top">
     <strong id="picker-title">{multiple ? "Chọn ảnh (nhiều)" : "Chọn ảnh"}</strong>
     <input type="search" bind:value={query} placeholder="Tìm ảnh" aria-label="Tìm ảnh" />
-    <label class="button upload"
-      >Tải ảnh lên <input type="file" accept="image/*" multiple onchange={upload} /></label
-    >
+    <label class="button upload">
+      Tải ảnh lên <input type="file" accept="image/*" multiple onchange={upload} />
+    </label>
     <button type="button" onclick={() => load(true)} title="Tải lại danh sách">↻</button>
     <button type="button" onclick={onclose}>Đóng</button>
   </div>

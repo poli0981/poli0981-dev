@@ -159,8 +159,8 @@
   }}
 >
   <p>Kéo thả ảnh vào đây, hoặc</p>
-  <label class="button pick"
-    >Chọn tệp
+  <label class="button pick">
+    Chọn tệp
     <input
       type="file"
       accept="image/*"
@@ -254,21 +254,24 @@
             {/if}
           </p>
           <div class="row">
-            <button type="button" onclick={() => copy(mediaPictureHtml(item, item.alt), "HTML")}
-              >Copy HTML</button
-            >
+            <button type="button" onclick={() => copy(mediaPictureHtml(item, item.alt), "HTML")}>
+              Copy HTML
+            </button>
             <button
               type="button"
               onclick={() => copy(`{ id: "${item.id}", w: ${item.w}, h: ${item.h} }`, "ID")}
-              >Copy ID</button
             >
+              Copy ID
+            </button>
             <button
               type="button"
               class="danger"
               onclick={() => remove(item)}
               disabled={used.length > 0}
-              title={used.length ? "Gỡ ảnh khỏi các bài trước khi xoá" : undefined}>Xoá</button
+              title={used.length ? "Gỡ ảnh khỏi các bài trước khi xoá" : undefined}
             >
+              Xoá
+            </button>
           </div>
         </div>
       </li>

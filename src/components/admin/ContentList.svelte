@@ -99,8 +99,8 @@
       create();
     }}
   >
-    <label
-      >Loại
+    <label>
+      Loại
       <select bind:value={collection}>
         {#each Object.values(COLLECTIONS).filter((spec) => spec.creatable) as spec (spec.id)}
           <option value={spec.id}>{spec.label}</option>
@@ -110,8 +110,8 @@
     {#if collection === "stories"}
       <label>Bộ truyện (slug) <input bind:value={series} placeholder="dem-khong-tieng" /></label>
     {/if}
-    <label
-      >Slug
+    <label>
+      Slug
       <input
         bind:value={slug}
         placeholder="ten-bai-viet"
@@ -121,11 +121,11 @@
         spellcheck="false"
       />
     </label>
-    <label
-      >Ngôn ngữ
-      <select bind:value={newLang}
-        ><option value="vi">vi</option><option value="en">en</option></select
-      >
+    <label>
+      Ngôn ngữ
+      <select bind:value={newLang}>
+        <option value="vi">vi</option><option value="en">en</option>
+      </select>
     </label>
     <button type="submit" class="primary" disabled={!newPath || taken}>Tạo</button>
   </form>
@@ -179,9 +179,9 @@
   {:else if groups.length === 0}
     <p class="muted">
       {#if filtered}
-        Không có mục nào khớp bộ lọc. <button type="button" class="ghost" onclick={clearFilters}
-          >Xoá bộ lọc</button
-        >
+        Không có mục nào khớp bộ lọc. <button type="button" class="ghost" onclick={clearFilters}>
+          Xoá bộ lọc
+        </button>
       {:else}
         Repo nội dung chưa có bài nào.
       {/if}

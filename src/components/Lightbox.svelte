@@ -151,9 +151,9 @@
     <div class="bar">
       <!-- Arrowing to another photo announces its position and its caption: focus stays on
            the button, so nothing else would say which photo is now showing. -->
-      <span class="count" aria-live="polite"
-        >{counter}<span class="sr-only"> — {current.alt}</span></span
-      >
+      <span class="count" aria-live="polite">
+        {counter}<span class="sr-only"> — {current.alt}</span>
+      </span>
       <button type="button" class="close" onclick={close} aria-label={labels.close}>✕</button>
     </div>
 
@@ -162,8 +162,10 @@
       class="nav prev"
       onclick={prev}
       disabled={index === 0}
-      aria-label={labels.prev}>‹</button
+      aria-label={labels.prev}
     >
+      ‹
+    </button>
 
     <div
       class="track"
@@ -189,8 +191,10 @@
       class="nav next"
       onclick={next}
       disabled={index === slides.length - 1}
-      aria-label={labels.next}>›</button
+      aria-label={labels.next}
     >
+      ›
+    </button>
 
     <!-- The same words are the image's alt and the dialog's description (aria-describedby
          still resolves a hidden node), so the visible copy is hidden from the reading order

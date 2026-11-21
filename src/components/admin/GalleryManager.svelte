@@ -216,9 +216,9 @@
               onclick={() => open(album)}
             >
               <span>{album.titles.vi ?? album.album}</span>
-              <span class="meta"
-                >{album.photos.length} ảnh R2{album.local ? ` · ${album.local} ảnh repo` : ""}</span
-              >
+              <span class="meta">
+                {album.photos.length} ảnh R2{album.local ? ` · ${album.local} ảnh repo` : ""}
+              </span>
             </button>
           </li>
         {/each}
@@ -274,14 +274,14 @@
             >
               <img src={mediaFallbackSrc(photo)} alt="" />
               <div class="captions">
-                <label
-                  ><span class="sr-only">Chú thích tiếng Việt, ảnh {index + 1}</span>
-                  <input bind:value={photo.caption.vi} placeholder="Chú thích (vi)" /></label
-                >
-                <label
-                  ><span class="sr-only">English caption, photo {index + 1}</span>
-                  <input bind:value={photo.caption.en} placeholder="Caption (en)" /></label
-                >
+                <label>
+                  <span class="sr-only">Chú thích tiếng Việt, ảnh {index + 1}</span>
+                  <input bind:value={photo.caption.vi} placeholder="Chú thích (vi)" />
+                </label>
+                <label>
+                  <span class="sr-only">English caption, photo {index + 1}</span>
+                  <input bind:value={photo.caption.en} placeholder="Caption (en)" />
+                </label>
               </div>
               <div class="order">
                 <button
@@ -289,25 +289,33 @@
                   class="cover-pick"
                   aria-pressed={current.coverId === photo.id}
                   aria-label={`Đặt ảnh ${index + 1} làm ảnh bìa`}
-                  onclick={() => current && (current.coverId = photo.id)}>★</button
+                  onclick={() => current && (current.coverId = photo.id)}
                 >
+                  ★
+                </button>
                 <button
                   type="button"
                   aria-label={`Đưa ảnh ${index + 1} lên`}
                   disabled={index === 0}
-                  onclick={() => move(index, index - 1)}>↑</button
+                  onclick={() => move(index, index - 1)}
                 >
+                  ↑
+                </button>
                 <button
                   type="button"
                   aria-label={`Đưa ảnh ${index + 1} xuống`}
                   disabled={index === current.photos.length - 1}
-                  onclick={() => move(index, index + 1)}>↓</button
+                  onclick={() => move(index, index + 1)}
                 >
+                  ↓
+                </button>
                 <button
                   type="button"
                   aria-label={`Bỏ ảnh ${index + 1} khỏi album`}
-                  onclick={() => removePhoto(photo)}>✕</button
+                  onclick={() => removePhoto(photo)}
                 >
+                  ✕
+                </button>
               </div>
             </li>
           {/each}
@@ -321,9 +329,9 @@
         {#if !creating}
           <button type="button" class="danger" onclick={removeAlbum}>Xoá album</button>
         {/if}
-        <button type="button" class="primary push" onclick={save} disabled={saving || !dirty}
-          >{saving ? "Đang lưu…" : "Lưu album"}</button
-        >
+        <button type="button" class="primary push" onclick={save} disabled={saving || !dirty}>
+          {saving ? "Đang lưu…" : "Lưu album"}
+        </button>
       </div>
     </section>
   {/if}

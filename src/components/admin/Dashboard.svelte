@@ -60,8 +60,10 @@
           <a
             href={`https://github.com/poli0981/poli0981-dev/commit/${overview.config.version.commit}`}
             target="_blank"
-            rel="noopener noreferrer"><code>{shortSha(overview.config.version.commit)}</code></a
+            rel="noopener noreferrer"
           >
+            <code>{shortSha(overview.config.version.commit)}</code>
+          </a>
         {/if}
         · triển khai {ago(overview.config.version.timestamp)}
       </p>
@@ -89,11 +91,13 @@
       {#if overview.content}
         <table>
           <thead>
-            <tr
-              ><th scope="col">Loại</th><th scope="col">Tổng</th><th scope="col">vi</th><th
-                scope="col">en</th
-              ><th scope="col">Nháp</th></tr
-            >
+            <tr>
+              <th scope="col">Loại</th><th scope="col">Tổng</th><th scope="col">vi</th><th
+                scope="col"
+              >
+                en
+              </th><th scope="col">Nháp</th>
+            </tr>
           </thead>
           <tbody>
             {#each overview.content.collections as c (c.id)}
@@ -102,10 +106,9 @@
                 <td>{c.total}</td>
                 <td>{c.vi}</td>
                 <td>{c.en}</td>
-                <td
-                  >{#if c.drafts}<span class="pill" data-tone="warn">{c.drafts}</span
-                    >{:else}0{/if}</td
-                >
+                <td>
+                  {#if c.drafts}<span class="pill" data-tone="warn">{c.drafts}</span>{:else}0{/if}
+                </td>
               </tr>
             {/each}
           </tbody>
@@ -150,15 +153,15 @@
       <p><a href="/admin/media/">{overview.media.count} ảnh</a> trong thư viện R2.</p>
       {#if overview.widgets}
         <p class="pills">
-          <span class="pill" data-tone={tone(overview.widgets.yt)}
-            >YouTube {overview.widgets.yt}</span
-          >
-          <span class="pill" data-tone={tone(overview.widgets.steam)}
-            >Steam {overview.widgets.steam}</span
-          >
-          <span class="pill" data-tone={tone(overview.widgets.gh)}
-            >GitHub {overview.widgets.gh}</span
-          >
+          <span class="pill" data-tone={tone(overview.widgets.yt)}>
+            YouTube {overview.widgets.yt}
+          </span>
+          <span class="pill" data-tone={tone(overview.widgets.steam)}>
+            Steam {overview.widgets.steam}
+          </span>
+          <span class="pill" data-tone={tone(overview.widgets.gh)}>
+            GitHub {overview.widgets.gh}
+          </span>
         </p>
         <p class="muted small" title={dateTime(overview.widgets.lastRun)}>
           Cron widgets chạy {ago(overview.widgets.lastRun)}

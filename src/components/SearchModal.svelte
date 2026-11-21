@@ -249,9 +249,9 @@
         spellcheck="false"
       />
       <!-- The name starts with the visible "Esc" so voice control can target it (WCAG 2.5.3). -->
-      <button type="button" class="close" onclick={close} aria-label={`Esc — ${labels.close}`}
-        >Esc</button
-      >
+      <button type="button" class="close" onclick={close} aria-label={`Esc — ${labels.close}`}>
+        Esc
+      </button>
     </div>
 
     <div class="results">
