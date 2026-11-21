@@ -210,6 +210,16 @@ describe("age check and content warning", () => {
       assert.equal(await foldOpen(page), false, "Esc leaves the text folded");
       assert.equal(await stored(page), null, "Esc stores nothing");
       assert.equal(await focused(page), "summary.age-summary", "focus returns to the summary");
+
+      // Find-in-page or a #:~:text= link opens a <details> without asking anyone; without a
+      // "yes" on record the gate folds it straight back.
+      await page.evaluate(() => {
+        const fold = document.querySelector<HTMLDetailsElement>(".age-fold");
+        if (fold) fold.open = true;
+      });
+      await page.waitForFunction(
+        () => document.querySelector<HTMLDetailsElement>(".age-fold")?.open === false,
+      );
     });
   });
 
@@ -226,6 +236,8 @@ describe("age check and content warning", () => {
       await page.waitForSelector(".age-dialog[open]");
       await page.locator(".age-dialog .age-yes").click();
       await page.waitForSelector(".age-fold[open]");
+      // The dialog hands focus back to "Chọn lại", which is hidden now: it must not be lost.
+      assert.equal(await focused(page), "summary.age-summary", "focus lands on the summary");
       assert.match((await stored(page)) ?? "", /"ok":16/);
       assert.ok(await page.locator(".age-body .prose p").first().isVisible(), "the text shows");
 

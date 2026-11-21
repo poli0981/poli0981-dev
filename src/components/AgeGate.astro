@@ -16,13 +16,15 @@ interface Props {
 //  - With JavaScript, the summary asks first, in a native modal <dialog> (focus stays inside,
 //    Esc cancels — it never means "yes"); the answer is kept in this browser's localStorage.
 //  - It never pops up on its own: the page around it (title, banner, navigation) stays usable.
-// Search indexes the title, not the folded text.
+// Search indexes the page's title, not anything inside the gate.
 const { rating, locale } = Astro.props;
 const t = useTranslations(locale);
 const age = minAge(rating) ?? 18;
 ---
 
-<div class="age-gate" data-min-age={age}>
+<!-- Search indexes none of it: not the text, and not the status lines either — they would
+     become the search excerpt of a page the reader has not been allowed into. -->
+<div class="age-gate" data-min-age={age} data-pagefind-ignore>
   <!-- The answer's state sits above the text, where the reader is, not after a long chapter. -->
   <p class="age-status" data-state="allow" hidden>
     <span>{withAge(t.cw.confirmed, age)}</span>
@@ -96,15 +98,23 @@ const age = minAge(rating) ?? 18;
       dialog.showModal();
     });
 
+    // The browser also opens a <details> by itself — find-in-page, a #:~:text= link from a
+    // search engine, an #id inside the text. Without a "yes" on record, fold it straight back.
+    fold.addEventListener("toggle", () => {
+      if (fold.open && decide(current, age) !== "allow") fold.open = false;
+    });
+
     dialog.addEventListener("close", () => {
       const choice = dialog.returnValue; // "yes", "no", or "" when cancelled with Esc
       if (choice !== "yes" && choice !== "no") return;
       current = answer(current, age, choice === "yes");
       saveAnswer(store, current);
       render();
-      // "Yes": focus is back on the summary, right above the text. "No": the summary is now
-      // hidden, so focus goes to the row that explains why and offers to choose again.
-      if (choice === "no") denyRow.querySelector("button")?.focus();
+      // "Yes": the summary, right above the text — the dialog may have handed focus back to
+      // "Chọn lại", which render() just hid. "No": the summary is hidden now, so focus goes to
+      // the row that explains why and offers to choose again.
+      if (choice === "yes") summary.focus();
+      else denyRow.querySelector("button")?.focus();
     });
 
     denyRow.querySelector(".age-retry")?.addEventListener("click", () => {

@@ -12,6 +12,7 @@ import { formatDate } from "@/lib/format";
 import ContentNotice from "@/components/ContentNotice.astro";
 import AgeGate from "@/components/AgeGate.astro";
 import { labelNames, needsBlur } from "@/lib/content-labels";
+import { albumWarning } from "@/lib/collections";
 
 interface Props {
   locale: Locale;
@@ -23,7 +24,8 @@ const t = useTranslations(locale);
 
 // Labels: the album's own blur every photo; a photo's own blur just that one. The notice
 // lists both, and its "Hiện ảnh" box un-blurs the page's photos and the viewer's slides.
-const albumLabels = entry.data.contentWarning;
+// The album's labels and age rating come from both language entries (same photos).
+const { labels: albumLabels, ageRating } = await albumWarning(entry.data.album);
 const albumBlur = needsBlur(albumLabels);
 const allLabels = [...new Set([...albumLabels, ...photos.flatMap((p) => p.labels)])];
 const photoBlur = photos.map((p) => albumBlur || needsBlur(p.labels));
@@ -88,20 +90,23 @@ const thumbLabels = photos.map((p) =>
     {entry.data.description && <p class="lead">{entry.data.description}</p>}
     <p class="date">{formatDate(entry.data.date, locale)}</p>
 
-    <ContentNotice labels={allLabels} ageRating={entry.data.ageRating} {locale} />
+    <ContentNotice labels={allLabels} ageRating={ageRating} {locale} />
 
     {
-      entry.data.ageRating ? (
-        <AgeGate rating={entry.data.ageRating} {locale}>
+      ageRating ? (
+        <AgeGate rating={ageRating} {locale}>
           <GalleryGrid {photos} {hrefs} blurred={ownBlur} labels={thumbLabels} {locale} />
         </AgeGate>
       ) : (
         <GalleryGrid {photos} {hrefs} blurred={ownBlur} labels={thumbLabels} {locale} />
       )
     }
-
-    <Lightbox client:idle {slides} labels={{ ...t.gallery, reveal: t.cw.reveal }} />
   </section>
+  {
+    /* Outside the labelled section on purpose: its blur rule would otherwise also blur the
+      viewer's photo, which has its own "show" button. */
+  }
+  <Lightbox client:idle {slides} labels={{ ...t.gallery, reveal: t.cw.reveal }} />
 </BaseLayout>
 
 <style>

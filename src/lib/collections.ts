@@ -1,5 +1,6 @@
 import { getCollection, type CollectionEntry } from "astro:content";
 import type { Locale } from "../i18n/routing";
+import { LABEL_IDS, minAge, type AgeRating, type ContentLabel } from "./content-labels";
 
 export type BlogEntry = CollectionEntry<"blog">;
 export type StoryEntry = CollectionEntry<"stories">;
@@ -56,6 +57,25 @@ export async function getProjects(locale: Locale): Promise<ProjectEntry[]> {
 export async function getFaqs(locale: Locale): Promise<FaqEntry[]> {
   const faqs = await getCollection("faq", ({ data }) => data.lang === locale);
   return faqs.sort((a, b) => a.data.order - b.data.order);
+}
+
+/**
+ * An album's content labels and age rating, gathered from BOTH language entries: the vi and en
+ * album pages show the same photos, so a label set on either applies to both, and the stricter
+ * age rating wins.
+ */
+export async function albumWarning(
+  album: string,
+): Promise<{ labels: ContentLabel[]; ageRating?: AgeRating }> {
+  const entries = await getCollection("gallery", ({ data }) => data.album === album);
+  const labels = LABEL_IDS.filter((id) =>
+    entries.some(({ data }) => (data.contentWarning ?? []).includes(id)),
+  );
+  const ageRating = entries
+    .map(({ data }) => data.ageRating)
+    .filter((rating): rating is AgeRating => Boolean(rating))
+    .sort((a, b) => (minAge(b) ?? 0) - (minAge(a) ?? 0))[0];
+  return ageRating ? { labels, ageRating } : { labels };
 }
 
 export async function getGalleryAlbums(locale: Locale): Promise<GalleryEntry[]> {

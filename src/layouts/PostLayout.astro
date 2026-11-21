@@ -1,6 +1,4 @@
 ---
-import { Image } from "astro:assets";
-import MediaImage from "../components/MediaImage.astro";
 import BaseLayout from "./BaseLayout.astro";
 import Prose from "../components/Prose.astro";
 import Waveline from "../components/Waveline.svelte";
@@ -8,6 +6,7 @@ import TagPill from "../components/TagPill.astro";
 import Pagination from "../components/Pagination.astro";
 import ContentNotice from "../components/ContentNotice.astro";
 import AgeGate from "../components/AgeGate.astro";
+import PostCover from "../components/PostCover.astro";
 import type { BlogEntry } from "../lib/collections";
 import { labelNames, needsBlur } from "../lib/content-labels";
 import { useTranslations } from "../i18n";
@@ -134,42 +133,22 @@ const crumbs = breadcrumbSchema([
     <ContentNotice labels={contentWarning} {ageRating} {locale} />
 
     {
-      (cover || coverMedia) && (
-        <div class="post-cover">
-          {cover ? (
-            <Image
-              src={cover}
-              alt=""
-              widths={[720, 1080, 1440]}
-              sizes="(max-width: 768px) 100vw, 720px"
-              fetchpriority="high"
-            />
-          ) : (
-            coverMedia && (
-              <MediaImage
-                media={coverMedia}
-                alt={coverMedia.alt ?? ""}
-                sizes="(max-width: 768px) 100vw, 720px"
-                loading="eager"
-                fetchpriority="high"
-              />
-            )
-          )}
-        </div>
-      )
-    }
-
-    {
+      /* An age-rated post folds its cover away with the text: a reader who says "no" sees
+        neither. */
       ageRating ? (
         <AgeGate rating={ageRating} {locale}>
+          <PostCover {cover} {coverMedia} />
           <Prose class="post-body">
             <slot />
           </Prose>
         </AgeGate>
       ) : (
-        <Prose class="post-body">
-          <slot />
-        </Prose>
+        <Fragment>
+          <PostCover {cover} {coverMedia} />
+          <Prose class="post-body">
+            <slot />
+          </Prose>
+        </Fragment>
       )
     }
 
@@ -241,15 +220,6 @@ const crumbs = breadcrumbSchema([
     color: var(--accent);
     font-size: var(--text-meta);
     font-family: var(--ff-mono);
-  }
-  .post-cover {
-    margin-block-end: 2rem;
-  }
-  .post-cover :global(img) {
-    inline-size: 100%;
-    block-size: auto;
-    border-radius: var(--radius-card);
-    border: 1px solid var(--line);
   }
   .post-foot {
     margin-block-start: 3rem;

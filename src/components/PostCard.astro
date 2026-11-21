@@ -19,9 +19,9 @@ const Title = `h${headingLevel}` as const;
 const t = useTranslations(locale);
 const href = sectionPath("blog", locale, entry.id);
 const mins = readingTime(entry.body);
-// A labelled post: its cover stays blurred here (no "show" box on a card — open the post),
-// and the card names the labels and any age rating.
-const blurCover = needsBlur(entry.data.contentWarning);
+// A labelled or age-rated post: its cover stays blurred here (no "show" box on a card — open
+// the post), and the card names the labels and any age rating.
+const blurCover = needsBlur(entry.data.contentWarning) || Boolean(entry.data.ageRating);
 const warning = [
   ...labelNames(entry.data.contentWarning, t.labels),
   ...(entry.data.ageRating ? [entry.data.ageRating] : []),

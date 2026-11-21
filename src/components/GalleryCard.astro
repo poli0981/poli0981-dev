@@ -1,7 +1,7 @@
 ---
 import { Image } from "astro:assets";
 import MediaImage from "./MediaImage.astro";
-import { type GalleryEntry } from "../lib/collections";
+import { albumWarning, type GalleryEntry } from "../lib/collections";
 import type { GalleryPhoto } from "../lib/gallery";
 import { sectionPath, type Locale } from "../i18n/routing";
 import { useTranslations } from "../i18n";
@@ -19,13 +19,13 @@ const { entry, cover, locale, headingLevel = 3 } = Astro.props;
 const Title = `h${headingLevel}` as const;
 const href = sectionPath("gallery", locale, entry.data.album);
 const year = entry.data.date.getFullYear();
-// The cover stays blurred when the album, or that photo, carries a label that blurs images.
+// The cover stays blurred when the album (in either language) or that photo carries a label
+// that blurs images, or when the album is age-rated; the card says why.
 const t = useTranslations(locale);
-const blurCover = needsBlur(entry.data.contentWarning) || needsBlur(cover.labels);
-const warning = [
-  ...labelNames(entry.data.contentWarning, t.labels),
-  ...(entry.data.ageRating ? [entry.data.ageRating] : []),
-].join(" · ");
+const { labels: albumLabels, ageRating } = await albumWarning(entry.data.album);
+const labels = [...new Set([...albumLabels, ...cover.labels])];
+const blurCover = needsBlur(labels) || Boolean(ageRating);
+const warning = [...labelNames(labels, t.labels), ...(ageRating ? [ageRating] : [])].join(" · ");
 ---
 
 <article class="card">
