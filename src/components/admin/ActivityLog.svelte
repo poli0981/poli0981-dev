@@ -21,6 +21,7 @@
     "gallery.save": "Lưu album",
     "gallery.delete": "Xoá album",
     publish: "Xuất bản",
+    "publish.auto": "Tự xuất bản",
     "denylist.add": "Chặn IP",
     "denylist.remove": "Bỏ chặn IP",
   };

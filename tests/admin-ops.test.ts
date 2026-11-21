@@ -249,7 +249,11 @@ describe("/api/admin/overview and /api/admin/activity", () => {
     };
     assert.deepEqual(
       body.audit.map((e) => [e.action, e.target, e.admin]),
-      [["content.save", "blog/b.md", OWNER]],
+      // Newest first: the save, then the publish it started on its own.
+      [
+        ["publish.auto", "content → site", OWNER],
+        ["content.save", "blog/b.md", OWNER],
+      ],
     );
     assert.equal(body.commits[0]?.message, "content(blog): update blog/b.md");
 
@@ -338,7 +342,10 @@ describe("/api/admin/gallery covers and deletion", () => {
     assert.equal(github?.files.get("gallery/other.md")?.includes("coverIndex"), false);
     assert.deepEqual(
       (await listAudit(kv.asBinding())).map((e) => [e.action, e.target]),
-      [["gallery.save", "game"]],
+      [
+        ["publish.auto", "content → site"],
+        ["gallery.save", "game"],
+      ],
     );
   });
 
@@ -372,7 +379,7 @@ describe("/api/admin/gallery covers and deletion", () => {
     assert.equal((await del({ album: "Bad Name" })).status, 400);
     assert.deepEqual(
       (await listAudit(kv.asBinding())).map((e) => e.action),
-      ["gallery.delete"],
+      ["publish.auto", "gallery.delete"],
     );
     setServerEnv({});
     assert.equal((await del({ album: "other" })).status, 503);

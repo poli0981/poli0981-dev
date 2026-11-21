@@ -2,15 +2,33 @@ import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
 import { GITHUB_CONTENT_TOKEN } from "astro:env/server";
 import { recordAudit } from "@/lib/admin/audit";
-import { collectionOf, validateFrontmatter } from "@/lib/admin/collections";
+import { autoPublish } from "@/lib/admin/autopublish";
+import {
+  collectionOf,
+  galleryPhotosPath,
+  validateFrontmatter,
+  type FieldError,
+} from "@/lib/admin/collections";
 import { buildFile, splitFile, type Frontmatter } from "@/lib/admin/frontmatter";
 import { commitContent, listContentFiles, readContentFile } from "@/lib/admin/github";
 import { errorResponse, isPlainObject, json, readJson } from "@/lib/admin/http";
+import { localPhotoCount } from "@/lib/gallery";
 import { log } from "@/lib/log";
 
-// Content entries of poli0981/content. Saving commits straight to the content repo's
-// main branch; nothing goes live until "Publish" (api/admin/publish).
+// Content entries of poli0981/content. Saving commits straight to the content repo's main
+// branch and then starts a publish (lib/admin/autopublish), so a save goes live on its own.
 export const prerender = false;
+
+/**
+ * An album entry must point at an album that has photos — local ones in this repo or an R2
+ * list in the content repo — or the publish build fails (lib/gallery getAlbumPhotos).
+ */
+async function albumProblem(token: string, album: unknown): Promise<FieldError | null> {
+  if (typeof album !== "string") return null; // validateFrontmatter already said why
+  const list = galleryPhotosPath(album);
+  if (!list || localPhotoCount(album) > 0 || (await readContentFile(token, list))) return null;
+  return { field: "album", code: "missing" };
+}
 
 const MAX_FILE_BYTES = 200_000;
 
@@ -81,6 +99,10 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       if (!collection.creatable) return json({ error: "not_creatable" }, 400);
     }
     const errors = validateFrontmatter(collection, input.frontmatter);
+    if (errors.length === 0 && collection.id === "gallery") {
+      const problem = await albumProblem(GITHUB_CONTENT_TOKEN, input.frontmatter.album);
+      if (problem) errors.push(problem);
+    }
     if (errors.length > 0) return json({ error: "invalid_fields", fields: errors }, 400);
 
     const original = input.sha ? await readContentFile(GITHUB_CONTENT_TOKEN, input.path) : null;
@@ -94,9 +116,11 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     }
     const verb = input.sha ? "update" : "add";
     const email = locals.admin?.email ?? "unknown";
+    // The content repo is public: the commit says it came through the admin, but who it was
+    // stays in the private audit log below.
     const commit = await commitContent(
       GITHUB_CONTENT_TOKEN,
-      `content(${collection.id}): ${verb} ${input.path}\n\nvia admin (${email})`,
+      `content(${collection.id}): ${verb} ${input.path}\n\nvia admin`,
       [{ path: input.path, text, expectSha: input.sha }],
     );
     const saved = await readContentFile(GITHUB_CONTENT_TOKEN, input.path);
@@ -107,7 +131,8 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       detail: commit,
     });
     log.info("admin.content_saved", { path: input.path, verb, commit, admin: email });
-    return json({ commit, path: input.path, sha: saved?.sha ?? null });
+    const publish = await autoPublish(email, commit);
+    return json({ commit, path: input.path, sha: saved?.sha ?? null, publish });
   } catch (error) {
     return errorResponse(error);
   }
@@ -128,7 +153,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     const email = locals.admin?.email ?? "unknown";
     const commit = await commitContent(
       GITHUB_CONTENT_TOKEN,
-      `content: delete ${input.path}\n\nvia admin (${email})`,
+      `content: delete ${input.path}\n\nvia admin`,
       [{ path: input.path, text: null, expectSha: input.sha }],
     );
     await recordAudit(env.KV, {
@@ -138,7 +163,8 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
       detail: commit,
     });
     log.info("admin.content_deleted", { path: input.path, commit, admin: email });
-    return json({ commit });
+    const publish = await autoPublish(email, commit);
+    return json({ commit, publish });
   } catch (error) {
     return errorResponse(error);
   }

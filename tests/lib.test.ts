@@ -242,18 +242,24 @@ describe("structured logs, version", () => {
     assert.deepEqual(fields, { ray: "abc", method: "GET", path: "/p" });
   });
 
-  it("reports the running version and build commit", () => {
+  it("reports the running version, build commit and content commit", () => {
     assert.deepEqual(versionInfo(undefined), {
       id: null,
       tag: null,
       timestamp: null,
       commit: null,
+      content: null,
     });
-    (globalThis as { __BUILD_COMMIT__?: string }).__BUILD_COMMIT__ = "abc1234";
+    const constants = globalThis as { __BUILD_COMMIT__?: string; __CONTENT_COMMIT__?: string };
+    constants.__BUILD_COMMIT__ = "abc1234";
+    constants.__CONTENT_COMMIT__ = "def5678";
     try {
-      assert.equal(versionInfo({ CF_VERSION_METADATA: { id: "v1" } }).commit, "abc1234");
+      const info = versionInfo({ CF_VERSION_METADATA: { id: "v1" } });
+      assert.equal(info.commit, "abc1234");
+      assert.equal(info.content, "def5678");
     } finally {
-      delete (globalThis as { __BUILD_COMMIT__?: string }).__BUILD_COMMIT__;
+      delete constants.__BUILD_COMMIT__;
+      delete constants.__CONTENT_COMMIT__;
     }
   });
 });

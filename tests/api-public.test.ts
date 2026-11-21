@@ -221,7 +221,13 @@ describe("GET /api/health", () => {
     assert.equal(response.headers.get("cache-control"), "no-store");
     assert.deepEqual(await response.json(), {
       ok: true,
-      version: { id: "v-9", tag: null, timestamp: "2026-10-24T01:02:03Z", commit: null },
+      version: {
+        id: "v-9",
+        tag: null,
+        timestamp: "2026-10-24T01:02:03Z",
+        commit: null,
+        content: null,
+      },
     });
   });
 });

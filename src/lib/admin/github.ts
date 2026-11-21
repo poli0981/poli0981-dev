@@ -82,11 +82,13 @@ interface TreeEntry {
 }
 
 /**
- * Every text file of the content repo's main branch, in ONE GraphQL request (three
- * directory levels: collection/series/file), plus the commit it was read at.
+ * Every text file of the content repo's main branch — or of one commit, `at` — in ONE
+ * GraphQL request (three directory levels: collection/series/file), plus the commit it was
+ * read at.
  */
 export async function listContentFiles(
   token: string,
+  at?: string,
 ): Promise<{ head: string; files: RepoFile[] }> {
   const blob = "... on Blob { oid text }";
   const level = (inner: string) => `entries { path type object { ${blob} ${inner} } }`;
@@ -99,8 +101,10 @@ export async function listContentFiles(
     }
   }`;
   const data = await graphql<{
-    repository: { ref: { target: { oid: string } }; object: { entries: TreeEntry[] } };
-  }>(token, query, { ...CONTENT_REPO, expr: `${BRANCH}:` });
+    repository: { ref: { target: { oid: string } }; object: { entries: TreeEntry[] } | null };
+  }>(token, query, { ...CONTENT_REPO, expr: `${at ?? BRANCH}:` });
+  // A commit the repo doesn't have (yet) has no tree: report it as empty, not as a crash.
+  if (!data.repository.object) return { head: at ?? data.repository.ref.target.oid, files: [] };
 
   const files: RepoFile[] = [];
   const walk = (entries: TreeEntry[]) => {
@@ -116,7 +120,7 @@ export async function listContentFiles(
     }
   };
   walk(data.repository.object.entries);
-  return { head: data.repository.ref.target.oid, files };
+  return { head: at ?? data.repository.ref.target.oid, files };
 }
 
 /** One file of the content repo at main, or null if it doesn't exist. */
@@ -199,7 +203,10 @@ export async function commitContent(
 
 export interface PublishStatus {
   contentHead: string;
-  /** The content commit the live site is built from (gitlink in the site repo's main). */
+  /**
+   * The content commit the site repo's main points at (the src/content gitlink): merged, but
+   * live only once Workers Builds has deployed that main — compare with versionInfo().content.
+   */
   published: string;
   pr: {
     number: number;

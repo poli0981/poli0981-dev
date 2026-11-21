@@ -5,6 +5,7 @@ import svelte from "@astrojs/svelte";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
+import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { rename, rmdir } from "node:fs/promises";
 import { DEFAULT_LOCALE, LOCALES } from "./src/i18n/routing.ts";
@@ -70,6 +71,23 @@ const CF_BEACON_DEFAULT =
 // GITHUB_SHA). /api/health reports it next to the Worker version id (src/lib/version.ts), so
 // "what is live?" maps straight to a commit.
 const BUILD_COMMIT = process.env.WORKERS_CI_COMMIT_SHA ?? process.env.GITHUB_SHA ?? null;
+
+// The poli0981/content commit this build's src/content points at: the gitlink recorded in
+// HEAD, so it is right even when the submodule checkout itself is missing or dirty. The admin
+// compares it with the content repo's head to tell "merged" from "live"; /api/health reports
+// it next to the site commit. null when git or the gitlink isn't there.
+function contentCommit() {
+  try {
+    const sha = execFileSync("git", ["rev-parse", "HEAD:src/content"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+    return /^[0-9a-f]{40}$/.test(sha) ? sha : null;
+  } catch {
+    return null;
+  }
+}
+const CONTENT_COMMIT = contentCommit();
 
 // https://astro.build/config
 export default defineConfig({
@@ -166,7 +184,10 @@ export default defineConfig({
   // Tailwind v4 is wired through the Vite plugin (NOT the legacy @astrojs/tailwind).
   vite: {
     plugins: [tailwindcss()],
-    define: { __BUILD_COMMIT__: JSON.stringify(BUILD_COMMIT) },
+    define: {
+      __BUILD_COMMIT__: JSON.stringify(BUILD_COMMIT),
+      __CONTENT_COMMIT__: JSON.stringify(CONTENT_COMMIT),
+    },
   },
 
   // Self-hosted fonts via the built-in Fonts API. Subsets include `vietnamese`.

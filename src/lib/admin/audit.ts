@@ -13,6 +13,7 @@ type AuditAction =
   | "gallery.save"
   | "gallery.delete"
   | "publish"
+  | "publish.auto"
   | "denylist.add"
   | "denylist.remove";
 

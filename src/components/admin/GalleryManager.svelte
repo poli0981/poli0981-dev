@@ -4,6 +4,7 @@
   import MediaPicker from "./MediaPicker.svelte";
   import { confirmAction, toast } from "./ui";
   import { SLUG_PATTERN } from "@/lib/admin/collections";
+  import { afterSaveMessage } from "@/lib/admin/publish-phase";
   import { mediaFallbackSrc } from "@/lib/media";
 
   /** @typedef {{ id: string; w: number; h: number; caption: { vi: string; en: string } }} Photo */
@@ -143,7 +144,7 @@
     const cover = current.photos.findIndex((p) => p.id === current?.coverId);
     saving = true;
     try {
-      await api("/api/admin/gallery", "PUT", {
+      const result = await api("/api/admin/gallery", "PUT", {
         album,
         photos: current.photos,
         sha: current.sha,
@@ -158,7 +159,9 @@
             }
           : {}),
       });
-      toast("Đã lưu album vào repo nội dung — bấm “Xuất bản” để đưa lên site.");
+      const message = afterSaveMessage(result.publish, "Đã lưu album");
+      toast(message.text, message.kind);
+      if (message.queued) dispatchEvent(new Event("admin:published"));
       creating = false;
       await load();
       const saved = albums.find((a) => a.album === album);
@@ -179,8 +182,10 @@
     );
     if (!ok) return;
     try {
-      await api("/api/admin/gallery", "DELETE", { album: current.album });
-      toast("Đã xoá album.");
+      const result = await api("/api/admin/gallery", "DELETE", { album: current.album });
+      const message = afterSaveMessage(result.publish, "Đã xoá album");
+      toast(message.text, message.kind);
+      if (message.queued) dispatchEvent(new Event("admin:published"));
       current = null;
       baseline = "";
       await load();

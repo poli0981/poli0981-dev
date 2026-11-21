@@ -6,6 +6,8 @@
 
 /** The git commit this build was made from, or null (set by `vite.define` in astro.config.mjs). */
 declare const __BUILD_COMMIT__: string | null;
+/** The poli0981/content commit the build's src/content pointed at, or null (same place). */
+declare const __CONTENT_COMMIT__: string | null;
 
 declare namespace App {
   interface Locals {

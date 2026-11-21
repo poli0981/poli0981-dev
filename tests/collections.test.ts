@@ -81,6 +81,30 @@ describe("frontmatter validation", () => {
     assert.equal(galleryPhotosPath("trip-2026"), "gallery-photos/trip-2026.json");
     assert.equal(galleryPhotosPath("../x"), null);
   });
+
+  it("holds the admin to the content schema's own rules", () => {
+    const stories = COLLECTIONS.stories;
+    // chapter: z.number().int().positive()
+    assert.deepEqual(validateFrontmatter(stories, { ...valid, chapter: 2 }), []);
+    assert.deepEqual(validateFrontmatter(stories, { ...valid, chapter: 1.5 }), [
+      { field: "chapter", code: "type" },
+    ]);
+    assert.deepEqual(validateFrontmatter(stories, { ...valid, chapter: 0 }), [
+      { field: "chapter", code: "min" },
+    ]);
+    // One cover only: a local `cover` (kept untouched by the admin) or an R2 `coverMedia`.
+    const cover = { id: "0123456789abcdef", w: 800, h: 600 };
+    assert.deepEqual(validateFrontmatter(blog, { ...valid, cover: "./x.jpg", coverMedia: cover }), [
+      { field: "coverMedia", code: "conflict" },
+    ]);
+    // An album is a slug (the folder and gallery-photos/<album>.json are named after it).
+    const gallery = COLLECTIONS.gallery;
+    const album = { title: "A", lang: "vi", date: "2026-10-24", album: "game" };
+    assert.deepEqual(validateFrontmatter(gallery, album), []);
+    assert.deepEqual(validateFrontmatter(gallery, { ...album, album: "Game Shots" }), [
+      { field: "album", code: "format" },
+    ]);
+  });
 });
 
 describe("admin collections", () => {
@@ -97,22 +121,25 @@ describe("admin collections", () => {
     assert.equal(newEntryPath("gallery", "trip"), null);
   });
 
-  it("rejects bad slugs and stories without a series", () => {
+  it("rejects bad slugs; a story without a series is a one-shot", () => {
     assert.equal(newEntryPath("blog", "Hello World"), null);
     assert.equal(newEntryPath("blog", "../x"), null);
-    assert.equal(newEntryPath("stories", "chuong-03"), null);
+    assert.equal(newEntryPath("stories", "chuong-03", "Bad Series"), null);
+    assert.equal(newEntryPath("stories", "mot-dem"), "stories/mot-dem.md");
   });
 
   it("only maps editable content paths to a collection", () => {
     assert.equal(collectionOf("now/now-en.md")?.id, "now");
     assert.equal(collectionOf("blog/lan-dau-viet-truyen.mdx")?.id, "blog");
     assert.equal(collectionOf("stories/dem-khong-tieng/chuong-01.md")?.id, "stories");
+    assert.equal(collectionOf("stories/mot-dem.md")?.id, "stories");
     for (const path of [
       "README.md",
       "blog/../README.md",
       "gallery-photos/game.json",
       "blog/x.txt",
       ".github/x.md",
+      "stories/a/b/c.md",
     ]) {
       assert.equal(collectionOf(path), null, path);
     }
