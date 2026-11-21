@@ -7,14 +7,17 @@
  * section under any other `<h2>` (the "Models" and "Components" tables) is left alone and
  * keeps the page's language. The container is styled `display: contents` (prose.css).
  */
-const HALVES: Record<string, string> = { English: "en", "Tiếng Việt": "vi" };
+const HALVES = new Map([
+  ["English", "en"],
+  ["Tiếng Việt", "vi"],
+]);
 
 export function markLanguageHalves(html: string): string {
   return html
     .split(/(?=<h2[\s>])/)
     .map((section) => {
       const heading = /^<h2[^>]*>([^<]*)<\/h2>/.exec(section)?.[1].trim();
-      const lang = heading === undefined ? undefined : HALVES[heading];
+      const lang = heading === undefined ? undefined : HALVES.get(heading);
       return lang ? `<div lang="${lang}">${section}</div>` : section;
     })
     .join("");

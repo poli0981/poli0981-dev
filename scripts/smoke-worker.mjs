@@ -108,6 +108,11 @@ async function withWorker(port, vars, run) {
   const base = `http://127.0.0.1:${port}`;
   const get = (path, init) =>
     fetch(`${base}${path}`, { redirect: "manual", signal: AbortSignal.timeout(15000), ...init });
+  // A phase that can't run is a failure, reported with the tail of wrangler's own output.
+  const fail = (error) => {
+    failures.push(String(error));
+    console.error(error, `\n${log.slice(-4000)}`);
+  };
   try {
     let up = false;
     for (let i = 0; i < 60 && !up; i++) {
@@ -116,11 +121,10 @@ async function withWorker(port, vars, run) {
         () => sleep(1000).then(() => false),
       );
     }
-    if (!up) throw new Error(`wrangler dev did not come up on ${base}`);
-    await run(get, port);
+    if (up) await run(get, port);
+    else fail(new Error(`wrangler dev did not come up on ${base}`));
   } catch (error) {
-    failures.push(String(error));
-    console.error(error, `\n${log.slice(-4000)}`);
+    fail(error);
   } finally {
     stop(server);
   }
@@ -272,8 +276,12 @@ await withWorker(8788, {}, async (get, port) => {
     "/api/admin/content without Access → 403",
     (await get("/api/admin/content")).status === 403,
   );
+  // Well-formed but signed by nobody: real JSON header and claims, a junk signature. Built
+  // here rather than pasted as a token literal, which secret scanners rightly flag.
+  const part = (value) => Buffer.from(JSON.stringify(value)).toString("base64url");
+  const forgedJwt = `${part({ alg: "RS256" })}.${part({ email: "a@b.c" })}.c2ln`;
   const forged = await get("/api/admin/content", {
-    headers: { "cf-access-jwt-assertion": "eyJhbGciOiJSUzI1NiJ9.eyJlbWFpbCI6ImFAYi5jIn0.c2ln" },
+    headers: { "cf-access-jwt-assertion": forgedJwt },
   });
   expect("/api/admin with a forged JWT → 403", forged.status === 403);
 });

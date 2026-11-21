@@ -42,8 +42,8 @@ export function plainText(markdown: string): string {
   // [ \t] rather than \s, which (under /m) could run across newlines and backtrack.
   return markdown
     .replace(/```[\s\S]*?```/g, "") // fenced code
-    .replace(/!\[[^[\]]*\]\([^()]*\)/g, "") // images
-    .replace(/\[([^[\]]+)\]\([^()]*\)/g, "$1") // links → their text
+    .replace(/!\[[^[\]]*]\([^()]*\)/g, "") // images
+    .replace(/\[([^[\]]+)]\([^()]*\)/g, "$1") // links → their text
     .replace(/^[ \t]{0,3}#{1,6}[ \t]+/gm, "") // headings
     .replace(/^[ \t]{0,3}>[ \t]?/gm, "") // blockquotes
     .replace(/^[ \t]*[-*+][ \t]+/gm, "") // list bullets

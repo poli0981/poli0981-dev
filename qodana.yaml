@@ -11,6 +11,10 @@ linter: qodana-js
 # resolves the same Node 26 and node_modules as the build (the Docker image ships its own Node).
 withinDocker: false
 
+# Quality gate: the first run's 11 findings were fixed or, for one inspection, switched off
+# below with the reason, so any problem now is a new one and turns the check red.
+failThreshold: 0
+
 profile:
   name: qodana.recommended
   inspections:
@@ -33,4 +37,9 @@ profile:
     - inspection: SpellCheckingInspection
       enabled: false
     - inspection: GrazieInspection
+      enabled: false
+    # "Import can be shortened" wants tsconfig's `@/` alias or extensionless paths. The build
+    # scripts and astro.config.mjs run under plain Node, where `@/` doesn't resolve and a
+    # TypeScript import needs its `.ts`; in src/ relative vs alias imports are a style choice.
+    - inspection: ES6PreferShortImport
       enabled: false

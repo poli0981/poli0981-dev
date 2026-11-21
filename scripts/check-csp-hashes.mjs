@@ -37,7 +37,7 @@ const CONTENT = /\bcontent\s*=\s*(?:"([^"]*)"|'([^']*)')/i;
 // CodeQL js/bad-tag-filter found three separate holes here, one patch at a time, so the
 // cases below are now asserted on every run instead of being re-reasoned from scratch.
 const SCRIPT = /<script(\s[^>]*)?>([\s\S]*?)<\/script(\s[^>]*)?>/gi;
-const JSON_LD = /type=("|')?application\/ld\+json/i;
+const JSON_LD = /type=["']?application\/ld\+json/i;
 // Inline <style> blocks need their hash in the policy just the same, and Astro misses some:
 // the styles of a component rendered only from MDX content (Callout) shipped unhashed, so the
 // browser dropped them. A style *attribute* can never pass a policy without 'unsafe-inline'.
