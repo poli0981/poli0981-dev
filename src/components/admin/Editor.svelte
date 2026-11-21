@@ -291,8 +291,10 @@
         onclick={save}
         disabled={saving || loading || Boolean(loadError)}
         aria-keyshortcuts="Control+S Meta+S"
-        title="Lưu (Ctrl/⌘+S)">Lưu</button
+        title="Lưu (Ctrl/⌘+S)"
       >
+        Lưu
+      </button>
     </div>
   </div>
 
@@ -321,18 +323,19 @@
           {@const errorId = `err-${field.key}`}
           <div class="field">
             {#if field.type === "checkbox"}
-              <label class="check"
-                ><input type="checkbox" bind:checked={data[field.key]} /> {field.label}</label
-              >
+              <label class="check">
+                <input type="checkbox" bind:checked={data[field.key]} />
+                {field.label}
+              </label>
             {:else if field.type === "media"}
               <span class="label">{field.label}</span>
               {#if data[field.key]?.id}
                 <img class="cover" src={mediaFallbackSrc(data[field.key])} alt="" />
                 <div class="row">
                   <button type="button" onclick={() => (picking = "cover")}>Đổi ảnh</button>
-                  <button type="button" onclick={() => ((data[field.key] = undefined), touch())}
-                    >Bỏ</button
-                  >
+                  <button type="button" onclick={() => ((data[field.key] = undefined), touch())}>
+                    Bỏ
+                  </button>
                 </div>
               {:else}
                 <button type="button" onclick={() => (picking = "cover")}>Chọn ảnh bìa</button>
@@ -354,9 +357,9 @@
                     aria-describedby={invalid(field.key) ? errorId : undefined}
                   >
                     <option value={undefined}>—</option>
-                    {#each field.options ?? [] as option (option)}<option value={option}
-                        >{option}</option
-                      >{/each}
+                    {#each field.options ?? [] as option (option)}<option value={option}>
+                        {option}
+                      </option>{/each}
                   </select>
                 {:else if field.type === "tags"}
                   <input
@@ -412,8 +415,10 @@
               aria-controls="panel-edit"
               aria-selected={tab === "edit"}
               tabindex={tab === "edit" ? 0 : -1}
-              onclick={() => (tab = "edit")}>Soạn</button
+              onclick={() => (tab = "edit")}
             >
+              Soạn
+            </button>
             <button
               type="button"
               role="tab"
@@ -421,11 +426,14 @@
               aria-controls="panel-preview"
               aria-selected={tab === "preview"}
               tabindex={tab === "preview" ? 0 : -1}
-              onclick={() => (tab = "preview")}>Xem trước</button
+              onclick={() => (tab = "preview")}
             >
+              Xem trước
+            </button>
           </div>
-          <button type="button" class="insert" onclick={() => (picking = "insert")}>Chèn ảnh</button
-          >
+          <button type="button" class="insert" onclick={() => (picking = "insert")}>
+            Chèn ảnh
+          </button>
         </div>
         {#if tab === "edit"}
           <div role="tabpanel" id="panel-edit" aria-labelledby="tab-edit">

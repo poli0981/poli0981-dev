@@ -59,9 +59,9 @@
 
 {#if sessionLost}
   <div class="session" role="alert">
-    <span
-      >Phiên đăng nhập Cloudflare Access đã hết hạn. Bản nháp đang viết vẫn được giữ trên máy.</span
-    >
+    <span>
+      Phiên đăng nhập Cloudflare Access đã hết hạn. Bản nháp đang viết vẫn được giữ trên máy.
+    </span>
     <button type="button" onclick={() => location.reload()}>Đăng nhập lại</button>
   </div>
 {/if}
@@ -99,8 +99,10 @@
       <button
         type="button"
         class={pending.danger ? "danger" : "primary"}
-        onclick={() => answer(true)}>{pending.confirmLabel}</button
+        onclick={() => answer(true)}
       >
+        {pending.confirmLabel}
+      </button>
     </div>
   {/if}
 </dialog>

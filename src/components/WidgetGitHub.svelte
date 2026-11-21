@@ -56,8 +56,10 @@
               class="gh-repo"
               href={`https://github.com/${item.repo}`}
               target="_blank"
-              rel="noopener noreferrer">{item.repo}</a
+              rel="noopener noreferrer"
             >
+              {item.repo}
+            </a>
             {#if item.detail}
               <span class="gh-detail">· {item.detail}</span>
             {/if}

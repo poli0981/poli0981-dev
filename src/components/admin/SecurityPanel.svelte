@@ -100,8 +100,8 @@
           void add();
         }}
       >
-        <label
-          >Địa chỉ hoặc dải CIDR
+        <label>
+          Địa chỉ hoặc dải CIDR
           <input
             bind:value={cidr}
             required
@@ -110,11 +110,11 @@
             spellcheck="false"
           />
         </label>
-        <label
-          >Lý do <input bind:value={reason} maxlength="200" placeholder="vd. cào dữ liệu" /></label
-        >
-        <label
-          >Thời hạn
+        <label>
+          Lý do <input bind:value={reason} maxlength="200" placeholder="vd. cào dữ liệu" />
+        </label>
+        <label>
+          Thời hạn
           <select bind:value={duration}>
             <option value="1">1 giờ</option>
             <option value="24">1 ngày</option>
@@ -146,10 +146,9 @@
                 <td title={dateTime(entry.until)}>
                   {entry.until ? (expired(entry) ? "đã hết hạn" : ago(entry.until)) : "không"}
                 </td>
-                <td
-                  ><button type="button" class="danger" onclick={() => remove(entry)}>Gỡ</button
-                  ></td
-                >
+                <td>
+                  <button type="button" class="danger" onclick={() => remove(entry)}>Gỡ</button>
+                </td>
               </tr>
             {/each}
           </tbody>

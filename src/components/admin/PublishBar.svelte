@@ -91,8 +91,10 @@
         data-state="failure"
         href={status.run.url}
         target="_blank"
-        rel="noopener noreferrer">lần xuất bản trước lỗi ↗</a
+        rel="noopener noreferrer"
       >
+        lần xuất bản trước lỗi ↗
+      </a>
     {:else if pending}
       <span class="state" data-state="pending">có thay đổi chưa xuất bản</span>
     {:else}
@@ -103,15 +105,18 @@
         class="warn"
         href="/admin/security/"
         title="Xuất bản đang dùng chung token nội dung — xem trang Bảo mật"
-        >⚠<span class="sr-only">Xuất bản đang dùng chung token nội dung</span></a
       >
+        ⚠<span class="sr-only">Xuất bản đang dùng chung token nội dung</span>
+      </a>
     {/if}
     <button
       type="button"
       class="primary"
       onclick={publish}
-      disabled={busy || !pending || running || checking}>Xuất bản</button
+      disabled={busy || !pending || running || checking}
     >
+      Xuất bản
+    </button>
   {:else if failedToLoad}
     <span class="state" data-state="failure">không đọc được trạng thái xuất bản</span>
   {/if}

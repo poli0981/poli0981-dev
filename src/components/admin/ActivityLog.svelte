@@ -58,8 +58,8 @@
     <section class="card">
       <div class="section-head">
         <h2>Nhật ký admin</h2>
-        <label class="muted small"
-          >Lọc
+        <label class="muted small">
+          Lọc
           <select bind:value={filter}>
             <option value="">Tất cả</option>
             <option value="content">Nội dung</option>
@@ -96,9 +96,9 @@
         <ol class="log">
           {#each data.commits as commit (commit.sha)}
             <li>
-              <a href={commit.url} target="_blank" rel="noopener noreferrer"
-                ><code>{shortSha(commit.sha)}</code></a
-              >
+              <a href={commit.url} target="_blank" rel="noopener noreferrer">
+                <code>{shortSha(commit.sha)}</code>
+              </a>
               <span class="what">{commit.message}</span>
               <span class="muted small when" title={dateTime(commit.date)}>
                 {ago(commit.date)} · {commit.author}

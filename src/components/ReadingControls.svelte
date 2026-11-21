@@ -122,8 +122,10 @@
               type="button"
               class:active={size === key}
               aria-pressed={size === key}
-              onclick={() => setSize(key)}>{text}</button
+              onclick={() => setSize(key)}
             >
+              {text}
+            </button>
           {/each}
         </div>
       </div>
@@ -135,8 +137,10 @@
               type="button"
               class:active={theme === key}
               aria-pressed={theme === key}
-              onclick={() => setTheme(key)}>{text}</button
+              onclick={() => setTheme(key)}
             >
+              {text}
+            </button>
           {/each}
         </div>
       </div>
