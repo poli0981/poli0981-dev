@@ -1,0 +1,13 @@
+# Maintenance mode (CONTRIBUTING.md): issues are for bugs, accessibility and language problems.
+# Questions and ideas go to Discussions; security problems are reported privately.
+blank_issues_enabled: false
+contact_links:
+  - name: Question or idea · Câu hỏi hoặc ý tưởng
+    url: https://github.com/poli0981/poli0981-dev/discussions
+    about: >-
+      The project is in maintenance mode and takes no new features — ask or talk ideas over in
+      Discussions. · Dự án đang ở chế độ bảo trì, không nhận tính năng mới — hỏi hoặc trao đổi
+      ý tưởng trong Discussions.
+  - name: Security vulnerability · Lỗ hổng bảo mật
+    url: https://github.com/poli0981/poli0981-dev/security/policy
+    about: Report it privately, never in a public issue. · Báo riêng, không mở issue công khai.

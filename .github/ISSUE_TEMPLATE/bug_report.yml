@@ -7,7 +7,13 @@ body:
     attributes:
       value: |
         Cảm ơn bạn đã báo lỗi. / Thanks for reporting.
-        Báo lỗi gửi từ nút "Báo lỗi" trên trang sẽ tự điền các mục dưới đây.
+        Nhanh hơn: nút "Báo lỗi" ngay trên trang gửi kèm trang và môi trường đang dùng (báo cáo đó đi
+        vào một repo riêng, không hiện ở đây). / Quicker: the "Report a problem" button on the page
+        itself sends the page and environment along (those reports go to a private repository and
+        do not show up here).
+        Dự án đang ở chế độ bảo trì: form này dành cho lỗi, không dành cho đề xuất tính năng — xem
+        CONTRIBUTING.md. / The project is in maintenance mode: this form is for bugs, not feature
+        requests — see CONTRIBUTING.md.
   - type: textarea
     id: description
     attributes:

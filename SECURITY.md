@@ -36,13 +36,20 @@ Only the currently deployed site (`main` → Cloudflare Workers) is supported. R
 tagged (`v2.0.0` onwards, see [`CHANGELOG.md`](CHANGELOG.md)) for reference only — there are
 no backports. `https://poli0981.dev/api/health` reports the version and commit that is live.
 
+The project is in maintenance mode ([`CONTRIBUTING.md`](CONTRIBUTING.md)), and security work
+is the first thing it keeps doing: a dependency advisory of High or Critical severity, or a
+serious vulnerability in Node.js or the Workers runtime, is fixed and deployed as soon as
+possible, outside the regular update schedule.
+
 ## What the site actually handles
 
 Useful context when judging impact — the site is static and stores almost nothing:
 
 - No visitor accounts or logins, no ad or analytics trackers. The only cookie is
   `__Host-gate`, a signed 48-hour pass set after the Turnstile bot check (expiry, random
-  value and HMAC — no identifier; see `src/lib/gate/`).
+  value and HMAC — no identifier; see `src/lib/gate/`). Preferences, and the answer to the age
+  check on age-rated pages (an age threshold, never a birth date), stay in the browser's
+  `localStorage` and are never sent to the site.
 - User-submitted input: the bug-report form (Turnstile-gated, schema-validated, size-capped,
   forwarded to an issue in a **private** repository and a Discord webhook) and the bot-check
   token exchange at `/api/gate`. Both are rate-limited per client.

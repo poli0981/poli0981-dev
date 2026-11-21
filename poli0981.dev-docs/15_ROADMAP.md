@@ -2,7 +2,7 @@
 
 Ước lượng theo "buổi tối" (~2–3h). Nguyên tắc quen thuộc: **xong P0 spikes mới viết feature** — spike nào fail thì sửa kế hoạch khi chưa tốn công.
 
-Trạng thái tại 2026-10-24 (v2.0.0): ✅ xong · 🟡 đang làm · ⬜ chưa.
+Trạng thái tại 2026-11-21 (v2.3.0 — **chế độ bảo trì**): ✅ xong · 🟡 đang làm · ⬜ chưa.
 
 ## P0 — Spikes ✅
 
@@ -49,7 +49,15 @@ Trạng thái tại 2026-10-24 (v2.0.0): ✅ xong · 🟡 đang làm · ⬜ chư
 - [ ] Test 2 thiết bị thật + 1 máy lạ (bạn bè) — thu 1 vòng feedback
 - [ ] Đăng giới thiệu lên các kênh (dùng notify.py 😄), thêm link site vào bio YouTube/GitHub/Discord
 
-## Hướng đi tiếp (sau v2.0)
+- **v2.3.0** (11/2026, bản tính năng cuối): nhãn nội dung + hỏi tuổi + ảnh mờ + banner cảnh báo (D22) · admin tự xuất bản và biết khi nào "đã lên web" (D23) · Qodana + kiểm license toàn cây (D24) · **chuyển sang chế độ bảo trì** (D21).
+
+## Chế độ bảo trì (từ v2.3.0, 11/2026)
+
+Không thêm tính năng mới. Chỉ: cập nhật dependency định kỳ · vá bảo mật (advisory High/Critical, lỗ hổng runtime) · nâng cấp lớn ngôn ngữ/runtime/framework · sửa lỗi (cả UI/UX, accessibility) · sửa lỗi ngôn ngữ. Chính sách: `CONTRIBUTING.md`; lịch: `17` §0–§1; bot đóng đề xuất tính năng: `.github/workflows/triage.yml`.
+
+P4 còn mở vẫn làm được vì không phải tính năng. Bảng dưới đây **đóng băng** — giữ để biết đã cân nhắc gì; mục nào chỉ quay lại khi rơi vào một trong năm loại thay đổi được nhận (VD gộp TypeScript 7.1 = nâng cấp lớn).
+
+## Hướng đi đã cân nhắc (đóng băng)
 
 | Hướng | Vì sao | Điều kiện |
 |---|---|---|

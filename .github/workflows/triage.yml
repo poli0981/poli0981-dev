@@ -1,0 +1,83 @@
+name: Triage
+
+# Maintenance mode (CONTRIBUTING.md): an issue or pull request asking for a new feature is
+# labelled `enhancement` + `out-of-scope`, answered in both languages and closed. The rules
+# live in scripts/triage.mjs (unit-tested); this only wires them to GitHub. The owner's own
+# items, bots, and anything labelled `maintenance-exception` are left alone.
+#
+# pull_request_target runs with this repository's token, so it must never run a pull
+# request's code: the checkout below takes the default branch, and only the one script file.
+on:
+  issues:
+    types: [opened, reopened, edited, labeled]
+  pull_request_target:
+    types: [opened, reopened, edited, labeled]
+  # Dry run on main: classify a title and print the decision, writing nothing.
+  workflow_dispatch:
+    inputs:
+      title:
+        description: "Title to classify"
+        required: true
+      kind:
+        description: "issue or pull_request"
+        default: issue
+
+permissions: {}
+
+concurrency:
+  group: triage-${{ github.event.issue.number || github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+          sparse-checkout: scripts/triage.mjs
+          sparse-checkout-cone-mode: false
+
+      - name: Label and close feature requests
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const { decide, closingComment, LABELS } = await import(
+              `${process.env.GITHUB_WORKSPACE}/scripts/triage.mjs`
+            );
+
+            if (context.eventName === "workflow_dispatch") {
+              const { title, kind } = context.payload.inputs;
+              const verdict = decide({ title, labels: [], author: "someone", association: "NONE" });
+              core.notice(`${kind} "${title}": ${verdict.action} (${verdict.reason})`);
+              return;
+            }
+
+            const item = context.payload.issue ?? context.payload.pull_request;
+            const kind = context.payload.pull_request ? "pull_request" : "issue";
+            const verdict = decide({
+              title: item.title,
+              labels: (item.labels ?? []).map((label) => label.name),
+              author: item.user.login,
+              association: item.author_association,
+              sender: context.payload.sender?.login,
+              owner: context.repo.owner,
+              state: item.state,
+            });
+            core.info(`#${item.number}: ${verdict.action} (${verdict.reason})`);
+            if (verdict.action !== "close") return;
+
+            const target = { ...context.repo, issue_number: item.number };
+            await github.rest.issues.addLabels({ ...target, labels: [LABELS.feature, LABELS.closed] });
+            await github.rest.issues.createComment({ ...target, body: closingComment(kind) });
+            if (kind === "pull_request") {
+              await github.rest.pulls.update({ ...context.repo, pull_number: item.number, state: "closed" });
+            } else {
+              await github.rest.issues.update({ ...target, state: "closed", state_reason: "not_planned" });
+            }

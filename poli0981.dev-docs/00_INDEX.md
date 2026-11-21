@@ -55,6 +55,10 @@
 | D18 | Báo lỗi (10/2026) | Issue tạo ở repo **private** `poli0981/site-reports` (repo site đã public) — `10` §4 |
 | D19 | Phát hành | Tag `vX.Y.Z` có ký GPG + GitHub Release + `CHANGELOG.md`; deploy vẫn là "merge `main`" (`08` §8) |
 | D20 | Trợ năng (11/2026, v2.2.0) | Mục tiêu **WCAG 2.2 AA** — kim chỉ nam, không tự nhận đã được kiểm định. Tuyên bố cho khách ở `/legal/accessibility` (song ngữ, repo content); `ACCESSIBILITY.md` ở root là bản của repo kèm ghi chú cho người sửa code (trang site thắng nếu lệch). Rào cản báo về `accessibility@` hoặc nút "Báo lỗi". Cổng tự động: `npm run test:a11y` (axe-core + bàn phím + reflow + forced-colors, Playwright lái Chrome có sẵn) chạy trong check bắt buộc `build` (`08` §0, checklist ở `03` §8) — ngoại lệ có chủ đích của D17 "không thêm deps cho test" |
+| D21 | Chế độ bảo trì (11/2026, v2.3.0) | Không thêm tính năng mới. Chỉ nhận: deps định kỳ · vá bảo mật (High/Critical, lỗ hổng runtime) · nâng cấp lớn ngôn ngữ/runtime/framework · sửa lỗi (UI/UX, a11y) · sửa lỗi ngôn ngữ. Bot `triage.yml` gắn `enhancement` + `out-of-scope` và đóng đề xuất tính năng; ngoại lệ = nhãn `maintenance-exception` (`CONTRIBUTING.md`, `17` §0) |
+| D22 | Nhãn nội dung & tuổi (11/2026) | `contentWarning` từ danh sách cố định 11 nhãn (`src/lib/content-labels.ts`) cho blog/truyện/album/từng ảnh + `ageRating` 13+/16+/18+. Banner; ảnh mờ bằng CSS (`:has()`, chạy khi tắt JS); hỏi tuổi bằng `<dialog>` gốc, không tự bật, câu trả lời chỉ ở localStorage `ageGate` (mốc tuổi, không ngày sinh) — Privacy §6 (`04` §2) |
+| D23 | Xuất bản tự động (11/2026) | Mỗi lần lưu/xoá trong admin tự dispatch `content-bump.yml`; build ghi `__CONTENT_COMMIT__` ⇒ `/api/health` có `version.content`, admin phân biệt "đã merge" với "đã lên web". Điều kiện: Workers Builds deploy `main` (`07` §9) |
+| D24 | Chất lượng (11/2026) | Thêm **Qodana** (Ultimate, Qodana for JS, ngưỡng 0) cạnh SonarCloud. License: kiểm toàn bộ `package-lock.json`, ngoại lệ theo **gói** có lý do (`scripts/license-policy.mjs`) — license audit của Qodana cần Ultimate Plus nên không dùng (`08` §0) |
 
 ## Cách dùng suite
 
