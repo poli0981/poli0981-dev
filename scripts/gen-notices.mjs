@@ -11,46 +11,41 @@
  * `license-checker`. Same source of truth, one less dependency to vet — which is the
  * point of the exercise.
  *
- * Any license outside ALLOWED is reported. That is deliberately noisy: an unexpected
- * license is exactly the thing a human should look at, so it fails rather than being
- * quietly folded into the table. Cleared cases go in REVIEWED with a reason.
+ * Any license outside the shared policy's ALLOWED list is reported. That is deliberately
+ * noisy: an unexpected license is exactly the thing a human should look at, so it fails rather
+ * than being quietly folded into the table. Cleared packages go in REVIEWED with a reason
+ * (scripts/license-policy.mjs, shared with check-licenses.mjs, which covers the whole tree).
  *
  * The block holds nothing that changes on a routine version bump (no versions, no package
  * count): it used to print the size of the resolved tree, so every Dependabot PR that added
  * or dropped one transitive package failed CI here.
  */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { ALLOWED, reviewFor, satisfies } from "./license-policy.mjs";
 
 const NOTICES = "THIRD-PARTY-NOTICES.md";
 const BEGIN = "<!-- BEGIN GENERATED — edit scripts/gen-notices.mjs, not this block -->";
 const END = "<!-- END GENERATED -->";
 
-// docs 12: the licenses that need no discussion.
-const ALLOWED = new Set([
-  "MIT",
-  "Apache-2.0",
-  "ISC",
-  "BSD-2-Clause",
-  "BSD-3-Clause",
-  "OFL-1.1",
-  "0BSD",
-  "Unlicense",
-  "CC0-1.0",
-  "MIT OR Apache-2.0",
-  "(MIT OR Apache-2.0)",
-  "Apache-2.0 WITH LLVM-exception",
-  "BlueOak-1.0.0",
-  "Python-2.0",
-]);
+/** Whether a license expression passes without review; an unparseable one never does. */
+function allowedOutright(license) {
+  try {
+    return satisfies(license, ALLOWED);
+  } catch {
+    return false;
+  }
+}
 
-// Licenses cleared by hand. A reason is required — "we shipped it anyway" is not one.
-const REVIEWED = new Map([
-  [
-    "MPL-2.0",
-    "File-level copyleft. satori and @resvg/resvg-js are used unmodified as build-time " +
-      "tools and never shipped to the browser, so no source-disclosure obligation is triggered.",
-  ],
-]);
+/** Whether the package's REVIEWED entry clears its license. */
+function clearedByReview(name, license) {
+  const review = reviewFor(name);
+  if (!review) return false;
+  try {
+    return satisfies(license, new Set([...ALLOWED, review.license]));
+  } catch {
+    return false;
+  }
+}
 
 function licenseOf(name) {
   const p = `node_modules/${name}/package.json`;
@@ -98,7 +93,7 @@ for (const { name } of direct) {
 }
 
 const flagged = [...byLicense.entries()]
-  .filter(([lic]) => !ALLOWED.has(lic))
+  .filter(([lic]) => !allowedOutright(lic))
   .sort((a, b) => a[0].localeCompare(b[0]));
 
 // ---------------------------------------------------------------- render
@@ -142,10 +137,11 @@ const lines = [
 if (flagged.length > 0) {
   lines.push("## Licenses outside the standard allowlist", "");
   for (const [lic, list] of flagged) {
-    const note = REVIEWED.get(lic);
-    lines.push(`**${lic}** — ${list.length} package(s): ${list.map((n) => `\`${n}\``).join(", ")}`);
-    lines.push("");
-    lines.push(note ? `> Reviewed: ${note}` : `> ⚠️ NOT YET REVIEWED.`);
+    lines.push(`**${lic}** — ${list.length} package(s):`, "");
+    for (const name of list) {
+      const note = clearedByReview(name, lic) ? `reviewed: ${reviewFor(name).reason}` : null;
+      lines.push(`- \`${name}\` — ${note ?? "⚠️ NOT YET REVIEWED."}`);
+    }
     lines.push("");
   }
 }
@@ -175,7 +171,9 @@ if (start === -1 || stop === -1) {
 }
 const next = current.slice(0, start) + generated + current.slice(stop + END.length);
 
-const unreviewed = flagged.filter(([lic]) => !REVIEWED.has(lic));
+const unreviewed = flagged.flatMap(([lic, list]) =>
+  list.filter((name) => !clearedByReview(name, lic)).map((name) => `${name} (${lic})`),
+);
 
 if (process.argv.includes("--check")) {
   if (next !== current) {
@@ -187,8 +185,8 @@ if (process.argv.includes("--check")) {
   }
   if (unreviewed.length > 0) {
     console.error(
-      `Unreviewed license(s) in the dependency tree: ${unreviewed.map(([l]) => l).join(", ")}\n` +
-        `Review them and add an entry to REVIEWED in scripts/gen-notices.mjs.`,
+      `Unreviewed license(s) among the direct dependencies: ${unreviewed.join(", ")}\n` +
+        `Review them and add an entry to REVIEWED in scripts/license-policy.mjs.`,
     );
     process.exit(1);
   }
@@ -197,8 +195,6 @@ if (process.argv.includes("--check")) {
   writeFileSync(NOTICES, next);
   console.log(`wrote ${NOTICES} — ${direct.length} direct, ${resolvedCount} resolved packages`);
   if (unreviewed.length > 0) {
-    console.log(
-      `  note: ${unreviewed.length} license(s) need review: ${unreviewed.map(([l]) => l).join(", ")}`,
-    );
+    console.log(`  note: ${unreviewed.length} package(s) need review: ${unreviewed.join(", ")}`);
   }
 }

@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/poli0981/poli0981-dev/actions/workflows/ci.yml/badge.svg)](https://github.com/poli0981/poli0981-dev/actions/workflows/ci.yml)
 [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=poli0981_poli0981-dev&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=poli0981_poli0981-dev)
+[![Qodana](https://github.com/poli0981/poli0981-dev/actions/workflows/qodana.yml/badge.svg)](https://github.com/poli0981/poli0981-dev/actions/workflows/qodana.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/code-GPL--3.0-blue)](LICENSE)
 
 The personal site of Kokone (SkullMute) — dev portfolio, blog, short fiction and a hub for
@@ -20,7 +21,7 @@ the SkullMute channel, in Vietnamese and English. Live at **[poli0981.dev](https
 | Content   | Markdown/MDX in [`poli0981/content`](https://github.com/poli0981/content) (git submodule `src/content`)                       |
 | Search    | Pagefind (built after `astro build`)                                                                                          |
 | Tooling   | Node 26 · TypeScript 7 (`tsc`) next to TypeScript 6 (astro check, typescript-eslint) · `node:test` · ESLint · Prettier · knip |
-| Quality   | SonarCloud quality gate · CodeQL · OSV-Scanner · Snyk · Dependabot (3-day cooldown) · axe-core accessibility gate             |
+| Quality   | SonarCloud quality gate · Qodana · CodeQL · OSV-Scanner · Snyk · Dependabot (3-day cooldown) · axe-core gate · licence check  |
 
 ## How it fits together
 

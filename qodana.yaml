@@ -1,0 +1,36 @@
+# JetBrains Qodana — run by .github/workflows/qodana.yml on every PR and on main
+# (docs 08 §0). Reference: https://www.jetbrains.com/help/qodana/configuration-reference.html
+#
+# Qodana for JS is WebStorm's inspection engine. It reads .ts/.js/.mjs, CSS, JSON, YAML and
+# Markdown — not .astro or .svelte, which stay with astro check, eslint-plugin-astro/-svelte
+# and Prettier in ci.yml.
+version: "1.0"
+linter: qodana-js
+
+# Native mode: the workflow sets up Node from .nvmrc and runs `npm ci` itself, so the analysis
+# resolves the same Node 26 and node_modules as the build (the Docker image ships its own Node).
+withinDocker: false
+
+profile:
+  name: qodana.recommended
+  inspections:
+    # Not source code: build output, coverage, generated types, the content submodule (prose,
+    # in its own repo), the design docs and the frontmatter templates.
+    - group: ALL
+      ignore:
+        - "dist/**"
+        - "coverage/**"
+        - ".astro/**"
+        - ".wrangler/**"
+        - "src/content/**"
+        - "poli0981.dev-docs/**"
+        - "docs/templates/**"
+        - "public/pagefind/**"
+        - "worker-configuration.d.ts"
+        - "workers/widgets/worker-configuration.d.ts"
+    # Prose checkers don't read Vietnamese: every other word of the bilingual UI strings,
+    # comments and docs would be a "typo".
+    - inspection: SpellCheckingInspection
+      enabled: false
+    - inspection: GrazieInspection
+      enabled: false

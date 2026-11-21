@@ -1,0 +1,87 @@
+name: Qodana
+
+# JetBrains Qodana (Qodana for JS, WebStorm's inspections) over the whole repository: on every
+# PR, on main and by hand. Settings live in qodana.yaml. Results go to Qodana Cloud (the
+# project token is the QODANA_TOKEN secret) and, for main, to GitHub code scanning as SARIF.
+#
+# Advisory, not required: the main ruleset requires only `build`, and Dependabot and fork PRs
+# get no secrets, so they skip this job like the SonarCloud one in ci.yml.
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths-ignore: ["poli0981.dev-docs/**", "*.md", "LICENSE"]
+  workflow_dispatch:
+
+# Explicit — a missing block makes GitHub default every scope to `none`.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Cancel superseded PR runs; let main runs finish.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  qodana:
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+       github.actor != 'dependabot[bot]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      checks: write # problem annotations on the commit
+      pull-requests: write # the summary comment on PRs
+      security-events: write # SARIF upload (main and manual runs)
+    steps:
+      # Pinned to commit SHAs like every other workflow here; Dependabot keeps them current.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The PR's own head commit, not the merge preview, so Qodana Cloud links to it.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          submodules: recursive
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # Same rules as ci.yml: no dependency lifecycle script runs in CI, and any lockfile
+      # package with an install script must be on package.json#allowScripts.
+      - name: Install
+        run: npm ci --ignore-scripts
+
+      - name: Install scripts allow-listed
+        run: npm run check-install-scripts
+
+      # Gitignored, generated types the TypeScript service needs to resolve imports of
+      # cloudflare:workers, astro:content and friends.
+      - name: Generate types
+        run: |
+          npm run types
+          npm run types:widgets
+          npm run astro -- sync
+
+      - name: Qodana scan
+        uses: JetBrains/qodana-action@13e3acbbaeb2cbfc37893b98e74594985edf42eb # v2026.2.4
+        env:
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
+          QODANA_ENDPOINT: https://qodana.cloud
+        with:
+          # Whole repository every time (it is small), so the quality gate in qodana.yaml
+          # always judges the full picture rather than the files a PR happens to touch.
+          pr-mode: false
+          upload-result: true
+
+      # Like the OSV scan: main and manual runs only, so PR runs don't open code-scanning
+      # alerts for code that may never merge.
+      - name: Upload SARIF to code scanning
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: ${{ runner.temp }}/qodana/results/qodana.sarif.json
+          category: qodana
